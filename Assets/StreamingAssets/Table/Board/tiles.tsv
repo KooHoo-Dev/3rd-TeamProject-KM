@@ -1,0 +1,4 @@
+ID	Name	TileType	ValidDir	PrefabPath
+0	영토	Property	South, West, North, East	Board/Tiles/Property
+1	특수	Special	South, West, North, East	Board/Tiles/Special
+2	모서리	Corner	None	Board/Tiles/Corner
