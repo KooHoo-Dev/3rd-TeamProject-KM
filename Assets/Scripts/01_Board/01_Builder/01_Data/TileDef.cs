@@ -9,15 +9,17 @@ namespace BlueMarble.Board.Builder
         public string Name { get; private set; }
 
         public TileType Type { get; private set; }
-        
-        public Dictionary<TileDirection, GameObject> Prefabs { get; private set; }
+        public TileDirection Dir { get; private set; }
 
-        public TileDef(int id, string name, TileType type, Dictionary<TileDirection, GameObject> prefabs)
+        public GameObject Prefab { get; private set; }
+
+        public TileDef(int id, string name, TileType type, TileDirection dir, GameObject prefab)
         {
             ID = id;
             Name = name;
             Type = type;
-            Prefabs = prefabs;
+            Dir = dir;
+            Prefab = prefab;
         }
     }
 }

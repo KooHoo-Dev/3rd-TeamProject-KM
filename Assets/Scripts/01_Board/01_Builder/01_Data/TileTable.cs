@@ -29,34 +29,14 @@ namespace BlueMarble.Board.Builder
             {
                 TileDTO dto = rows[i];
 
-                (int id, string name, TileType type, 
-                    Dictionary<TileDirection, GameObject> prefabs) = Interpret(dto);
+                int id = dto.ID;
+                string name = dto.Name;
+                TileType type = Enum.Parse<TileType>(dto.TileType);
+                TileDirection dir = Enum.Parse<TileDirection>(dto.TileDir);
+                GameObject prefab = Resources.Load<GameObject>($"{dto.PrefabPath}/Tile_{type}_{dir}");
                 
-                defs[dto.ID] = new TileDef(id, name, type, prefabs);
+                defs[dto.ID] = new TileDef(id, name, type, dir, prefab);
             }
-        }
-        
-        private (int, string, TileType, Dictionary<TileDirection, GameObject>) Interpret(TileDTO dto)
-        {
-            int id = dto.ID;
-            string name = dto.Name;
-            TileType type = Enum.Parse<TileType>(dto.TileType);
-            Dictionary<TileDirection, GameObject> prefabs = new();
-            
-            string basePath = $"{dto.PrefabPath}/Tile_{type}";
-            
-            foreach (string rawDir in dto.ValidDir.Split(DELIMITER))
-            {
-                TileDirection dir = Enum.Parse<TileDirection>(
-                    rawDir.Trim(),
-                    ignoreCase: true
-                );
-
-                string path = $"{basePath}_{dir}";
-                prefabs[dir] = Resources.Load<GameObject>(path);
-            }
-            
-            return (id, name, type, prefabs);
         }
     }
 }

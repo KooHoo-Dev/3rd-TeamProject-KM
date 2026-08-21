@@ -25,13 +25,10 @@ namespace BlueMarble.Board.Builder
         private async void CreateTile()
         {
             await Data.EnsureDataLoaded();
+            
+            TileDef def = Data.GetTileDef((int)tileType);
 
-            int id = (int)tileType;
-            
-            TileDef def = Data.GetTileDef(id);
-            GameObject pref = def.Prefabs[tileDir];
-            
-            GameObject created = Instantiate(pref, root);
+            GameObject created = Instantiate(def.Prefab, root);
             created.name = $"Tile_{tileType}_{tileDir}";
         }
     }

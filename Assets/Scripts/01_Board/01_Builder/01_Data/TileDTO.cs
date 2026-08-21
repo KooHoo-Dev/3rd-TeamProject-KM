@@ -8,8 +8,8 @@ namespace BlueMarble.Board.Builder
         public string Name;
 
         public string TileType;
+        public string TileDir;
         
-        public string ValidDir;
         public string PrefabPath;
     }
 }
