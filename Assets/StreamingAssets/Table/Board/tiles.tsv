@@ -1,10 +1,9 @@
-ID	TileType	TileDir	PrefabPath
-0	Property	South	Board/Tiles/Property
-1	Property	West	Board/Tiles/Property
-2	Property	North	Board/Tiles/Property
-4	Property	East	Board/Tiles/Property
-5	Special	South	Board/Tiles/Special
-6	Special	West	Board/Tiles/Special
-7	Special	North	Board/Tiles/Special
-8	Special	East	Board/Tiles/Special
-9	Corner	None	Board/Tiles/Corner
+Id	TileType	TileDir
+0	Property	South
+1	Property	West
+2	Property	North
+4	Property	East
+5	Special	South
+6	Special	North
+7	Special	Vertical
+8	Corner	All

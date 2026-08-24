@@ -4,12 +4,8 @@ namespace BlueMarble.Board.Builder
 {
     public class TileDTO
     {
-        public int ID;
-        public string Name;
-
+        public int Id;
         public string TileType;
         public string TileDir;
-        
-        public string PrefabPath;
     }
 }

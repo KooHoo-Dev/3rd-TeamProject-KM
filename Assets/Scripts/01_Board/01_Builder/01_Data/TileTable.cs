@@ -9,8 +9,8 @@ namespace BlueMarble.Board.Builder
 {
     public class TileTable
     {
-        private const char DELIMITER = ',';
         private const string TABLE_NAME = "Board/tiles";
+        private const string BASE_PREFAB_PATH = "Board/Tiles";
 
         private readonly Dictionary<int, TileDef> defs = new();
 
@@ -29,13 +29,12 @@ namespace BlueMarble.Board.Builder
             {
                 TileDTO dto = rows[i];
 
-                int id = dto.ID;
-                string name = dto.Name;
+                int id = dto.Id;
                 TileType type = Enum.Parse<TileType>(dto.TileType);
                 TileDirection dir = Enum.Parse<TileDirection>(dto.TileDir);
-                GameObject prefab = Resources.Load<GameObject>($"{dto.PrefabPath}/Tile_{type}_{dir}");
-                
-                defs[dto.ID] = new TileDef(id, name, type, dir, prefab);
+                Tile prefab = Resources.Load<Tile>($"{BASE_PREFAB_PATH}/{type}/Tile_{type}_{dir}");
+
+                defs[dto.Id] = new TileDef(id, type, dir, prefab);
             }
         }
     }
