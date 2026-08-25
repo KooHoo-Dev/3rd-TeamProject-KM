@@ -19,7 +19,7 @@ namespace BlueMarble.Utility
             byte g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
             byte b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
 
-            return new Color(r, g, b, 255);
+            return new Color32(r, g, b, 255);
         }
     }
 }

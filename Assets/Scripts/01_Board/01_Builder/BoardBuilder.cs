@@ -25,11 +25,11 @@ namespace BlueMarble.Board.Builder
         {
             await Data.EnsureDataLoaded();
             
-            Tile created = CreateTile(TileType.Corner, TileDirection.All);
+            Tile created = CreateTile(TileType.Corner, TileDirection.All, 0);
             created.transform.position = startPoint.position;
         }
         
-        private Tile CreateTile(TileType type, TileDirection dir)
+        private Tile CreateTile(TileType type, TileDirection dir, int spaceId)
         {
             if (Data.TryGetTileDef(type, dir, out var def) == false)
             {
@@ -37,21 +37,24 @@ namespace BlueMarble.Board.Builder
                 return null;
             }
             
+            BoardSpaceDef spaceDef = Data.GetBoardSpaceDef(spaceId);
+            
             Tile created = Instantiate(def.Prefab, boardRoot);
-            created.Initialize(def);
+            created.Initialize(def, spaceDef);
+            created.UpdateVisuals();
             
             createdList.Add(created);
 
             return created;
         }
 
-        public void CreateTile(TileType type)
+        public void CreateTile(TileType type, int spaceId)
         {
             // CreateTile에서 CreatedList에 생성한 타일을 즉시 Add하므로
             // 가장 최근 타일을 미리 캐싱해두고 위치 계산에 사용해야 함
             Tile lastCreated = createdList[^1];
             
-            Tile created = CreateTile(type, currentDir);
+            Tile created = CreateTile(type, currentDir, spaceId);
             created.transform.position = created.CalculateDistFrom(lastCreated, currentDir, offset);
 
             // 코너 타일이 설치되었다면 다음 방향으로 전환

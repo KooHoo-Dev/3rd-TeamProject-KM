@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,24 +16,43 @@ namespace BlueMarble.Board.Builder
         [SerializeField] private Button createButton;
         [SerializeField] private Button removeButton;
         [SerializeField] private Button saveButton;
+        [SerializeField] private TMP_Dropdown spaceDropdown;
         
         private TileType currentType = TileType.Property;
+        private int currentSpace = 0;
         
         private BoardBuilder builder;
+        
+        private DataManager Data => DataManager.Instance;
 
         private void Awake()
         {
             builder = GetComponent<BoardBuilder>();
         }
 
-        private void Start()
+        private async void Start()
         {
+            await Data.EnsureDataLoaded();
+
+            InitSpaceDropdown();
+            
             OnToggleChanged(propertyToggle, TileType.Property);
             OnToggleChanged(specialToggle, TileType.Special);
             OnToggleChanged(cornerToggle, TileType.Corner);
             createButton.onClick.AddListener(OnCreateButtonClicked);
             removeButton.onClick.AddListener(OnRemoveButtonClicked);
             saveButton.onClick.AddListener(OnSaveButtonClicked);
+            spaceDropdown.onValueChanged.AddListener(OnSpaceDropdownValueChanged);
+        }
+
+        private void InitSpaceDropdown()
+        {
+            List<string> spaceNames = Data.BoardSpaces.GetDefs()
+                .Select(def => def.Name)
+                .ToList();
+            
+            spaceDropdown.AddOptions(spaceNames);
+            spaceDropdown.value = 0;
         }
 
         private void OnToggleChanged(Toggle toggle, TileType type)
@@ -42,10 +64,12 @@ namespace BlueMarble.Board.Builder
             });
         }
 
-        private void OnCreateButtonClicked() => builder.CreateTile(currentType);
+        private void OnCreateButtonClicked() => builder.CreateTile(currentType, currentSpace);
 
         private void OnRemoveButtonClicked() => builder.RemoveLastTile();
         
         private void OnSaveButtonClicked() => builder.SaveBoard();
+
+        private void OnSpaceDropdownValueChanged(int value) => currentSpace = value;
     }
 }

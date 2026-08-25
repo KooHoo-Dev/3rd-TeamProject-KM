@@ -14,10 +14,19 @@ namespace BlueMarble.Board
         [field: SerializeField] public SpriteRenderer RegionRenderer { get; private set; }
 
         public TileDef Def { get; private set; }
+        public BoardSpaceDef SpaceDef { get; private set; }
 
-        public void Initialize(TileDef def)
+        public void Initialize(TileDef def, BoardSpaceDef spaceDef)
         {
             Def = def;
+            SpaceDef = spaceDef;
+        }
+
+        public void UpdateVisuals()
+        {
+            AreaName.SetText(SpaceDef.Name);
+            AreaIconRenderer.sprite = SpaceDef.Icon;
+            if (RegionRenderer != null) RegionRenderer.color = SpaceDef.Color;
         }
     }
 }

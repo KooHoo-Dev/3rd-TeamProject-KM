@@ -42,6 +42,7 @@ namespace BlueMarble
         #region GET_DEF
 
         public TileDef GetTileDef(int id) => Tiles.Get(id);
+        public BoardSpaceDef GetBoardSpaceDef(int id) => BoardSpaces.Get(id);
 
         #endregion
         
