@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using BlueMarble.Board;
 using BlueMarble.Board.Builder;
 using Cysharp.Threading.Tasks;
@@ -9,6 +10,7 @@ namespace BlueMarble
     public class DataManager : SingletonBase<DataManager>
     {
         public TileTable Tiles { get; } = new();
+        public BoardSpaceTable BoardSpaces { get; } = new();
 
         public event Action OnDataLoaded;
         
@@ -24,12 +26,14 @@ namespace BlueMarble
 
         private async UniTask LoadAsync()
         {
-            // 만약 추가적인 데이터가 들어오면 t2로 확장하여 whenall에 대입
-            // 예시) UniTask t2 = Fights.LoadAsync();
-            //      await UniTask.WhenAll(t1, t2);
-            UniTask t1 = Tiles.LoadAsync();
-            
-            await UniTask.WhenAll(t1);
+            // 추가적인 데이터 확장이 필요하다면 tasks에 계속해서 추가하면 됨
+            List<UniTask> tasks = new()
+            {
+                Tiles.LoadAsync(),
+                BoardSpaces.LoadAsync()
+            };
+
+            await UniTask.WhenAll(tasks);
         }
 
         public UniTask EnsureDataLoaded() 
