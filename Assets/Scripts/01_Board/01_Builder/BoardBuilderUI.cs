@@ -16,6 +16,8 @@ namespace BlueMarble.Board.Builder
         [SerializeField] private Button createButton;
         [SerializeField] private Button removeButton;
         [SerializeField] private Button saveButton;
+        [SerializeField] private Button loadButton;
+        [SerializeField] private Button clearButton;
         [SerializeField] private TMP_Dropdown spaceDropdown;
         
         private TileType currentType = TileType.Property;
@@ -42,6 +44,8 @@ namespace BlueMarble.Board.Builder
             createButton.onClick.AddListener(OnCreateButtonClicked);
             removeButton.onClick.AddListener(OnRemoveButtonClicked);
             saveButton.onClick.AddListener(OnSaveButtonClicked);
+            loadButton.onClick.AddListener(OnLoadButtonClicked);
+            clearButton.onClick.AddListener(OnClearButtonClicked);
             spaceDropdown.onValueChanged.AddListener(OnSpaceDropdownValueChanged);
         }
 
@@ -70,6 +74,10 @@ namespace BlueMarble.Board.Builder
         
         private void OnSaveButtonClicked() => builder.SaveBoard();
 
+        private void OnLoadButtonClicked() => builder.LoadBoard();
+        
+        private void OnClearButtonClicked() => builder.ClearBoard();
+        
         private void OnSpaceDropdownValueChanged(int value) => currentSpace = value;
     }
 }

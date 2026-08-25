@@ -2,18 +2,25 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Sirenix.OdinInspector;
+using UnityEditor;
 using UnityEngine;
 
 namespace BlueMarble.Board.Builder
 {
     public class BoardBuilder : MonoBehaviour
     {
+        [Title("Components")]
+        [SerializeField] private BoardData boardData;
+        
         [Title("Settings")]
         [SerializeField] private Transform boardRoot;
         [SerializeField] private Transform startPoint;
 
         [Space]
         [SerializeField] private Vector2 offset;
+
+        [Space]
+        [SerializeField, FolderPath] private string prefabFolderPath;
 
         [Title("Readonly")]
         [ShowInInspector] private TileDirection currentDir = TileDirection.South;
@@ -29,6 +36,39 @@ namespace BlueMarble.Board.Builder
             created.transform.position = startPoint.position;
         }
         
+        #region BOARD
+
+        private void BuildBoard(BoardFile file)
+        {
+            ClearBoard();
+            
+            List<TileEntry> entries = file.Entries;
+
+            // 첫 번째 타일은 이미 생성되어있으므로, Build 과정에 포함시키지 않음
+            for (int i = 1; i < entries.Count; i++)
+            {
+                TileEntry entry = entries[i];
+                
+                TileDef def = Data.GetTileDef(entry.TileId);
+                BoardSpaceDef spaceDef = Data.GetBoardSpaceDef(entry.SpaceId);
+
+                CreateTile(def.Type, spaceDef.Id);
+            }
+        }
+
+        public void ClearBoard()
+        {
+            for (int i = createdList.Count - 1; i >= 0; i--)
+            {
+                if (RemoveLastTile(false) == false)
+                    break;
+            }
+        }
+        
+        #endregion
+        
+        #region TILE
+
         private Tile CreateTile(TileType type, TileDirection dir, int spaceId)
         {
             if (Data.TryGetTileDef(type, dir, out var def) == false)
@@ -61,13 +101,13 @@ namespace BlueMarble.Board.Builder
             if (type == TileType.Corner) currentDir++;
         }
 
-        public void RemoveLastTile()
+        public bool RemoveLastTile(bool isPrintLog = true)
         {
             // 출발점 타일은 지우지 못하도록 Early Return
             if (createdList.Count == 1)
             {
-                Debug.LogWarning("Cannot remove start tile.");
-                return;
+                if (isPrintLog) Debug.LogWarning("Cannot remove start tile.");
+                return false;
             }
             
             Tile lastCreated = createdList[^1];
@@ -78,11 +118,60 @@ namespace BlueMarble.Board.Builder
             
             createdList.Remove(lastCreated);
             Destroy(lastCreated.gameObject);
+
+            return true;
         }
+
+        #endregion
+        
+        #region SAVE_OR_LOAD_BOARD
 
         public void SaveBoard()
         {
-            // CreatedList에 저장해둔 순서대로 데이터 변환 후, Json파일로 저장
+            boardData.ImportFrom(createdList);
+            boardData.ToFile().Save();
+            
+            SaveBoardAsPrefab();
+            
+#if UNITY_EDITOR
+            AssetDatabase.Refresh();
+#endif
         }
+
+        public void LoadBoard()
+        {
+            if (BoardFile.TryLoad(out BoardFile file) == false)
+                return;
+
+            BuildBoard(file);
+            Debug.Log($"[BoardBuilder] Successfully loaded board: {file.Entries.Count} tiles.");
+        }
+
+        public void SaveBoardAsPrefab()
+        {
+#if UNITY_EDITOR
+            if (boardData == null)
+            {
+                Debug.LogError("[BoardBuilder] Make sure that boardData is assigned.");
+                return;
+            }
+
+            string prefabPath = $"{prefabFolderPath}/Board.prefab";
+
+            GameObject pref = PrefabUtility
+                .SaveAsPrefabAsset(boardData.gameObject, prefabPath, out bool success);
+
+            if (success == false || pref == null)
+            {
+                Debug.LogError("[BoardBuilder] Failed to save board as prefab.");
+                return;
+            }
+            
+            AssetDatabase.Refresh();
+            Debug.Log($"[BoardBuilder] Successfully saved board as prefab: {prefabPath}");
+#endif
+        }
+        
+        #endregion
     }
 }

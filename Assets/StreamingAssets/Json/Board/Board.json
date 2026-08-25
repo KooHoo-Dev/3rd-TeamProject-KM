@@ -1,0 +1,204 @@
+{
+  "Entries": [
+    {
+      "Id": 0,
+      "TileId": 8,
+      "SpaceId": 0
+    },
+    {
+      "Id": 1,
+      "TileId": 0,
+      "SpaceId": 1
+    },
+    {
+      "Id": 2,
+      "TileId": 5,
+      "SpaceId": 28
+    },
+    {
+      "Id": 3,
+      "TileId": 0,
+      "SpaceId": 2
+    },
+    {
+      "Id": 4,
+      "TileId": 0,
+      "SpaceId": 3
+    },
+    {
+      "Id": 5,
+      "TileId": 5,
+      "SpaceId": 29
+    },
+    {
+      "Id": 6,
+      "TileId": 0,
+      "SpaceId": 4
+    },
+    {
+      "Id": 7,
+      "TileId": 5,
+      "SpaceId": 28
+    },
+    {
+      "Id": 8,
+      "TileId": 0,
+      "SpaceId": 5
+    },
+    {
+      "Id": 9,
+      "TileId": 0,
+      "SpaceId": 6
+    },
+    {
+      "Id": 10,
+      "TileId": 8,
+      "SpaceId": 7
+    },
+    {
+      "Id": 11,
+      "TileId": 1,
+      "SpaceId": 8
+    },
+    {
+      "Id": 12,
+      "TileId": 7,
+      "SpaceId": 28
+    },
+    {
+      "Id": 13,
+      "TileId": 1,
+      "SpaceId": 9
+    },
+    {
+      "Id": 14,
+      "TileId": 1,
+      "SpaceId": 10
+    },
+    {
+      "Id": 15,
+      "TileId": 7,
+      "SpaceId": 29
+    },
+    {
+      "Id": 16,
+      "TileId": 1,
+      "SpaceId": 11
+    },
+    {
+      "Id": 17,
+      "TileId": 7,
+      "SpaceId": 28
+    },
+    {
+      "Id": 18,
+      "TileId": 1,
+      "SpaceId": 12
+    },
+    {
+      "Id": 19,
+      "TileId": 1,
+      "SpaceId": 13
+    },
+    {
+      "Id": 20,
+      "TileId": 8,
+      "SpaceId": 14
+    },
+    {
+      "Id": 21,
+      "TileId": 2,
+      "SpaceId": 15
+    },
+    {
+      "Id": 22,
+      "TileId": 6,
+      "SpaceId": 28
+    },
+    {
+      "Id": 23,
+      "TileId": 2,
+      "SpaceId": 16
+    },
+    {
+      "Id": 24,
+      "TileId": 2,
+      "SpaceId": 17
+    },
+    {
+      "Id": 25,
+      "TileId": 6,
+      "SpaceId": 29
+    },
+    {
+      "Id": 26,
+      "TileId": 2,
+      "SpaceId": 18
+    },
+    {
+      "Id": 27,
+      "TileId": 2,
+      "SpaceId": 19
+    },
+    {
+      "Id": 28,
+      "TileId": 6,
+      "SpaceId": 28
+    },
+    {
+      "Id": 29,
+      "TileId": 2,
+      "SpaceId": 20
+    },
+    {
+      "Id": 30,
+      "TileId": 8,
+      "SpaceId": 21
+    },
+    {
+      "Id": 31,
+      "TileId": 4,
+      "SpaceId": 22
+    },
+    {
+      "Id": 32,
+      "TileId": 4,
+      "SpaceId": 23
+    },
+    {
+      "Id": 33,
+      "TileId": 7,
+      "SpaceId": 28
+    },
+    {
+      "Id": 34,
+      "TileId": 4,
+      "SpaceId": 24
+    },
+    {
+      "Id": 35,
+      "TileId": 7,
+      "SpaceId": 29
+    },
+    {
+      "Id": 36,
+      "TileId": 4,
+      "SpaceId": 25
+    },
+    {
+      "Id": 37,
+      "TileId": 4,
+      "SpaceId": 26
+    },
+    {
+      "Id": 38,
+      "TileId": 7,
+      "SpaceId": 28
+    },
+    {
+      "Id": 39,
+      "TileId": 4,
+      "SpaceId": 27
+    }
+  ]
+}
