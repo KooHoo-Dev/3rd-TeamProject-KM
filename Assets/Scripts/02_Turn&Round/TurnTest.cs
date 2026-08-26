@@ -29,11 +29,17 @@ namespace Epic2
             List<int> joinedPlayers = new List<int>(player.Keys);
             
             turnManager.InitializePlayers(joinedPlayers);
+            
+            
         }
 
+        public void OnClickStart()
+        {
+            turnManager.TurnDeadline();
+        }
+        
         public void OnClickNextTurn()
         {
-
             turnManager.AdvanceTurn();
         }
 

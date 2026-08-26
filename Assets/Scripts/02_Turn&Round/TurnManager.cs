@@ -48,7 +48,7 @@ namespace Epic2
         public void AdvanceTurn()
         {
             currentPlayerIndex++;
-        
+            token.Cancel();
             // 모든 플레이어가 턴을 마쳤으면 라운드 증가
             if (currentPlayerIndex >= players.Count)
             {
@@ -57,11 +57,19 @@ namespace Epic2
                 IsGameEnded();
                 Debug.Log($"라운드 증가: {roundCount} 라운드 시작");
             }
-            
+
+            TurnDeadline();
             Debug.Log($"현재 순서: {players[currentPlayerIndex]}");
         }
-        
-        
+
+        public async UniTaskVoid TurnDeadline()
+        {
+            token =  new CancellationTokenSource();
+
+            await UniTask.Delay(Mathf.RoundToInt(waitSeconds * 1000f),
+                DelayType.DeltaTime,
+                cancellationToken: token.Token);
+        } 
 
         private bool IsGameEnded()
         {
