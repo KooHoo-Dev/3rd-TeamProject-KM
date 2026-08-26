@@ -1,15 +1,24 @@
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Epic2
 {
+    // 이거는 방장만..?
     public class TurnManager : MonoBehaviour
     {
         public List<int> players = new List<int>();
-        public int roundCount = 1;
-    
-        private int currentPlayerIndex = 0;
 
+        public const int MAX_ROUND = 20;
+        public int roundCount = 1;
+        public int currentPlayerIndex = 0;
+        
+        private bool isGameEnded = false;
+        private float waitSeconds = 30f;
+        
+        public CancellationTokenSource token;
+        
         // 게임 시작 시 서버에서 참가자 리스트를 받아 초기화할 때 호출
         public void InitializePlayers(List<int> joinedPlayers)
         {
@@ -45,10 +54,21 @@ namespace Epic2
             {
                 currentPlayerIndex = 0;
                 roundCount++;
+                IsGameEnded();
                 Debug.Log($"라운드 증가: {roundCount} 라운드 시작");
             }
+            
+            Debug.Log($"현재 순서: {players[currentPlayerIndex]}");
+        }
+        
+        
+
+        private bool IsGameEnded()
+        {
+            return roundCount > MAX_ROUND ? isGameEnded =  true : isGameEnded = false;
         }
 
+        // 생각해보니까 이거는 같은 결과 값을 공유해야 함.
         private static void Shuffle(List<int> list)
         {
             int n = list.Count;

@@ -13,19 +13,19 @@ namespace Epic2
         
         public DiceManager diceManager;
         
-        private Dictionary<string, int> playerPosition = new Dictionary<string, int>();
+        private Dictionary<int, int> playerPosition = new Dictionary<int, int>();
 
         private void OnEnable()
         {
-            diceManager.OnDiceResultReceived += HandleDiceResult;
+            diceManager.OnDiceRolled += HandleDiceResult;
         }
 
         private void OnDisable()
         {
-            diceManager.OnDiceResultReceived -= HandleDiceResult;
+            diceManager.OnDiceRolled -= HandleDiceResult;
         }
 
-        private void HandleDiceResult(string playerId, int dice1, int dice2)
+        private void HandleDiceResult(int playerId, int dice1, int dice2)
         {
             int moveDistance = dice1 + dice2;
             
@@ -34,7 +34,7 @@ namespace Epic2
             MovePosition(playerId, moveDistance);
         }
 
-        private void MovePosition(string playerId, int moveDistance)
+        private void MovePosition(int playerId, int moveDistance)
         {
             if (playerPosition.ContainsKey(playerId)== false) playerPosition.Add(playerId, 0);
             
