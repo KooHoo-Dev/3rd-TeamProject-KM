@@ -1,11 +1,12 @@
 ﻿using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using Jay;
 using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
-    public class BlueMarbleWorld : MonoBehaviour
+    public class BlueMarbleWorld : SingletonBase<BlueMarbleWorld>
     {
         [field: Title("Components")]
         [field: SerializeField] public BoardLoader BoardLoader { get; private set; }
