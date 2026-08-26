@@ -1,4 +1,4 @@
-﻿namespace BlueMarble.Board
+﻿namespace BlueMarble
 {
     public enum TileType
     {

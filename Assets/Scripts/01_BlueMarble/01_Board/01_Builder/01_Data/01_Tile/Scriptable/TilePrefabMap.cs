@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace BlueMarble.Board.Builder
+namespace BlueMarble
 {
     [CreateAssetMenu(fileName = "TilePrefabs", menuName = "Board/Tile/PrefabMap", order = 0)]
     public class TilePrefabMap : ScriptableObject

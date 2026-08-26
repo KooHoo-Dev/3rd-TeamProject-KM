@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace BlueMarble.Board
+namespace BlueMarble
 {
     public static class TileExtensions
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BlueMarble.Board
+namespace BlueMarble
 {
     [Serializable]
     public class TileEntry

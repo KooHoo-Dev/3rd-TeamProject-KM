@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace BlueMarble.Board
+namespace BlueMarble
 {
     public class BoardData : MonoBehaviour
     {
@@ -26,6 +26,8 @@ namespace BlueMarble.Board
                 });
             }
         }
+        
+        public Board ToBoard(Transform root) => Board.FromRoot(root);
         
         public BoardFile ToFile() => new BoardFile { Entries = new List<TileEntry>(entries) };
         public void ApplyFile(BoardFile file) => entries = new List<TileEntry>(file.Entries);

@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-
-namespace BlueMarble.Board.Builder
+﻿namespace BlueMarble
 {
     public class TileDef
     {

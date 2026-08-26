@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using Sirenix.OdinInspector;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace BlueMarble.Board.Builder
+namespace BlueMarble
 {
     [CreateAssetMenu(fileName = "SpaceIcons", menuName = "Board/Space/IconMap", order = 0)]
     public class BoardSpaceIconMap : ScriptableObject

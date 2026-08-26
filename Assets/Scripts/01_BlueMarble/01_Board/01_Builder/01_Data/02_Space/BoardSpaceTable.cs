@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using BlueMarble.Utility;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 using Utility.Data;
+using BlueMarble.Utility;
 
-namespace BlueMarble.Board.Builder
+namespace BlueMarble
 {
     public class BoardSpaceTable : DataTable<BoardSpaceDTO, BoardSpaceDef>
     {

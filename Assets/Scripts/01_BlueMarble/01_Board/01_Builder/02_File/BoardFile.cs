@@ -4,23 +4,21 @@ using System.IO;
 using Jay.FileIO;
 using UnityEngine;
 
-namespace BlueMarble.Board
+namespace BlueMarble
 {
     [Serializable]
     public class BoardFile
     {
-        public List<TileEntry> Entries;
-        
-        #region FILE_INPUT_AND_OUTPUT
-
         private static readonly string FILE_PATH 
             = Path.Combine(Application.streamingAssetsPath, "Json", "Board", "Board.json");
+        
+        public List<TileEntry> Entries;
 
         public void Save()
         {
             JsonWriter.Save(this, FILE_PATH);
             Debug.Log($"[BoardFile] Board saved to {FILE_PATH}. " +
-                      $"Saved data count: {Entries.Count}");
+                $"Saved data count: {Entries.Count}");
         }
 
         public static bool TryLoad(out BoardFile file)
@@ -48,7 +46,5 @@ namespace BlueMarble.Board
             
             return true;
         }
-
-        #endregion
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace BlueMarble.Board.Builder
+namespace BlueMarble
 {
     public class BoardSpaceDef
     {

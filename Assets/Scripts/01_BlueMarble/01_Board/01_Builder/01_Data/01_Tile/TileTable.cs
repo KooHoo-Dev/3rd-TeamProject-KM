@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using Jay.FileIO;
-using UnityEngine;
 using Utility.Data;
 
-namespace BlueMarble.Board.Builder
+namespace BlueMarble
 {
     public class TileTable : DataTable<TileDTO, TileDef>
     {

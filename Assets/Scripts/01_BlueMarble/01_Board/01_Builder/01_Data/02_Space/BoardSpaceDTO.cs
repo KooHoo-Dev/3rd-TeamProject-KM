@@ -1,4 +1,4 @@
-﻿namespace BlueMarble.Board.Builder
+﻿namespace BlueMarble
 {
     public class BoardSpaceDTO
     {

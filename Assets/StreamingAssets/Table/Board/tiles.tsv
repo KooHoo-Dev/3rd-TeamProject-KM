@@ -2,8 +2,8 @@ Id	TileType	TileDir
 0	Property	South
 1	Property	West
 2	Property	North
-4	Property	East
-5	Special	South
-6	Special	North
-7	Special	Vertical
-8	Corner	All
+3	Property	East
+4	Special	South
+5	Special	North
+6	Special	Vertical
+7	Corner	All

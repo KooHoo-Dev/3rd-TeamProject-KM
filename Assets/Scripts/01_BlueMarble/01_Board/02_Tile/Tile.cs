@@ -1,9 +1,8 @@
-﻿using BlueMarble.Board.Builder;
-using Sirenix.OdinInspector;
+﻿using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 
-namespace BlueMarble.Board
+namespace BlueMarble
 {
     public class Tile : MonoBehaviour
     {

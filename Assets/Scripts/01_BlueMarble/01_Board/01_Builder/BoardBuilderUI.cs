@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BlueMarble.Board.Builder
+namespace BlueMarble
 {
     [RequireComponent(typeof(BoardBuilder))]
     public class BoardBuilderUI : MonoBehaviour
