@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Epic2
 {
@@ -15,7 +17,8 @@ namespace Epic2
         public int currentPlayerIndex = 0;
         
         private bool isGameEnded = false;
-        private float waitSeconds = 30f;
+        // 테스트를 위해 public
+        public float waitSeconds = 30f;
         
         public CancellationTokenSource token;
         
@@ -47,9 +50,16 @@ namespace Epic2
         // 누군가의 턴이 완전히 종료되었을 때 (이동, 정산 완료 후) 호출
         public void AdvanceTurn()
         {
+            // 1. 기존 타이머가 돌고 있다면 안전하게 취소하고 폐기해!
+            if (token != null)
+            {
+                token.Cancel();
+                token.Dispose();
+                token = null; // 폐기 후 비워둠
+            }
+
             currentPlayerIndex++;
-            token.Cancel();
-            // 모든 플레이어가 턴을 마쳤으면 라운드 증가
+        
             if (currentPlayerIndex >= players.Count)
             {
                 currentPlayerIndex = 0;
@@ -58,17 +68,31 @@ namespace Epic2
                 Debug.Log($"라운드 증가: {roundCount} 라운드 시작");
             }
 
-            TurnDeadline();
             Debug.Log($"현재 순서: {players[currentPlayerIndex]}");
+            
+            // 2. 다음 사람 턴이 되었으니 새 타이머를 시작해!
+            TurnDeadline().Forget();
         }
 
+        // 이 함수는 30초의 제한시간이 있고, 30초가 지나면 
         public async UniTaskVoid TurnDeadline()
         {
             token =  new CancellationTokenSource();
 
-            await UniTask.Delay(Mathf.RoundToInt(waitSeconds * 1000f),
-                DelayType.DeltaTime,
-                cancellationToken: token.Token);
+            Debug.Log($"{waitSeconds}초 만큼 대기");
+            try
+            {
+                await UniTask.Delay(Mathf.RoundToInt(waitSeconds * 1000f),
+                    DelayType.DeltaTime,
+                    cancellationToken: token.Token);
+            }
+            catch (Exception e)
+            {
+                return;
+            }
+            
+            Debug.Log("대기 끝");
+            AdvanceTurn();
         } 
 
         private bool IsGameEnded()
