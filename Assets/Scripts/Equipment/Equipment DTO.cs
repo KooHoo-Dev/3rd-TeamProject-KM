@@ -1,0 +1,24 @@
+namespace Equipment
+{
+    public class EquipmentDTO
+    {
+        public int Id;
+        
+        public string Name;
+        public string Code;
+        public string Grade;
+        public string AttackType;
+
+
+        public float BaseDamage;
+        public float Range;
+        public float ProjetileSpeedl;
+        public float Radius;
+        public float Cooldown;
+
+        public int MaxDurability;
+        public int Price;
+
+    }
+}
+

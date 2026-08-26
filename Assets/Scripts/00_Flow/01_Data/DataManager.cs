@@ -10,6 +10,8 @@ namespace BlueMarble
         public TileTable Tiles { get; } = new();
         public BoardSpaceTable BoardSpaces { get; } = new();
 
+        public EquipmentTable Equipments { get; } = new();
+        
         public event Action OnDataLoaded;
         
         public bool IsDataLoaded { get; private set; } = false;
@@ -29,6 +31,7 @@ namespace BlueMarble
             {
                 Tiles.LoadAsync(),
                 BoardSpaces.LoadAsync()
+                Equipments.LoadAsync()
             };
 
             await UniTask.WhenAll(tasks);
@@ -41,6 +44,8 @@ namespace BlueMarble
 
         public TileDef GetTileDef(int id) => Tiles.Get(id);
         public BoardSpaceDef GetBoardSpaceDef(int id) => BoardSpaces.Get(id);
+
+        public EquipmentDef GetEquipmentDef(int id) => Equipmets.Get(id);
 
         #endregion
         
