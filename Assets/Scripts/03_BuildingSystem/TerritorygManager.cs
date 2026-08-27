@@ -3,19 +3,17 @@ using UnityEngine;
 
 namespace Epic3
 {
-    public class BuildingManager : MonoBehaviour
+    public class TerritorygManager : MonoBehaviour
     {
+        // 경제 부분은 하드코딩 해놨는데 경제 시스템 만들어지면 교체 하겠습니다.(강민)
+        
         public Dictionary<int, TileProperty> tileStates = new Dictionary<int, TileProperty>();
 
         public int Coin = 500;
-        
-        // 타일을 구매하고 싶다.
-        // 내가 어떤 땅에 있는지 확인부터 해야함.(근데 이건 나중에)
-        // 구매 버튼을 누르면 해당 땅의 상태부터 확인
-        // 주인이 있는지 확인하고 주인이 있으면 대전 신청으로 넘어감
-        // 주인이 없으면 영토 구매.
-        // 영토 구매후 건물을 지을지 확인.
-        // 주인이 나고 건물이 지어져있으면 랜드마크를 세울지
+
+        public int TilePrice = 300;
+        public int BuildingPrice = 200;
+        public int LandMarkPrice = 500;
 
         // 특정 인덱스의 상태를 받아오는 함수
         public TileProperty GetTileState(int tileIndex)
@@ -36,7 +34,6 @@ namespace Epic3
                 return;
             }
 
-            // 경제 시스템 들어오면 교체
             if (Coin < 300)
             {
                 Debug.Log($"[Tile] :300원 [Coin] :{Coin} 돈 부족");
@@ -65,7 +62,6 @@ namespace Epic3
                 Debug.Log($"[Building] :100원 [Coin] :{Coin}");
                 tileStates[tileIndex].HasBuilding = true;
             }
-            else Debug.Log("이미 주인이 있습니다. 대전 신청으로 넘어갑니다");
         }
 
         public void PurchaseLandMark(int ownerId, int tileIndex)
@@ -85,7 +81,51 @@ namespace Epic3
                 Debug.Log($"[LandMark] :200원 [Coin] :{Coin}");
                 tileStates[tileIndex].HasLandMark = true;
             }
-            else Debug.Log("이미 주인이 있습니다. 대전 신청으로 넘어갑니다");
         }
+
+        public void PayAToll(int myPlayerId, int tileIndex)
+        {
+            TileProperty currentTileState = GetTileState(tileIndex);
+            
+            if (currentTileState.IsOwned == false) return;
+            if (currentTileState.OwnerId == myPlayerId) return;
+            
+            // 통행료 누적 계산
+            int tollAmount = TilePrice;
+
+            if (currentTileState.HasBuilding)
+            {
+                tollAmount += BuildingPrice;
+            }
+            if (currentTileState.HasLandMark)
+            {
+                // 기획서 밸런스에 따라 랜드마크 가격을 합산할지 별도 배율을 적용할지 결정
+                tollAmount += LandMarkPrice;
+            }
+
+            if (Coin < tollAmount)
+            {
+                // 나중에 구현할 파산 및 급매 절차로 연결될 부분
+                Debug.Log($"[Toll] {tollAmount}원 필요. [Coin] {Coin}원. 자금 부족으로 급매/파산 처리 필요");
+                Coin = 0; 
+            }
+            else
+            {
+                Coin -= tollAmount;
+                Debug.Log($"[Toll] 통행료 {tollAmount}원 지불. 남은 돈: {Coin}");
+            }
+        }
+
+        public void StolenTerritory(int loserId,int winnerId, int tileIndex)
+        {
+            TileProperty currentTileState = GetTileState(tileIndex);
+
+            if (currentTileState.HasLandMark) return;
+            
+                
+            if(currentTileState.OwnerId == loserId)
+                currentTileState.OwnerId = winnerId;
+        }
+        
     }
 }
