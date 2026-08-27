@@ -6,10 +6,15 @@ namespace BlueMarble
 {
     /// <summary>
     /// 인벤토리 매니저 동작 확인용 테스트 스크립트.
+    /// 0번 키: 현재 인벤토리 상태 조회
     /// 1번 키: 장비 테이블(id 1~20)에서 랜덤 5개를 뽑아 인벤토리를 채움
     /// 2번 키: 인벤토리를 전부 비움
     /// 3번 키: 낡은 단검(id=1)만 5개 채움 (중복 장비 인스턴스 확인용)
     /// 4번 키: 현재 상태에서 장비 1개 추가 시도 (가득 찼을 때 실패하는지 확인용)
+    /// 5번 키: 보유 장비 중 무작위 1개 즉시 파괴 (E8-T2-S2)
+    /// 6번 키: (교체 대기 모드 전용) 신규 장비 획득 포기
+    /// 7번 키: 보유 장비 전체 내구도 -1, 0되면 제거 (E8-T2-S1)
+    /// ※ 교체 대기 모드 중에는 1~5번이 "교체할 슬롯 선택"으로 동작이 바뀐다.
     /// </summary>
     public class EquipmentInventoryTest : MonoBehaviour
     {
@@ -47,6 +52,26 @@ namespace BlueMarble
             if (SimpleInput.GetKeyDown(Key.Digit4))
             {
                 TestOverflow();
+            }
+
+            if (SimpleInput.GetKeyDown(Key.Digit0))
+            {
+                Debug.Log("===== [0] 현재 인벤토리 상태 =====");
+                LogInventory();
+            }
+
+            if (SimpleInput.GetKeyDown(Key.Digit5))
+            {
+                Debug.Log("===== [5] 무작위 장비 파괴 =====");
+                inventory.DestroyRandomEquipment();
+                LogInventory();
+            }
+
+            if (SimpleInput.GetKeyDown(Key.Digit7))
+            {
+                Debug.Log("===== [7] 전체 내구도 -1 =====");
+                inventory.LossDurabilityAll();
+                LogInventory();
             }
         }
 
@@ -176,20 +201,35 @@ namespace BlueMarble
 
             bool added = inventory.TryAddEquipment(def);
             Debug.Log($"6번째 장비 추가 시도 → 성공 여부: {added} (가득 찬 상태라면 false가 정상)");
+            LogInventory();
         }
 
         /// <summary>
-        /// 현재 인벤토리 상태를 "{슬롯} {ID} {이름} {등급} {내구도}" 형식으로 출력한다.
-        /// 1번/3번 기능이 공통으로 사용하는 출력 형식.
+        /// 현재 인벤토리 상태(빈 슬롯 포함 5칸 전체)를 표 형태로 출력한다.
         /// </summary>
         private void LogInventory()
         {
-            foreach (EquipmentInstance instance in inventory.GetAll())
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("[인벤토리 상태]");
+            sb.AppendLine("슬롯 | ID | 이름          | 등급       | 내구도");
+            sb.AppendLine("--------------------------------------------");
+
+            for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
             {
-                Debug.Log(
-                    $"{instance.SlotIndex} {instance.Def.Id} {instance.Def.Name} " +
-                    $"{instance.Def.Grade} {instance.CurrentDurability}/{instance.Def.MaxDurability}");
+                EquipmentInstance instance = inventory.GetAt(i);
+
+                if (instance == null)
+                {
+                    sb.AppendLine($"{i,4} | -- | (비어있음)");
+                    continue;
+                }
+
+                sb.AppendLine(
+                    $"{i,4} | {instance.Def.Id,2} | {instance.Def.Name,-12} | " +
+                    $"{instance.Def.Grade,-9} | {instance.CurrentDurability}/{instance.Def.MaxDurability}");
             }
+
+            Debug.Log(sb.ToString());
         }
 
         /// <summary>
@@ -203,6 +243,7 @@ namespace BlueMarble
             }
 
             Debug.Log("===== [2] 인벤토리 비움 =====");
+            LogInventory();
         }
     }
 }
