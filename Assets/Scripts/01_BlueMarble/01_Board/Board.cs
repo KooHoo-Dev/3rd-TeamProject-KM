@@ -8,6 +8,8 @@ namespace BlueMarble
     {
         private readonly Tile[] tiles;
         
+        public int MaxTileIndex => tiles.Length - 1;
+        
         public Board(Tile[] tiles)
         {
             this.tiles = tiles;

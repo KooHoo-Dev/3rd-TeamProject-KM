@@ -14,7 +14,7 @@ namespace BlueMarble
         
         public Board Board { get; private set; }
 
-        public bool IsInitialized => Board != null;
+        public bool IsBoardReady => Board != null;
         
         private DataManager Data => DataManager.Instance;
 

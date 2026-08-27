@@ -1,13 +1,16 @@
-﻿using UnityEngine;
+﻿using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using DG.Tweening;
 using Jay;
 using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
-    public class LocalPlayer : SingletonBase<BlueMarbleWorld>
+    public class LocalPlayer : SingletonBase<LocalPlayer>
     {
+        [field: ShowInInspector, ReadOnly] public int Id { get; private set; }
+
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
         [SerializeField] private float jumpDuration = 0.5f;
@@ -17,20 +20,28 @@ namespace BlueMarble
 
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
 
-        public async UniTask MoveBy(int count)
+        [Button]
+        public async UniTask<Tile> MoveNext()
         {
+            await UniTask.WaitUntil(this, self => self.World.IsBoardReady);
+
             Board board = World.Board;
             
-            for (int i = 0; i < count; i++)
-            {
-                int targetIdx = CurrentTileIndex + i + 1;
-                Vector3 goal = board.GetTile(targetIdx).transform.position;
+            // 다음 목적지 설정
+            CurrentTileIndex += 1;
+                
+            // 만약 다음 목적지가 보드의 끝이었다면, 시작점으로 목표 변경
+            if (CurrentTileIndex > board.MaxTileIndex)
+                CurrentTileIndex = 0;
+            
+            Tile goal = board.GetTile(CurrentTileIndex);
+            
+            await transform
+                .DOJump(goal.transform.position, jumpPower, 1, jumpDuration)
+                .SetEase(Ease.OutCubic)
+                .ToUniTask(TweenCancelBehaviour.Complete);
 
-                await transform
-                    .DOJump(goal, jumpPower, 1, jumpDuration)
-                    .SetEase(Ease.OutCubic)
-                    .ToUniTask();
-            }
+            return goal;
         }
     }
 }

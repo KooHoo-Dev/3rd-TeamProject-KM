@@ -24,10 +24,11 @@ namespace BlueMarble
                 int id = dto.Id;
                 string name = dto.Name;
                 int price = dto.Price;
+                bool isActiveOnPass = dto.IsActiveOnPass;
                 Sprite icon = iconMap.GetIcon(dto.IconIndex);
                 Color color = dto.ColorHex.HexToColor();
 
-                defs[dto.Id] = new BoardSpaceDef(id, name, price, icon, color);
+                defs[dto.Id] = new BoardSpaceDef(id, name, price, isActiveOnPass, icon, color);
             }
         }
     }
