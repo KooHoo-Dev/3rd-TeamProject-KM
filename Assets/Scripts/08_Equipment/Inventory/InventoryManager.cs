@@ -62,6 +62,13 @@ namespace BlueMarble
             return result; 
         }
         
+        /// <summary>
+        /// 보유중인 인벤토리에서 하나만 가져오는 함수
+        /// </summary>
+        /// <param name="slotIndex"></param>
+        /// <returns></returns>
+        public EquipmentInstance GetAt(int slotIndex) => slots[slotIndex];
+        
 
         /// <summary>
         /// 빈칸 찾기 함수 
