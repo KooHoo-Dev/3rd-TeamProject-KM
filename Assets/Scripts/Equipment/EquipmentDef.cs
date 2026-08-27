@@ -1,4 +1,4 @@
-namespace Equipment
+namespace BlueMarble
 {
     public enum EquipmentGrade
     {

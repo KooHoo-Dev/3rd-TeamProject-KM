@@ -1,4 +1,4 @@
-namespace Equipment
+namespace BlueMarble
 {
     public class EquipmentDTO
     {
@@ -12,7 +12,7 @@ namespace Equipment
 
         public float BaseDamage;
         public float Range;
-        public float ProjetileSpeedl;
+        public float ProjectileSpeed;
         public float Radius;
         public float Cooldown;
 

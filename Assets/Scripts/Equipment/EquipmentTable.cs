@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using Equipment;
 using Utility.Data;
 
-namespace Equipment
+namespace BlueMarble
 {
     public class EquipmentTable : DataTable<EquipmentDTO, EquipmentDef>
     {

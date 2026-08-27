@@ -30,7 +30,7 @@ namespace BlueMarble
             List<UniTask> tasks = new()
             {
                 Tiles.LoadAsync(),
-                BoardSpaces.LoadAsync()
+                BoardSpaces.LoadAsync(),
                 Equipments.LoadAsync()
             };
 
@@ -45,7 +45,7 @@ namespace BlueMarble
         public TileDef GetTileDef(int id) => Tiles.Get(id);
         public BoardSpaceDef GetBoardSpaceDef(int id) => BoardSpaces.Get(id);
 
-        public EquipmentDef GetEquipmentDef(int id) => Equipmets.Get(id);
+        public EquipmentDef GetEquipmentDef(int id) => Equipments.Get(id);
 
         #endregion
         
