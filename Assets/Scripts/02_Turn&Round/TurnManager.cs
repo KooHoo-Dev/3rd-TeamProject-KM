@@ -7,7 +7,6 @@ using Random = UnityEngine.Random;
 
 namespace Epic2
 {
-    // 이거는 방장만..?
     public class TurnManager : MonoBehaviour
     {
         public List<int> players = new List<int>();
