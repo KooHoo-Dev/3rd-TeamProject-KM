@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using BlueMarble;
 using UnityEngine;
 
 namespace Epic3
@@ -14,16 +15,17 @@ namespace Epic3
         public int TilePrice = 300;
         public int BuildingPrice = 200;
         public int LandMarkPrice = 500;
+        
+        public BlueMarbleWorld worldBoard => BlueMarbleWorld.Instance; 
 
-        // 특정 인덱스의 상태를 받아오는 함수
-        public TileProperty GetTileState(int tileIndex)
+        public void GetTileState(IPlayer player)
         {
-            if(tileStates.ContainsKey(tileIndex) == false) tileStates.Add(tileIndex, new TileProperty());
-
-            return tileStates[tileIndex];
+            // 이 함수가 하는 역할은 player가 위치한 곳의 타일 불러오기.
+            Tile currentTile = worldBoard.Board.GetTile(player.Position);
+            // TileProperty를 Tile 안에 넣기
         }
-
-        public void PurchaseTile(int ownerId, int tileIndex)
+        
+        /*   public void PurchaseTile(int ownerId, int tileIndex)
         {
             TileProperty currentTileState = GetTileState(tileIndex);
             
@@ -125,7 +127,7 @@ namespace Epic3
                 
             if(currentTileState.OwnerId == loserId)
                 currentTileState.OwnerId = winnerId;
-        }
+        }*/
         
     }
 }

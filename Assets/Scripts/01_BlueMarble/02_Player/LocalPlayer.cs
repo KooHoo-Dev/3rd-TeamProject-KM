@@ -10,13 +10,14 @@ using Sirenix.OdinInspector;
 public interface IPlayer
 {
     string Id { get; }
+    Vector3 Position { get; }
     
     UniTask<Tile> MoveNext();
 }
 
 namespace BlueMarble
 {
-    public class LocalPlayer : MonoBehaviour, IPlayer
+    public class LocalPlayer : SingletonBase<LocalPlayer>, IPlayer
     {
         [field: SerializeField] public string Id { get; private set; }
 
@@ -27,6 +28,8 @@ namespace BlueMarble
         [field: Title("States")]
         [field: ShowInInspector, ReadOnly] public int CurrentTileIndex { get; private set; }
 
+        public Vector3 Position => transform.position;
+        
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
 
         [Button]
