@@ -1,11 +1,12 @@
 ﻿using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using Jay;
 using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
-    public class BlueMarbleWorld : MonoBehaviour
+    public class BlueMarbleWorld : SingletonBase<BlueMarbleWorld>
     {
         [field: Title("Components")]
         [field: SerializeField] public BoardLoader BoardLoader { get; private set; }
@@ -13,7 +14,7 @@ namespace BlueMarble
         
         public Board Board { get; private set; }
 
-        public bool IsInitialized => Board != null;
+        public bool IsBoardReady => Board != null;
         
         private DataManager Data => DataManager.Instance;
 
