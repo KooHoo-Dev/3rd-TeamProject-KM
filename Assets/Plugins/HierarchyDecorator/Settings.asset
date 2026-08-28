@@ -22,7 +22,7 @@ MonoBehaviour:
     tagLayerLayout: 0
     showTags: 0
     showLayers: 0
-    applyChildLayers: 0
+    applyChildLayers: 1
     showAllComponents: 1
     showBreadcrumbs: 1
     instanceBreadcrumbs:
@@ -124,7 +124,7 @@ MonoBehaviour:
         m_IsSDF: 0
       capturedGroups: []
     - prefix: '-'
-      noSpaceAfterPrefix: 0
+      noSpaceAfterPrefix: 1
       isRegex: 0
       name: Subheader
       font: {fileID: 0}
@@ -207,7 +207,7 @@ MonoBehaviour:
         m_IsSDF: 0
       capturedGroups: []
     - prefix: +
-      noSpaceAfterPrefix: 0
+      noSpaceAfterPrefix: 1
       isRegex: 0
       name: Mini Header (Centered)
       font: {fileID: 0}
@@ -4520,6 +4520,19 @@ MonoBehaviour:
     allCustomComponents:
       name: All
       components:
+      - displayName: BlueMarbleWorld
+        name: BlueMarble.BlueMarbleWorld, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+          PublicKeyToken=null
+        content:
+          m_Text: BlueMarbleWorld
+          m_Image: {fileID: -8204150473280056172, guid: 0000000000000000d000000000000000, type: 0}
+          m_Tooltip: BlueMarbleWorld
+          m_TextWithWhitespace: "BlueMarbleWorld\u200B"
+        shown: 0
+        excluded: 0
+        isBuiltIn: 0
+        script: {fileID: 11500000, guid: 824bfee4c5934b2a9540b1bb0ff65431, type: 3}
+        hasToggle: 1
       - displayName: DataManager
         name: BlueMarble.DataManager, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
           PublicKeyToken=null
@@ -4545,71 +4558,6 @@ MonoBehaviour:
         excluded: 0
         isBuiltIn: 0
         script: {fileID: 11500000, guid: 096aa5f05dbb41e393d9ca5cff2c5d9c, type: 3}
-        hasToggle: 1
-      - displayName: BoardBuilder
-        name: BlueMarble.BoardBuilder, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-          PublicKeyToken=null
-        content:
-          m_Text: BoardBuilder
-          m_Image: {fileID: -8204150473280056172, guid: 0000000000000000d000000000000000, type: 0}
-          m_Tooltip: BoardBuilder
-          m_TextWithWhitespace: "BoardBuilder\u200B"
-        shown: 0
-        excluded: 0
-        isBuiltIn: 0
-        script: {fileID: 11500000, guid: d10cbfcb2baf49df900a794c96a22407, type: 3}
-        hasToggle: 1
-      - displayName: BoardBuilderUI
-        name: BlueMarble.BoardBuilderUI, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-          PublicKeyToken=null
-        content:
-          m_Text: BoardBuilderUI
-          m_Image: {fileID: -8204150473280056172, guid: 0000000000000000d000000000000000, type: 0}
-          m_Tooltip: BoardBuilderUI
-          m_TextWithWhitespace: "BoardBuilderUI\u200B"
-        shown: 0
-        excluded: 0
-        isBuiltIn: 0
-        script: {fileID: 11500000, guid: 161de63617e04e2c9b5bfb09bc0b51f4, type: 3}
-        hasToggle: 1
-      - displayName: BoardLoader
-        name: BlueMarble.BoardLoader, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-          PublicKeyToken=null
-        content:
-          m_Text: BoardLoader
-          m_Image: {fileID: -8204150473280056172, guid: 0000000000000000d000000000000000, type: 0}
-          m_Tooltip: BoardLoader
-          m_TextWithWhitespace: "BoardLoader\u200B"
-        shown: 0
-        excluded: 0
-        isBuiltIn: 0
-        script: {fileID: 11500000, guid: 86fcb9da22a74f6d91e4e62f6e1676c0, type: 3}
-        hasToggle: 1
-      - displayName: Tile
-        name: BlueMarble.Tile, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-          PublicKeyToken=null
-        content:
-          m_Text: Tile
-          m_Image: {fileID: -8204150473280056172, guid: 0000000000000000d000000000000000, type: 0}
-          m_Tooltip: Tile
-          m_TextWithWhitespace: "Tile\u200B"
-        shown: 0
-        excluded: 0
-        isBuiltIn: 0
-        script: {fileID: 11500000, guid: bc2a7070c4294230a1bb3dc96efa62cb, type: 3}
-        hasToggle: 1
-      - displayName: BlueMarbleWorld
-        name: BlueMarble.BlueMarbleWorld, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-          PublicKeyToken=null
-        content:
-          m_Text: BlueMarbleWorld
-          m_Image: {fileID: -8204150473280056172, guid: 0000000000000000d000000000000000, type: 0}
-          m_Tooltip: BlueMarbleWorld
-          m_TextWithWhitespace: "BlueMarbleWorld\u200B"
-        shown: 0
-        excluded: 0
-        isBuiltIn: 0
-        script: {fileID: 11500000, guid: 824bfee4c5934b2a9540b1bb0ff65431, type: 3}
         hasToggle: 1
     unityVersion: 6000.3.15f1
     unityCount: 323
