@@ -12,7 +12,7 @@ namespace BlueMarble
 
         public EquipmentTable Equipments { get; } = new();
 
-        public DropTable DropTables { get; } = new();
+        public DropTable Drops { get; } = new();
         
         public event Action OnDataLoaded;
         
@@ -34,7 +34,7 @@ namespace BlueMarble
                 Tiles.LoadAsync(),
                 BoardSpaces.LoadAsync(),
                 Equipments.LoadAsync(),
-                DropTables.LoadAsync()
+                Drops.LoadAsync()
             };
 
             await UniTask.WhenAll(tasks);
@@ -49,6 +49,8 @@ namespace BlueMarble
         public BoardSpaceDef GetBoardSpaceDef(int id) => BoardSpaces.Get(id);
 
         public EquipmentDef GetEquipmentDef(int id) => Equipments.Get(id);
+
+        public DropDef GetDropDef(int id) => Drops.Get(id);
 
         #endregion
         
