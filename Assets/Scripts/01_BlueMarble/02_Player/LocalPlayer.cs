@@ -1,15 +1,24 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using BlueMarble;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 using Jay;
 using Sirenix.OdinInspector;
 
+public interface IPlayer
+{
+    string Id { get; }
+    
+    UniTask<Tile> MoveNext();
+}
+
 namespace BlueMarble
 {
-    public class LocalPlayer : SingletonBase<LocalPlayer>
+    public class LocalPlayer : MonoBehaviour, IPlayer
     {
-        [field: ShowInInspector, ReadOnly] public int Id { get; private set; }
+        [field: SerializeField] public string Id { get; private set; }
 
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
@@ -21,6 +30,17 @@ namespace BlueMarble
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
 
         [Button]
+        public void Initialize(string id)
+        {
+            Id = id;
+            PlayerRegistry.Register(this);
+        }
+
+        public void OnDisable()
+        {
+            PlayerRegistry.Unregister(this);
+        }
+        
         public async UniTask<Tile> MoveNext()
         {
             await UniTask.WaitUntil(this, self => self.World.IsBoardReady);

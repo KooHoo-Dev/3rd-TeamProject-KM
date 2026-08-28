@@ -11,18 +11,18 @@ namespace Epic2
         // 주사위 결과 이벤트가 발생하면, 등록한 함수를 실행
         public const int TILE_COUNT = 40;
         
-        public DiceManager diceManager;
+        //public DiceManager diceManager;
         
         private Dictionary<int, int> playerPosition = new Dictionary<int, int>();
 
         private void OnEnable()
         {
-            diceManager.OnDiceRolled += HandleDiceResult;
+            //diceManager.OnDiceRolled += HandleDiceResult;
         }
 
         private void OnDisable()
         {
-            diceManager.OnDiceRolled -= HandleDiceResult;
+            //diceManager.OnDiceRolled -= HandleDiceResult;
         }
 
         private void HandleDiceResult(int playerId, int dice1, int dice2)
