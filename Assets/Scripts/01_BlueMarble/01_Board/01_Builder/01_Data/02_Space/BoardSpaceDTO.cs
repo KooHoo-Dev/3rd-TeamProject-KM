@@ -7,5 +7,6 @@
         public int Price;
         public int IconIndex;
         public string ColorHex;
+        public bool IsActiveOnPass;
     }
 }
