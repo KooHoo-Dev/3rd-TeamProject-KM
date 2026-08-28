@@ -1,7 +1,9 @@
-﻿namespace Epic._05_ShopAndTreasure
+﻿namespace BlueMarble
 {
     public class Shop
     {
+        private readonly EquipmentTable equipmentTable;
+        
         
     }
 }
