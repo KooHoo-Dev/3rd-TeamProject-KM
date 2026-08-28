@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Epic2
@@ -29,14 +30,20 @@ namespace Epic2
             List<int> joinedPlayers = new List<int>(player.Keys);
             
             turnManager.InitializePlayers(joinedPlayers);
+            
+            
         }
-
+        [Button]
+        public void OnClickStart()
+        {
+            turnManager.TurnDeadline().Forget();
+        }
+        [Button]
         public void OnClickNextTurn()
         {
-
             turnManager.AdvanceTurn();
         }
-
+        [Button]
         public void OnRollDice()
         {
             diceManager.RollDice(myIndex);
