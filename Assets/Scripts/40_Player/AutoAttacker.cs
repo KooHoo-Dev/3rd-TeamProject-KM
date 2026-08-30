@@ -1,5 +1,8 @@
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Utility;
 
 namespace Combat
 {
@@ -17,28 +20,38 @@ namespace Combat
         public Transform firePoint;    // 화살 목표 지점
         public Arrow arrowPrefab;
 
-        private Coroutine attackCoroutine;
-
+        private CancellationTokenSource attackCts;
+        
         private void OnEnable()
         {
-            attackCoroutine = StartCoroutine(AutoAttackRoutine());
+            attackCts = new CancellationTokenSource();
+            AutoAttackRoutine(attackCts.Token).Forget();
         }
 
         private void OnDisable()
         {
-            if (attackCoroutine != null) StopCoroutine(attackCoroutine);
+            attackCts?.Cancel();
+            attackCts?.Dispose();
+            attackCts = null;
         }
 
-        private IEnumerator AutoAttackRoutine()
+        private async UniTaskVoid AutoAttackRoutine(CancellationToken token)
         {
-            while (true)
+            try
             {
-                if (CombatSystem.Instance != null && CombatSystem.Instance.IsCombatActive)
+                while (true)
                 {
-                    FireArrow();
-                }
+                    if (CombatSystem.Instance.IsCombatActive)
+                    {
+                        FireArrow();
+                    }
 
-                yield return new WaitForSeconds(attackInterval);
+                    await CustomUniTask.DelaySeconds(attackInterval);
+                }
+            }
+            catch (System.OperationCanceledException)
+            {
+                
             }
         }
 

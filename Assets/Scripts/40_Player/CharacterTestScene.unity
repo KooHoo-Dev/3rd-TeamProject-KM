@@ -914,8 +914,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Study.Utilities.CharacterController2D
   speed: 4
-  gravity: -9.81
-  groundCheckDistance: 0.5
   skinWidth: 0.02
   dodgeSpeedBonus: 2
   dodgeDuration: 0.2

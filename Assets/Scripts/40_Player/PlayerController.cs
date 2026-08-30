@@ -10,11 +10,11 @@ namespace Player
     
     public class PlayerController : MonoBehaviour
     {
-        private CharacterController2D Controller2D;
+        private CharacterController2D controller2D;
 
         private void Awake()
         {
-            Controller2D = GetComponent<CharacterController2D>();
+            controller2D = GetComponent<CharacterController2D>();
         }
         
         private void Update()
@@ -26,7 +26,7 @@ namespace Player
         private void HandleMovement()
         {
             float inputVector = SimpleInput.GetAxisHorizontalRaw();
-            Controller2D.SetMoveInput(inputVector);
+            controller2D.SetMoveInput(inputVector);
         }
         
         private void HandleDodge()
@@ -34,7 +34,7 @@ namespace Player
             if (SimpleInput.GetKeyDown(Key.Space))
             {
                 float direction = SimpleInput.GetAxisHorizontalRaw();
-                Controller2D.Dodge(direction);
+                _ = controller2D.Dodge(direction);
             }
         }
     }
