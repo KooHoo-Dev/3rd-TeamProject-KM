@@ -33,10 +33,14 @@ namespace BlueMarble
         public int MaxDurability { get; } // 최대 내구도
         public int Price { get; } // 가격
 
+        public string PrefabPath { get; } // 프리팹 경로
+        public string IconKey { get; } // 아이콘 이미지
+
         public EquipmentDef(int id, string code, string name,
             EquipmentGrade grade, AttackType attackType,
             float baseDamage, float range, float projectileSpeed, float radius,
-            float cooldown, int maxDurability, int price)
+            float cooldown, int maxDurability, int price, string prefabPath, string iconKey)
+
         {
             Id = id;
             Code = code;
@@ -50,7 +54,9 @@ namespace BlueMarble
             Cooldown = cooldown;
             MaxDurability = maxDurability;
             Price = price;
+            PrefabPath = prefabPath;
+            IconKey = iconKey;
         }
-        
+
     }
 }
