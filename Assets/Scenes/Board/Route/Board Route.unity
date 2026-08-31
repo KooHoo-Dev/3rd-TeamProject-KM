@@ -854,6 +854,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c76df666241046baa61a78b0523a7780, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.LocalPlayer
+  <Id>k__BackingField: 
   jumpPower: 1
   jumpDuration: 0.5
 --- !u!1 &2102638733

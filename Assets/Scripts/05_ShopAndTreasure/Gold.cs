@@ -1,5 +1,4 @@
-﻿using BlueMarble;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace BlueMarble
 {
@@ -7,25 +6,28 @@ namespace BlueMarble
     {
         public int CurrentGold { get; private set; }
 
-
-        public Gold(int startGold)
+        public Gold(int startGold = 1000)
         {
             CurrentGold = startGold;
-            Debug.Log($"초기 금화 {CurrentGold}");
         }
-        
+
         public bool TrySpend(int amount)
         {
-            if (amount > CurrentGold)
+            if (CurrentGold < amount)
             {
-                Debug.Log($"금화 부족 : 보유 {CurrentGold}, 필요 : {amount}");
+                Debug.Log($"[MockGold] 잔액 부족: 보유 {CurrentGold}, 필요 {amount}");
                 return false;
             }
 
             CurrentGold -= amount;
-            Debug.Log($"{amount} 지출 , 남은 금화 {CurrentGold}");
+            Debug.Log($"[MockGold] {amount} 지출. 잔액: {CurrentGold}");
             return true;
+        }
 
+        public void AddGold(int amount)
+        {
+            CurrentGold += amount;
+            Debug.Log($"[MockGold] {amount} 지급. 잔액: {CurrentGold}");
         }
     }
 }
