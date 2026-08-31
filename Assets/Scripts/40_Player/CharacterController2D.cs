@@ -1,11 +1,8 @@
-using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Study.Utilities;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-namespace Study.Utilities
+namespace Player
 {
     [RequireComponent(typeof(Collider2D))]
     public class CharacterController2D : MonoBehaviour
@@ -37,7 +34,7 @@ namespace Study.Utilities
         private void Update()
         {
             Vector3 desireMove =
-                new Vector3(moveInput * speed, 0) * Time.fixedDeltaTime
+                new Vector3(moveInput * speed, 0) * Time.deltaTime
                 + externalDelta;
 
             externalDelta = Vector3.zero;

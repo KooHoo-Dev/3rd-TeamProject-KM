@@ -1,7 +1,7 @@
-using System;
 using Study.Utilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using BlueMarble;
 
 namespace Player
 {
@@ -11,10 +11,12 @@ namespace Player
     public class PlayerController : MonoBehaviour
     {
         private CharacterController2D controller2D;
+        private InventoryManager myInventory;
 
         private void Awake()
         {
             controller2D = GetComponent<CharacterController2D>();
+            myInventory = InventoryManager.Instance;
         }
         
         private void Update()

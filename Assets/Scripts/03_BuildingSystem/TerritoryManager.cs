@@ -25,12 +25,10 @@ namespace Epic3
             return tileStates[tileIndex];
         }
 
-        // ★ 플레이어가 이동을 마쳤을 때 이 함수를 호출해 주면 됩니다.
         public void OnPlayerArrived(IPlayer player)
         {
             if (!worldBoard.IsBoardReady) return;
 
-            // 1. 플레이어의 현재 위치(Position)로 타일 인덱스(0~39)를 알아냅니다.
             if (worldBoard.Board.TryGetTileIndex(player.Position, out int tileIndex) == false)
             {
                 Debug.LogError("플레이어가 보드 밖에 있습니다!");
@@ -40,17 +38,14 @@ namespace Epic3
             TileProperty currentTileState = GetTileState(tileIndex);
             Tile currentTile = worldBoard.Board.GetTile(tileIndex);
 
-            // 2. 일반 영토인지 확인합니다. (남의 코드 TileEnums 참조)
             if (currentTile.Def.Type != TileType.Property)
             {
                 Debug.Log($"이곳은 일반 영토가 아닌 특수 타일({currentTile.Def.Type})입니다.");
                 return;
             }
 
-            // 3. 플레이어의 ID(string)를 가져옵니다.
             string playerId = player.Id;
 
-            // 4. 상태에 따른 로직 분기
             if (currentTileState.IsOwned == false)
             {
                 Debug.Log("빈 땅입니다. 영토 구매 UI를 띄우세요.");
@@ -67,6 +62,23 @@ namespace Epic3
                 PurchaseLandMark(playerId, tileIndex);
                 PurchaseBuilding(playerId, tileIndex); 
             }
+        }
+
+        // 지어진 건물, 랜드마크의 가격까지 포함시켜야함
+        public int CalculateTotalAssets(string ownerId)
+        {
+            int totalAssets = 0;
+            TileProperty currentState = new TileProperty();
+            for (int i = 0; i < worldBoard.Board.MaxTileIndex; i++)
+            {
+                if (currentState.OwnerId == ownerId)
+                {
+                    Tile ownerTile = worldBoard.Board.GetTile(i);
+                    totalAssets = ownerTile.SpaceDef.Price;
+                }
+            }
+            
+            return  totalAssets;
         }
         
         public void PurchaseTile(string ownerId, int tileIndex)
