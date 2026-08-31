@@ -1,10 +1,16 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace BlueMarble
 {
     /// <summary>
     /// E5 특수 타일 효과를 처리하는 서비스.
     /// TurnManager의 ResolveTileLanding / ResolveTilePassing에서 호출되는 것을 가정한다.
+    ///
+    /// 상점(Shop) 관련 흐름은 "상점이 실제로 닫힐 때까지 기다려야" 하므로,
+    /// 상점을 거칠 가능성이 있는 메서드는 전부 UniTask를 반환하도록 바꿨다.
+    /// (HandleTileLanding, HandleTilePassing, HandleArriveShop, HandleShopPass,
+    ///  HandleWorldTourMove, HandleArriveGoldenKey, ApplyForceMove)
     /// </summary>
     public class SpecialTileService
     {
@@ -22,7 +28,7 @@ namespace BlueMarble
             this.shopOpener = shopOpener;
         }
 
-        public void HandleTileLanding(string playerId, int spaceId)
+        public async UniTask HandleTileLanding(string playerId, int spaceId)
         {
             SpaceCategory category = SpaceCategoryMap.GetCategory(spaceId);
 
@@ -37,11 +43,11 @@ namespace BlueMarble
                     break;
 
                 case SpaceCategory.GoldenKey:
-                    HandleArriveGoldenKey(playerId);
+                    await HandleArriveGoldenKey(playerId);
                     break;
 
                 case SpaceCategory.Shop:
-                    HandleArriveShop(playerId);
+                    await HandleArriveShop(playerId);
                     break;
 
                 default:
@@ -49,7 +55,7 @@ namespace BlueMarble
             }
         }
 
-        public void HandleTilePassing(string playerId, int spaceId)
+        public async UniTask HandleTilePassing(string playerId, int spaceId)
         {
             SpaceCategory category = SpaceCategoryMap.GetCategory(spaceId);
 
@@ -59,31 +65,30 @@ namespace BlueMarble
             }
             else if (category == SpaceCategory.Shop)
             {
-                HandleArriveShop(playerId);
+                // 지나치기만 해도 상점 칸에서 멈춰서 열고, 닫힐 때까지 기다린 뒤 이동을 이어간다.
+                await HandleArriveShop(playerId);
             }
         }
 
-        // ... HandleStartPass, HandleWorldTourMove, HandleArriveStart, HandleArriveIsland,
-        //     HandleArriveGoldenKey, DrawGoldenKeyCard, ApplyGoldChange, ApplyGrantItem,
-        //     ApplyForceMove, GetSpaceId 는 기존과 동일
+        // ... HandleArriveStart, HandleArriveIsland, DrawGoldenKeyCard,
+        //     ApplyGoldChange, ApplyGrantItem, GetSpaceId 는 기존과 동일
 
-        private void HandleArriveShop(string playerId)
+        private async UniTask HandleArriveShop(string playerId)
         {
-            shopOpener.OpenShop(playerId);
             Debug.Log($"[SpecialTileService] {playerId}: 상점 도착/통과 -> 상점 오픈 요청");
+            await shopOpener.OpenShopAsync(playerId);
+            Debug.Log($"[SpecialTileService] {playerId}: 상점 닫힘 -> 이동 재개");
         }
 
         /// <summary>
         /// 세계 여행: 플레이어가 선택한 목적지로 즉시 이동.
         /// 이동 중 출발지 통과/도착 시 급여를 지급하고, 도착한 칸의 효과를 이어서 실행한다.
         /// </summary>
-        public void HandleWorldTourMove(string playerId, int targetTileIndex)
+        public async UniTask HandleWorldTourMove(string playerId, int targetTileIndex)
         {
             bool passedStart = boardTeleporter.TeleportTo(playerId, targetTileIndex);
             bool passedShop = boardTeleporter.TeleportTo(playerId, targetTileIndex);
-            
-            
-            
+
             if (passedStart)
             {
                 HandleStartPass(playerId);
@@ -91,20 +96,20 @@ namespace BlueMarble
 
             if (passedShop)
             {
-                HandleArriveShop(playerId);
+                await HandleArriveShop(playerId);
             }
-            
+
             Debug.Log($"[SpecialTileService] {playerId}: 세계 여행으로 {targetTileIndex}번 칸 이동 완료");
 
             int targetSpaceId = GetSpaceId(targetTileIndex);
 
             if (SpaceCategoryMap.GetCategory(targetSpaceId) != SpaceCategory.Start)
             {
-                HandleTileLanding(playerId, targetSpaceId);
+                await HandleTileLanding(playerId, targetSpaceId);
             }
         }
-        
-        
+
+
         /// <summary>텔레포트(세계 여행, 황금 열쇠 강제 이동) 중 출발지를 지나갔거나 도착했을 때 전용 호출.</summary>
         public void HandleStartPass(string playerId)
         {
@@ -112,12 +117,12 @@ namespace BlueMarble
         }
 
 
-        public void HandleShopPass(string playerId)
+        public async UniTask HandleShopPass(string playerId)
         {
-            HandleArriveShop(playerId);
+            await HandleArriveShop(playerId);
         }
-        
-        
+
+
 
         /// <summary>
         /// 출발지 도착 or 통과 할때 주는 급여
@@ -128,8 +133,8 @@ namespace BlueMarble
             gold.AddGold(SalaryConfig.PassAmount);
             Debug.Log($"[SpecialTileService] {playerId}: 출발지 급여 {SalaryConfig.PassAmount} 지급");
         }
-        
-        
+
+
         /// <summary>
         /// 무인도 도착
         /// </summary>
@@ -140,12 +145,12 @@ namespace BlueMarble
             Debug.Log($"[SpecialTileService] {playerId}: 무인도 도착 -> 다음 턴 스킵 예약");
         }
 
-        
+
         /// <summary>
         /// 황금카드 도착
         /// </summary>
         /// <param name="playerId"></param>
-        private void HandleArriveGoldenKey(string playerId)
+        private async UniTask HandleArriveGoldenKey(string playerId)
         {
             GoldenKeyCard card = DrawGoldenKeyCard();
             Debug.Log($"[SpecialTileService] {playerId}: 황금 열쇠 카드 뽑음 -> {card.EffectType}");
@@ -161,7 +166,8 @@ namespace BlueMarble
                     break;
 
                 case GoldenKeyEffectType.ForceMove:
-                    ApplyForceMove(playerId, card.TargetTileIndex);
+                    // 강제 이동 목적지가 상점일 수도 있으므로 끝까지 기다린다.
+                    await ApplyForceMove(playerId, card.TargetTileIndex);
                     break;
             }
         }
@@ -195,7 +201,7 @@ namespace BlueMarble
             }
         }
 
-        
+
         /// <summary>
         /// 아이템
         /// </summary>
@@ -207,13 +213,13 @@ namespace BlueMarble
             Debug.Log($"[SpecialTileService] {playerId}: 황금 열쇠 장비 획득(임시) - {itemName}");
         }
 
-        
+
         /// <summary>
         /// 황금열쇠 강제 이동
         /// </summary>
         /// <param name="playerId"></param>
         /// <param name="targetTileIndex"></param>
-        private void ApplyForceMove(string playerId, int targetTileIndex)
+        private async UniTask ApplyForceMove(string playerId, int targetTileIndex)
         {
             bool passedStart = boardTeleporter.TeleportTo(playerId, targetTileIndex);
 
@@ -228,7 +234,7 @@ namespace BlueMarble
 
             if (SpaceCategoryMap.GetCategory(targetSpaceId) != SpaceCategory.Start)
             {
-                HandleTileLanding(playerId, targetSpaceId); // 도착 효과 연쇄 (황금열쇠끼리도 재귀 가능)
+                await HandleTileLanding(playerId, targetSpaceId); // 도착 효과 연쇄 (황금열쇠끼리도 재귀 가능)
             }
         }
 

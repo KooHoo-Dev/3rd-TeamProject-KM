@@ -72,8 +72,9 @@ namespace BlueMarble
             // 상점 닫기 버튼은 바로 닫지 않고, 확인 팝업을 먼저 띄운다.
             UnityEventTools.AddBoolPersistentListener(closeButton.onClick, confirmPopupGo.SetActive, true);
 
-            // 처음에는 상점 화면이 꺼져 있어야 한다 (상점 열기 버튼을 눌러야 켜짐).
+            // 처음에는 상점 화면이 꺼져 있어야 한다 (게임 로직이 상점 타일에서 열어줄 때만 켜짐).
             shopPanelGo.SetActive(false);
+            entryPanelGo.SetActive(false);
 
             EditorSceneManager.MarkSceneDirty(gameObject.scene);
             Debug.Log($"[StoreUIBuilder] '{RootName}' 생성 완료.");

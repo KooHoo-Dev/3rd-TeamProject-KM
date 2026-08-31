@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using Cysharp.Threading.Tasks;
 
 namespace BlueMarble
 {
@@ -18,7 +19,7 @@ namespace BlueMarble
     ///    (또는 테스트용으로 컴포넌트 우클릭 → "테스트용 더미 데이터로 초기화")
     /// </summary>
     [DisallowMultipleComponent]
-    public class ShopUIController : MonoBehaviour
+    public class ShopUIController : MonoBehaviour, IShopOpener
     {
         #region 카드 참조 캐시용 구조체
 
@@ -48,6 +49,7 @@ namespace BlueMarble
         [Header("씬 참조 - 비워두면 이름으로 자동 탐색")]
         [SerializeField] private Transform itemListArea;
         [SerializeField] private TMP_Text currentGoldText;
+        [SerializeField] private GameObject shopEntryPanelGo;
 
         [Header("등급별 아이콘 색상 (임시)")]
         [SerializeField] private Color commonColor = new Color(0.6f, 0.6f, 0.65f, 1f);
@@ -85,7 +87,7 @@ namespace BlueMarble
         [ContextMenu("테스트용 더미 데이터로 초기화")]
         private void InitWithDummyData()
         {
-            Init(new Gold(600), myinventory);
+            Init(new Gold(500), myinventory);
         }
 
         private void Awake()
@@ -94,6 +96,7 @@ namespace BlueMarble
             CacheSceneReferences();
             CacheCardRefs();
             EnsureReplacePopup();
+            WireShopEntryPanelCloseNotifier();
         }
 
         private void OnEnable()
@@ -105,6 +108,64 @@ namespace BlueMarble
             }
         }
 
+        private void WireShopEntryPanelCloseNotifier()
+        {
+            if (shopEntryPanelGo == null) return;
+
+            ShopSessionCloseNotifier notifier = shopEntryPanelGo.GetComponent<ShopSessionCloseNotifier>();
+            if (notifier == null)
+            {
+                notifier = shopEntryPanelGo.AddComponent<ShopSessionCloseNotifier>();
+            }
+
+            notifier.OnClosed = HandleShopSessionClosed;
+        }
+
+        private void HandleShopSessionClosed()
+        {
+            // "진짜 상점 세션 종료" = 왼쪽 진입 패널이 닫히는 시점.
+            // 오른쪽 아이템 목록(ShopPanel)을 한 번도 안 열었어도 여기서 확실히 완료된다.
+            _shopClosedTcs?.TrySetResult();
+            _shopClosedTcs = null;
+        }
+
+        #endregion
+
+        #region IShopOpener 구현
+
+        private UniTaskCompletionSource _shopClosedTcs;
+
+        /// <summary>
+        /// SpecialTileService 등 게임 로직에서 호출한다.
+        /// 왼쪽 진입 패널만 먼저 연다 - 사람이 "상점 열기"를 직접 눌렀을 때와 똑같이,
+        /// 오른쪽 아이템 목록은 그 버튼을 눌러야 나오게 한다.
+        /// 반환된 UniTask는 왼쪽 패널이 닫힐 때(=상점 세션 종료) 완료된다.
+        /// </summary>
+        public UniTask OpenShopAsync(string playerId)
+        {
+            // TODO: 지금은 Init된 gold/inventory를 그대로 쓴다.
+            // 실제 멀티플레이에서는 playerId로 해당 플레이어의 gold/inventory를 찾아서
+            // Init을 다시 호출하는 등의 처리가 필요할 수 있다.
+            Debug.Log($"[ShopUIController] {playerId}: 상점 진입 패널 오픈 (게임 로직에서 호출됨)");
+
+            _shopClosedTcs = new UniTaskCompletionSource();
+
+            if (shopEntryPanelGo != null)
+            {
+                shopEntryPanelGo.SetActive(true);
+            }
+            else
+            {
+                // 진입 패널을 못 찾았으면, 최소한 아이템 목록이라도 바로 열어서 막히지 않게 한다.
+                Debug.LogWarning("[ShopUIController] ShopEntryPanel을 못 찾아서 ShopPanel을 바로 엽니다.");
+                gameObject.SetActive(true);
+            }
+
+            return _shopClosedTcs.Task;
+        }
+
+        #endregion
+
         private void CacheSceneReferences()
         {
             if (itemListArea == null)
@@ -113,12 +174,29 @@ namespace BlueMarble
                 itemListArea = found;
             }
 
+            Transform canvasRootForSearch = transform.parent;
+
+            if (shopEntryPanelGo == null)
+            {
+                Transform entryFound = canvasRootForSearch != null
+                    ? canvasRootForSearch.Find("ShopEntryPanel")
+                    : null;
+
+                // 형제로 못 찾으면, 씬 전체에서 이름으로 한 번 더 찾아본다 (비활성 오브젝트도 포함).
+                if (entryFound == null)
+                {
+                    GameObject globalFound = FindInactiveObjectByName("ShopEntryPanel");
+                    entryFound = globalFound != null ? globalFound.transform : null;
+                }
+
+                shopEntryPanelGo = entryFound != null ? entryFound.gameObject : null;
+            }
+
             if (currentGoldText == null)
             {
                 // ShopPanel과 ShopEntryPanel은 같은 Canvas("Store UI")의 형제 오브젝트다.
-                Transform canvasRoot = transform.parent;
-                Transform found = canvasRoot != null
-                    ? canvasRoot.Find("ShopEntryPanel/CurrentGoldPanel/CurrentGoldText")
+                Transform found = canvasRootForSearch != null
+                    ? canvasRootForSearch.Find("ShopEntryPanel/CurrentGoldPanel/CurrentGoldText")
                     : null;
                 currentGoldText = found != null ? found.GetComponent<TMP_Text>() : null;
             }
@@ -132,6 +210,27 @@ namespace BlueMarble
             {
                 Debug.LogWarning("[ShopUIController] CurrentGoldText를 찾지 못했습니다. 인스펙터에서 직접 연결해주세요.");
             }
+
+            if (shopEntryPanelGo == null)
+            {
+                string parentName = canvasRootForSearch != null ? canvasRootForSearch.name : "(부모 없음)";
+                Debug.LogWarning($"[ShopUIController] ShopEntryPanel을 찾지 못했습니다. 지금 이 오브젝트의 부모는 '{parentName}' 입니다. 하이어라키에서 ShopPanel과 ShopEntryPanel이 같은 부모 밑에 있는지 확인해주세요.");
+            }
+        }
+
+        // 비활성 오브젝트까지 포함해서 씬 전체에서 이름으로 찾는다 (Resources.FindObjectsOfTypeAll 사용).
+        private static GameObject FindInactiveObjectByName(string name)
+        {
+            Transform[] all = Resources.FindObjectsOfTypeAll<Transform>();
+            foreach (Transform t in all)
+            {
+                if (t.name == name && t.hideFlags == HideFlags.None && t.gameObject.scene.IsValid())
+                {
+                    return t.gameObject;
+                }
+            }
+
+            return null;
         }
 
         private void CacheCardRefs()
@@ -187,8 +286,8 @@ namespace BlueMarble
 
             tooltip.SetActive(false); // 평소엔 숨김 상태로 리셋
         }
-
-        #endregion
+        
+        
 
         #region 갱신
 
