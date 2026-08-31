@@ -20,7 +20,10 @@ namespace BlueMarble
 
         public int MaxDurability;
         public int Price;
+
         public string PrefabPath;
+        public string IconKey;
+
     }
 }
 
