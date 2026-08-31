@@ -20,6 +20,8 @@ namespace Player
         public int baseDamage = 1;
         public string attackerName = "Player";
 
+        private float nextAttackTime = 0f;
+
         private Dictionary<AttackType, IAttackStrategy> strategies;
         private IAttackStrategy basicAttackStrategy;
         
@@ -33,6 +35,8 @@ namespace Player
             strategies = new Dictionary<AttackType, IAttackStrategy>
             {
                 { AttackType.Straight, new StraightAttackStrategy() },
+                {AttackType.Parabola, new ParabolaAttackStrategy()},
+                { AttackType.Area , new AreaAttackStrategy()}
             };
             
             basicAttackStrategy = new BasicAttackStrategy();
@@ -61,13 +65,13 @@ namespace Player
                                      && !playerController.IsMoving 
                                      && !playerController.IsCastingSkill;
 
-                    if (canAttack)
+                    if (canAttack&&Time.time>=nextAttackTime)
                     {
                         int damage = Mathf.RoundToInt(baseDamage * CombatSystem.Instance.DamageMultiplier);
                         
                         basicAttackStrategy.Execute(spawnPoint, firePoint, damage, attackerName, basicArrowPrefab);
-                        
-                        await CustomUniTask.DelaySeconds(basicAttackInterval, cancellationToken: token);
+
+                        nextAttackTime = Time.time + basicAttackInterval;
                     }
                     else
                     {

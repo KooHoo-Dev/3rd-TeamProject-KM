@@ -11,7 +11,7 @@ namespace Player
         private CharacterController2D controller2D;
         private InventoryManager myInventory;
         private EquipmentCaster myCaster;
-        
+
         public bool IsMoving => Mathf.Abs(SimpleInput.GetAxisHorizontalRaw()) > 0.01f;
 
         public bool IsCastingSkill { get; private set; } = false;
@@ -20,10 +20,11 @@ namespace Player
         {
             controller2D = GetComponent<CharacterController2D>();
             myCaster = GetComponent<EquipmentCaster>();
-            
+
             // 테스트 용
-            myInventory = InventoryManager.Instance; 
+            myInventory = InventoryManager.Instance;
         }
+    
 
         public void SetInventory(InventoryManager inventory)
         {
