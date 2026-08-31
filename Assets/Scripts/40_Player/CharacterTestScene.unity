@@ -723,6 +723,7 @@ GameObject:
   - component: {fileID: 1955245552}
   - component: {fileID: 1955245551}
   - component: {fileID: 1955245550}
+  - component: {fileID: 1955245553}
   m_Layer: 0
   m_Name: Local Player
   m_TagString: Untagged
@@ -891,7 +892,25 @@ MonoBehaviour:
   dodgeDuration: 0.2
   collisionLayer:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 0
+--- !u!114 &1955245553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1955245544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8eba3eafa24f9d874c0089810730f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player.EquipmentCaster
+  spawnPoint: {fileID: 0}
+  firePoint: {fileID: 0}
+  basicArrowPrefab: {fileID: 0}
+  basicAttackInterval: 1.3
+  baseDamage: 1
+  attackerName: Player
 --- !u!1 &2075094225
 GameObject:
   m_ObjectHideFlags: 0

@@ -25,7 +25,7 @@ namespace BlueMarble
                     dto.Id, dto.Code, dto.Name,
                     grade, attackType,
                     dto.BaseDamage, dto.Range, dto.ProjectileSpeed, dto.Radius,
-                    dto.Cooldown, dto.MaxDurability, dto.Price);
+                    dto.Cooldown, dto.MaxDurability, dto.Price, dto.PrefabPath);
             }
         }
     }
