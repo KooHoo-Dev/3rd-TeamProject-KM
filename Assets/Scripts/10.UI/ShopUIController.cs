@@ -37,11 +37,14 @@ namespace BlueMarble
         #endregion
 
         #region 필드
+        
+      
 
         [Header("의존성 (Init으로 주입됨)")]
         private ShopService shopService;
         private IGold gold;
         private InventoryManager inventory;
+        private InventoryManager myInventory = InventoryManager.Instance;
 
         [Header("씬 참조 - 비워두면 이름으로 자동 탐색")]
         [SerializeField] private Transform itemListArea;
@@ -53,6 +56,8 @@ namespace BlueMarble
         [SerializeField] private Color legendaryColor = new Color(0.9f, 0.65f, 0.15f, 1f);
 
         private readonly List<ShopCardRefs> _cards = new List<ShopCardRefs>();
+
+        
 
         // 교체 팝업 (씬에 없으면 런타임에 직접 만든다)
         private GameObject _replacePopupRoot;
@@ -83,7 +88,7 @@ namespace BlueMarble
         [ContextMenu("테스트용 더미 데이터로 초기화")]
         private void InitWithDummyData()
         {
-            Init(new Gold(500), new InventoryManager());
+            Init(new Gold(600), myInventory);
         }
 
         private void Awake()

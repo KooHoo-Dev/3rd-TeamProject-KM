@@ -14,9 +14,15 @@ namespace BlueMarble
     /// </summary>
     public class InventoryManager
     {
+        public static InventoryManager Instance { get; } = new InventoryManager();
+        
         public const int MaxSlotCount = 5;
         public readonly EquipmentInstance[] slots = new EquipmentInstance[MaxSlotCount];
-        
+
+        private InventoryManager()
+        {
+            
+        }
         
         private int nextInstanceId = 1;
         
