@@ -7,7 +7,7 @@ namespace BlueMarble
     /// <summary>
     /// 인벤토리 매니저 동작 확인용 테스트 스크립트.
     /// 0번 키: 현재 인벤토리 상태 조회
-    /// 1번 키: 장비 테이블(id 1~20)에서 랜덤 5개를 뽑아 인벤토리를 채움
+    /// 1번 키: 장비 테이블(id 1~10)에서 랜덤 5개를 뽑아 인벤토리를 채움
     /// 2번 키: 인벤토리를 전부 비움
     /// 3번 키: 낡은 단검(id=1)만 5개 채움 (중복 장비 인스턴스 확인용)
     /// 4번 키: 현재 상태에서 장비 1개 추가 시도 (가득 찼을 때 실패하는지 확인용)
@@ -24,6 +24,7 @@ namespace BlueMarble
 
         private readonly InventoryManager inventory = new();
         private bool hasLoggedReplacePrompt = false;
+        public InventoryManager Inventory { get; set; }
 
         private void Update()
         {
