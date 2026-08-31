@@ -16,7 +16,7 @@ namespace BlueMarble.Server
         public void Initialize(User user)
         {
             UserId = user.Id;
-            NicknameTMP.SetText(user.Nickname);
+            NicknameTMP.SetText($"{user.Nickname}({user.Id})");
             ReadyLabel.SetActive(user.IsReady);
         }
     }

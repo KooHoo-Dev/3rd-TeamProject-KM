@@ -2258,9 +2258,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1995238724}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c61b89117f6b41c3982fe18ca568331e, type: 3}
+  m_Script: {fileID: 11500000, guid: 97906be3f39f40f5a7a8ec0169270cdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.Server.RoomClient
+  isDontDestroyOnLoad: 1
   url: ws://34.50.63.204:5005/room
 --- !u!4 &1995238726
 Transform:

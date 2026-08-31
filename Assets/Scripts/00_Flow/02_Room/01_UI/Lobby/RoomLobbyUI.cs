@@ -32,33 +32,37 @@ namespace BlueMarble.Server
             ActiveSlot(Client.Me);
             
             // 이후 슬롯에 이미 접속중인 플레이어 표시
-            foreach (var user in Client.Users.Values)
+            foreach (var user in Client.Others.Values)
                 ActiveSlot(user);
             
             readyButton.onClick.AddListener(OnReadyButtonClicked);
             leaveButton.onClick.AddListener(OnExitButtonClicked);
             startButton.onClick.AddListener(OnStartButtonClicked);
             
-            Client.OnUserJoined += ActiveSlot;
-            Client.OnUserJoined += SetStartButton;
+            Client.OnJoined += ActiveSlot;
+            Client.OnJoined += SetStartButton;
             
-            Client.OnUserLeft += DeactiveSlot;
-            Client.OnUserLeft += SetStartButton;
+            Client.OnLeft += DeactiveSlot;
+            Client.OnLeft += SetStartButton;
             
-            Client.OnUserReadyChanged += SetReadyButton;
-            Client.OnUserReadyChanged += SetStartButton;
+            Client.OnSetGameReady += SetReadyButton;
+            Client.OnSetGameReady += SetStartButton;
+
+            Client.OnGameStarted += StartUserGame;
         }
 
         private void OnDisable()
         {
-            Client.OnUserJoined -= ActiveSlot;
-            Client.OnUserJoined -= SetStartButton;
+            Client.OnJoined -= ActiveSlot;
+            Client.OnJoined -= SetStartButton;
             
-            Client.OnUserLeft -= DeactiveSlot;
-            Client.OnUserLeft -= SetStartButton;
+            Client.OnLeft -= DeactiveSlot;
+            Client.OnLeft -= SetStartButton;
             
-            Client.OnUserReadyChanged -= SetReadyButton;
-            Client.OnUserReadyChanged -= SetStartButton;
+            Client.OnSetGameReady -= SetReadyButton;
+            Client.OnSetGameReady -= SetStartButton;
+            
+            Client.OnGameStarted -= StartUserGame;
         }
         
         #endregion
@@ -78,12 +82,12 @@ namespace BlueMarble.Server
             mask.SetActive(true);
             
             await Client.LeaveAsync();
-            SceneManager.LoadSceneAsync("Room Enter");
+            _ = SceneManager.LoadSceneAsync("Room Enter");
         }
 
         private void OnStartButtonClicked()
         {
-            
+            Client.RequestStart();
         }
 
         #endregion
@@ -121,13 +125,19 @@ namespace BlueMarble.Server
         {
             bool canStart =
                 Client.Me is { IsHost: true } &&
-                Client.Users.Count + 1 >= 2 &&
+                Client.Others.Count + 1 >= 2 &&
                 Client.Me.IsReady &&
-                Client.Users.Values.All(player => player.IsReady);
+                Client.Others.Values.All(player => player.IsReady);
 
             startButton.gameObject.SetActive(canStart);
         }
         private void SetStartButton(User user, bool _) => SetStartButton(user);
+
+        private void StartUserGame()
+        {
+            mask.SetActive(true);
+            SceneManager.LoadSceneAsync("Board");
+        }
         
         #endregion
         

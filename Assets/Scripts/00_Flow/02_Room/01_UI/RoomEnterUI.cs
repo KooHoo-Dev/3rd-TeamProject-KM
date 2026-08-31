@@ -92,7 +92,7 @@ namespace BlueMarble.Server
             {
                 if (Client.Me != null)
                 {
-                    SceneManager.LoadSceneAsync(roomSceneName);
+                    _ = SceneManager.LoadSceneAsync(roomSceneName);
                     return;
                 }
 
@@ -102,8 +102,8 @@ namespace BlueMarble.Server
                     enterButton.interactable = CanEnter;
                     return;
                 }
-
-                await UniTask.NextFrame();
+                
+                await UniTask.Yield();
             }
         }
     }
