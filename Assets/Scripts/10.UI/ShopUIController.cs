@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
 namespace BlueMarble
@@ -37,14 +38,12 @@ namespace BlueMarble
         #endregion
 
         #region 필드
-        
-      
 
         [Header("의존성 (Init으로 주입됨)")]
         private ShopService shopService;
         private IGold gold;
         private InventoryManager inventory;
-        private InventoryManager myInventory = InventoryManager.Instance;
+        private InventoryManager myinventory = InventoryManager.Instance;
 
         [Header("씬 참조 - 비워두면 이름으로 자동 탐색")]
         [SerializeField] private Transform itemListArea;
@@ -56,8 +55,6 @@ namespace BlueMarble
         [SerializeField] private Color legendaryColor = new Color(0.9f, 0.65f, 0.15f, 1f);
 
         private readonly List<ShopCardRefs> _cards = new List<ShopCardRefs>();
-
-        
 
         // 교체 팝업 (씬에 없으면 런타임에 직접 만든다)
         private GameObject _replacePopupRoot;
@@ -88,7 +85,7 @@ namespace BlueMarble
         [ContextMenu("테스트용 더미 데이터로 초기화")]
         private void InitWithDummyData()
         {
-            Init(new Gold(600), myInventory);
+            Init(new Gold(600), myinventory);
         }
 
         private void Awake()
@@ -160,7 +157,35 @@ namespace BlueMarble
                 };
 
                 _cards.Add(refs);
+                EnsureCardHoverTooltip(refs);
             }
+        }
+
+        // 호버 시 툴팁을 여닫는 연결을, 에디터가 아니라 여기(런타임)에서 직접 관리한다.
+        // 실행할 때마다 새로 연결되므로, Play 모드 재진입이나 씬 재오픈에도 항상 동작한다.
+        private void EnsureCardHoverTooltip(ShopCardRefs card)
+        {
+            if (card.tooltipPanel == null) return;
+
+            EventTrigger trigger = card.root.GetComponent<EventTrigger>();
+            if (trigger == null)
+            {
+                trigger = card.root.AddComponent<EventTrigger>();
+            }
+
+            trigger.triggers.Clear(); // 예전에 남아있을 수 있는 항목 정리 후 새로 등록
+
+            GameObject tooltip = card.tooltipPanel;
+
+            EventTrigger.Entry enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            enterEntry.callback.AddListener(_ => tooltip.SetActive(true));
+            trigger.triggers.Add(enterEntry);
+
+            EventTrigger.Entry exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+            exitEntry.callback.AddListener(_ => tooltip.SetActive(false));
+            trigger.triggers.Add(exitEntry);
+
+            tooltip.SetActive(false); // 평소엔 숨김 상태로 리셋
         }
 
         #endregion
@@ -195,7 +220,21 @@ namespace BlueMarble
                 if (card.effectText != null) card.effectText.text = EquipmentDisplayFormatter.GetEffectText(def);
                 if (card.cooldownText != null) card.cooldownText.text = EquipmentDisplayFormatter.GetCooldownText(def);
                 if (card.durabilityText != null) card.durabilityText.text = EquipmentDisplayFormatter.GetDurabilityText(def);
-                if (card.iconImage != null) card.iconImage.color = GetGradeColor(def.Grade);
+                if (card.iconImage != null)
+                {
+                    Sprite icon = string.IsNullOrEmpty(def.IconKey) ? null : Resources.Load<Sprite>(def.IconKey);
+
+                    if (icon != null)
+                    {
+                        card.iconImage.sprite = icon;
+                        card.iconImage.color = Color.white; // 실제 아이콘은 원래 색 그대로 보여준다
+                    }
+                    else
+                    {
+                        // 아이콘이 없거나 경로가 잘못됐으면, 기존처럼 등급 색상 블록으로 안전하게 대체
+                        card.iconImage.color = GetGradeColor(def.Grade);
+                    }
+                }
 
                 if (card.buyButton != null)
                 {
