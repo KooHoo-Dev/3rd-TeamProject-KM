@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace BlueMarble
 {
     public class EquipmentDTO
@@ -18,6 +20,9 @@ namespace BlueMarble
 
         public int MaxDurability;
         public int Price;
+
+        public string PrefabPath;
+        public string IconKey;
 
     }
 }
