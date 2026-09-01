@@ -1,0 +1,2 @@
+Id	Name	Description	FlavorText	IconKey	Type	Scope	GoldAmount	DropTableId	SpaceId
+0	테스트	자신에게 금화 +500	테스트 플레이버 텍스트		GainGold	Self	500	-1	-1

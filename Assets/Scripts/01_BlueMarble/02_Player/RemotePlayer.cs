@@ -19,6 +19,7 @@ namespace BlueMarble
         
         [field: Title("States")]
         [field: ShowInInspector, ReadOnly] public int CurrentTileIndex { get; private set; }
+        [field: ShowInInspector, ReadOnly] public int ActionDisabledTurnCount { get; set; } = 0;
         
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
         
