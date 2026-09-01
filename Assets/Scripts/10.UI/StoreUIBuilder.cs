@@ -67,13 +67,11 @@ namespace BlueMarble
             GameObject rootGo = CreateCanvas();
             Undo.RegisterCreatedObjectUndo(rootGo, "Build Store UI");
 
-            // ShopPanel을 먼저 만들어 참조를 확보한 뒤, 왼쪽 진입 패널의 버튼에 직접 연결한다.
-            GameObject shopPanelGo = CreateShopPanel(rootGo.transform);
-            GameObject inventoryPanelGo = CreateInventoryPanel(rootGo.transform);
-            GameObject entryPanelGo = CreateShopEntryPanel(rootGo.transform, shopPanelGo, out Button closeButton);
+            // ShopPanel 하나로 통합 - 열리면 헤더/아이템목록/인벤토리가 한 번에 다 나온다.
+            GameObject shopPanelGo = CreateShopPanel(rootGo.transform, out Button closeButton);
 
-            // 상점 닫기 확인 팝업 (Yes -> 왼쪽/오른쪽 모두 닫기, No -> 팝업만 닫기)
-            GameObject confirmPopupGo = CreateConfirmClosePopup(rootGo.transform, shopPanelGo, entryPanelGo);
+            // 상점 닫기 확인 팝업 (Yes -> 닫기, No -> 팝업만 닫기)
+            GameObject confirmPopupGo = CreateConfirmClosePopup(rootGo.transform, shopPanelGo);
             confirmPopupGo.SetActive(false);
 
             // 상점 닫기 버튼은 바로 닫지 않고, 확인 팝업을 먼저 띄운다.
@@ -81,8 +79,6 @@ namespace BlueMarble
 
             // 처음에는 상점 화면이 꺼져 있어야 한다 (게임 로직이 상점 타일에서 열어줄 때만 켜짐).
             shopPanelGo.SetActive(false);
-            inventoryPanelGo.SetActive(false);
-            entryPanelGo.SetActive(false);
 
             EditorSceneManager.MarkSceneDirty(gameObject.scene);
             Debug.Log($"[StoreUIBuilder] '{RootName}' 생성 완료.");
@@ -208,79 +204,9 @@ namespace BlueMarble
 
         #endregion
 
-        #region 왼쪽 - 상점 진입 패널
-
-        private GameObject CreateShopEntryPanel(Transform canvasTransform, GameObject shopPanelGo, out Button closeButtonOut)
-        {
-            GameObject panelGo = NewPanel("ShopEntryPanel", canvasTransform, Vector2.zero, panelSprite);
-            RectTransform panelRect = panelGo.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0f, 0f);
-            panelRect.anchorMax = new Vector2(0f, 1f);
-            panelRect.pivot = new Vector2(0f, 0.5f);
-            panelRect.sizeDelta = new Vector2(400f, 0f);
-            panelRect.anchoredPosition = new Vector2(0f, 0f);
-            panelGo.GetComponent<Image>().color = ColorBackgroundDark;
-
-            // 상점 그림 (외부 스프라이트 대신 색상 블록)
-            GameObject iconGo = NewPanel("ShopIconImage", panelGo.transform, new Vector2(300f, 300f));
-            RectTransform iconRect = iconGo.GetComponent<RectTransform>();
-            iconRect.anchorMin = new Vector2(0.5f, 1f);
-            iconRect.anchorMax = new Vector2(0.5f, 1f);
-            iconRect.pivot = new Vector2(0.5f, 1f);
-            iconRect.anchoredPosition = new Vector2(0f, -40f);
-            iconGo.GetComponent<Image>().color = ColorPanelFrame;
-            NewText("ShopIconLabel", iconGo.transform, "SHOP\nICON", 32f, TextAlignmentOptions.Center);
-            Stretch(iconGo.transform.Find("ShopIconLabel").GetComponent<RectTransform>(), 0f);
-
-            // 상점 열기 버튼 — CurrentGoldPanel 바로 위에 쌓이도록 하단 기준으로 배치
-            Button openButton = NewButton("OpenShopButton", panelGo.transform, "상점 열기", out _, buttonSprite);
-            RectTransform openRect = openButton.GetComponent<RectTransform>();
-            openRect.anchorMin = new Vector2(0.5f, 0f);
-            openRect.anchorMax = new Vector2(0.5f, 0f);
-            openRect.pivot = new Vector2(0.5f, 0f);
-            openRect.sizeDelta = new Vector2(300f, 70f);
-            openRect.anchoredPosition = new Vector2(0f, 230f);
-            openButton.image.color = ColorNeutralButton;
-
-            // 상점 닫기 버튼 — 상점 열기 버튼 바로 아래, CurrentGoldPanel 바로 위
-            Button closeButton = NewButton("CloseShopButton", panelGo.transform, "상점 닫기", out _, buttonSprite);
-            RectTransform closeRect = closeButton.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(0.5f, 0f);
-            closeRect.anchorMax = new Vector2(0.5f, 0f);
-            closeRect.pivot = new Vector2(0.5f, 0f);
-            closeRect.sizeDelta = new Vector2(300f, 70f);
-            closeRect.anchoredPosition = new Vector2(0f, 140f);
-            closeButton.image.color = new Color(0.4f, 0.42f, 0.45f, 1f);
-
-            // 보유 골드 표시
-            GameObject goldPanelGo = NewPanel("CurrentGoldPanel", panelGo.transform, new Vector2(300f, 80f), panelSprite);
-            RectTransform goldPanelRect = goldPanelGo.GetComponent<RectTransform>();
-            goldPanelRect.anchorMin = new Vector2(0.5f, 0f);
-            goldPanelRect.anchorMax = new Vector2(0.5f, 0f);
-            goldPanelRect.pivot = new Vector2(0.5f, 0f);
-            goldPanelRect.anchoredPosition = new Vector2(0f, 40f);
-            goldPanelGo.GetComponent<Image>().color = ColorPanelFrame;
-
-            TMP_Text goldText = NewText("CurrentGoldText", goldPanelGo.transform, "Current Gold : 0", 28f, TextAlignmentOptions.Center);
-            goldText.color = ColorGold;
-            Stretch(goldText.rectTransform, 8f);
-
-            // 상점 열기 -> ShopPanel 활성화
-            // AddListener(람다)가 아니라 "영구 리스너"로 등록해야
-            // Play 모드 진입(도메인 리로드) 후에도 클릭이 정상 동작한다.
-            UnityEventTools.AddBoolPersistentListener(openButton.onClick, shopPanelGo.SetActive, true);
-
-            // 상점 닫기 버튼의 실제 동작(확인 팝업 연결)은 BuildUI에서 팝업 생성 후 연결한다.
-            closeButtonOut = closeButton;
-
-            return panelGo;
-        }
-
-        #endregion
-
         #region 상점 닫기 확인 팝업
 
-        private GameObject CreateConfirmClosePopup(Transform canvasTransform, GameObject shopPanelGo, GameObject entryPanelGo)
+        private GameObject CreateConfirmClosePopup(Transform canvasTransform, GameObject shopPanelGo)
         {
             // 화면 전체를 덮는 딤 처리
             GameObject popupRootGo = NewPanel("ConfirmClosePopup", canvasTransform, Vector2.zero);
@@ -340,9 +266,8 @@ namespace BlueMarble
             noRect.anchoredPosition = new Vector2(130f, 40f);
             noButton.image.color = ColorNeutralButton;
 
-            // Yes -> 오른쪽(상점 화면)과 왼쪽(진입 패널) 모두 닫고, 팝업도 닫는다.
+            // Yes -> 상점을 닫고, 팝업도 닫는다.
             UnityEventTools.AddBoolPersistentListener(yesButton.onClick, shopPanelGo.SetActive, false);
-            UnityEventTools.AddBoolPersistentListener(yesButton.onClick, entryPanelGo.SetActive, false);
             UnityEventTools.AddBoolPersistentListener(yesButton.onClick, popupRootGo.SetActive, false);
 
             // No -> 팝업만 닫는다 (상점은 계속 열려 있음).
@@ -353,25 +278,20 @@ namespace BlueMarble
 
         #endregion
 
-        #region 오른쪽 - 상점 화면
+        #region 상점 화면 (전체 통합 - 헤더 + 아이템목록 + 인벤토리)
 
-        private GameObject CreateShopPanel(Transform canvasTransform)
+        private GameObject CreateShopPanel(Transform canvasTransform, out Button closeButtonOut)
         {
             GameObject shopGo = NewUI("ShopPanel", canvasTransform);
             RectTransform shopRect = shopGo.GetComponent<RectTransform>();
-            // 화면 상단 ~58%만 차지하도록 축소 - 아래쪽엔 InventoryPanel이 붙는다.
-            shopRect.anchorMin = new Vector2(0f, 0.42f);
-            shopRect.anchorMax = new Vector2(1f, 1f);
-            shopRect.pivot = new Vector2(0.5f, 0.5f);
-            // 왼쪽 진입 패널(400) 만큼 왼쪽 여백을 두고 나머지 영역을 채운다.
-            shopRect.offsetMin = new Vector2(400f, 0f);
-            shopRect.offsetMax = new Vector2(0f, 0f);
+            // 이제 화면 전체를 하나의 상점 팝업으로 쓴다 (진입 패널과 안 나눔).
+            Stretch(shopRect, 0f);
 
             GameObject dimGo = NewPanel("DimBackground", shopGo.transform, Vector2.zero);
             Stretch(dimGo.GetComponent<RectTransform>(), 0f);
-            dimGo.GetComponent<Image>().color = ColorDim;
+            dimGo.GetComponent<Image>().color = ColorBackgroundDark;
 
-            // 상단 헤더 — "진열장" 느낌: 전체 폭 판매대 + 상점주인 이미지 자리 + 간판(SHOP)
+            // 상단 헤더 — 상점주인 + 간판(SHOP) + 보유 골드 + 상점 닫기 버튼
             GameObject headerGo = NewPanel("ShopHeader", shopGo.transform, Vector2.zero, panelSprite);
             RectTransform headerRect = headerGo.GetComponent<RectTransform>();
             headerRect.anchorMin = new Vector2(0f, 1f);
@@ -393,30 +313,53 @@ namespace BlueMarble
             TMP_Text shopkeeperLabel = NewText("ShopkeeperLabel", shopkeeperGo.transform, "상점주인", 18f, TextAlignmentOptions.Center);
             Stretch(shopkeeperLabel.rectTransform, 0f);
 
-            // 간판(타이틀 사인)
+            // 간판(타이틀 사인) - 헤더 중앙
             GameObject bannerGo = NewPanel("TitleBanner", headerGo.transform, new Vector2(260f, 60f), panelSprite);
             RectTransform bannerRect = bannerGo.GetComponent<RectTransform>();
             bannerRect.anchorMin = new Vector2(0.5f, 0.5f);
             bannerRect.anchorMax = new Vector2(0.5f, 0.5f);
             bannerRect.pivot = new Vector2(0.5f, 0.5f);
-            bannerRect.anchoredPosition = new Vector2(30f, 0f);
+            bannerRect.anchoredPosition = Vector2.zero;
             bannerGo.GetComponent<Image>().color = ColorCardBody;
 
             TMP_Text titleText = NewText("TitleText", bannerGo.transform, "SHOP", 32f, TextAlignmentOptions.Center);
             Stretch(titleText.rectTransform, 0f);
 
-            // 아이템 목록 영역 (Horizontal Layout Group)
-            // 하단 기준으로 배치해서, 헤더 아래 남는 공백을 줄이고 카드 줄을 화면 아래쪽까지 내린다.
+            // 보유 골드 표시 - 헤더 오른쪽
+            GameObject goldPanelGo = NewPanel("CurrentGoldPanel", headerGo.transform, new Vector2(220f, 70f), panelSprite);
+            RectTransform goldPanelRect = goldPanelGo.GetComponent<RectTransform>();
+            goldPanelRect.anchorMin = new Vector2(1f, 0.5f);
+            goldPanelRect.anchorMax = new Vector2(1f, 0.5f);
+            goldPanelRect.pivot = new Vector2(1f, 0.5f);
+            goldPanelRect.anchoredPosition = new Vector2(-190f, 0f);
+            goldPanelGo.GetComponent<Image>().color = ColorPanelFrame;
+
+            TMP_Text goldText = NewText("CurrentGoldText", goldPanelGo.transform, "Current Gold : 0", 24f, TextAlignmentOptions.Center);
+            goldText.color = ColorGold;
+            Stretch(goldText.rectTransform, 8f);
+
+            // 상점 닫기 버튼 - 헤더 맨 오른쪽
+            Button closeButton = NewButton("CloseShopButton", headerGo.transform, "상점 닫기", out _, buttonSprite);
+            RectTransform closeRect = closeButton.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 0.5f);
+            closeRect.anchorMax = new Vector2(1f, 0.5f);
+            closeRect.pivot = new Vector2(1f, 0.5f);
+            closeRect.sizeDelta = new Vector2(150f, 70f);
+            closeRect.anchoredPosition = new Vector2(-30f, 0f);
+            closeButton.image.color = new Color(0.4f, 0.42f, 0.45f, 1f);
+            closeButtonOut = closeButton;
+
+            // 아이템 목록 영역 (Horizontal Layout Group) - 헤더 바로 아래
             GameObject listGo = NewUI("ItemListArea", shopGo.transform);
             RectTransform listRect = listGo.GetComponent<RectTransform>();
-            listRect.anchorMin = new Vector2(0.5f, 0f);
-            listRect.anchorMax = new Vector2(0.5f, 0f);
-            listRect.pivot = new Vector2(0.5f, 0f);
-            listRect.sizeDelta = new Vector2(1450f, 420f);
-            listRect.anchoredPosition = new Vector2(0f, 10f);
+            listRect.anchorMin = new Vector2(0.5f, 1f);
+            listRect.anchorMax = new Vector2(0.5f, 1f);
+            listRect.pivot = new Vector2(0.5f, 1f);
+            listRect.sizeDelta = new Vector2(1600f, 480f);
+            listRect.anchoredPosition = new Vector2(0f, -150f); // 헤더(130) + 여백(20)
 
             HorizontalLayoutGroup layout = listGo.AddComponent<HorizontalLayoutGroup>();
-            layout.childAlignment = TextAnchor.LowerCenter;
+            layout.childAlignment = TextAnchor.UpperCenter;
             layout.spacing = 30f;
             layout.childControlWidth = false;
             layout.childControlHeight = false;
@@ -427,6 +370,9 @@ namespace BlueMarble
             {
                 CreateShopItemCard(listGo.transform, i);
             }
+
+            // 인벤토리 영역 - 아이템 목록 아래, 같은 ShopPanel 안에 붙어서 항상 같이 열리고 닫힌다.
+            CreateInventorySection(shopGo.transform);
 
             return shopGo;
         }
@@ -542,18 +488,18 @@ namespace BlueMarble
 
         #endregion
 
-        #region 인벤토리 패널 (상점 바로 아래)
+        #region 인벤토리 영역 (상점 화면 안에 같이 포함)
 
-        private GameObject CreateInventoryPanel(Transform canvasTransform)
+        private void CreateInventorySection(Transform shopPanelTransform)
         {
-            GameObject invGo = NewUI("InventoryPanel", canvasTransform);
+            GameObject invGo = NewUI("InventoryPanel", shopPanelTransform);
             RectTransform invRect = invGo.GetComponent<RectTransform>();
-            // 화면 하단 ~42% - ShopPanel 바로 아래에 붙는다.
+            // 화면 하단에 고정 - ShopPanel과 항상 같이 열리고 닫힌다 (별도로 안 나눔).
             invRect.anchorMin = new Vector2(0f, 0f);
-            invRect.anchorMax = new Vector2(1f, 0.42f);
-            invRect.pivot = new Vector2(0.5f, 0.5f);
-            invRect.offsetMin = new Vector2(400f, 0f);
-            invRect.offsetMax = new Vector2(0f, 0f);
+            invRect.anchorMax = new Vector2(1f, 0f);
+            invRect.pivot = new Vector2(0.5f, 0f);
+            invRect.offsetMin = new Vector2(40f, 20f);
+            invRect.offsetMax = new Vector2(-40f, 20f + 330f);
 
             Image bgImage = invGo.AddComponent<Image>();
             if (panelSprite != null)
@@ -593,8 +539,6 @@ namespace BlueMarble
             {
                 CreateInventorySlot(gridGo.transform, i);
             }
-
-            return invGo;
         }
 
         private void CreateInventorySlot(Transform parent, int index)
