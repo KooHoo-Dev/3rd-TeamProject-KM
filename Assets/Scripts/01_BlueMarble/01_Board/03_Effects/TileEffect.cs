@@ -7,7 +7,7 @@ namespace BlueMarble
         UniTask Apply(string playerId, Tile tile);
     }
 
-    public class PropertyEffect : ITileEffect //
+    public class PropertyEffect : ITileEffect
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
@@ -15,18 +15,23 @@ namespace BlueMarble
         }
     }
 
-    public class SalaryEffect : ITileEffect //
+    public class SalaryEffect : ITileEffect
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
+            // 이건 EconomyManager 들어오면 Config값 찾아와서 그 만큼 Add처리 하면 될듯?
             await UniTask.CompletedTask;
         }   
     }
 
-    public class PrisonEffect : ITileEffect //
+    public class PrisonEffect : ITileEffect
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
+            // 지금 구조로는...
+            IPlayer target = PlayerRegistry.GetPlayer(playerId);
+            target.ActionDisabledTurnCount = 1; // 나중엔 Config에 등록된 값을 써야할듯?
+            
             await UniTask.CompletedTask;
         }  
     }
@@ -49,19 +54,19 @@ namespace BlueMarble
 
     public class TeleportEffect : ITileEffect
     {
-        public async UniTask Apply(string playerId, Tile tile)
+        public async UniTask Apply(string playerId, Tile _)
         {
-            await UniTask.CompletedTask;
+            TeleportManager teleport = TeleportManager.Instance;
+            await teleport.ExecuteAsync(playerId);
         }
     }
 
-    public class ShopEffect : ITileEffect //
+    public class ShopEffect : ITileEffect
     {
-        public async UniTask Apply(string playerId, Tile tile)
+        public async UniTask Apply(string playerId, Tile _)
         {
-            // ShopManager shop = ShopManager.Instance;
-            // await shop.OpenAsync();
-            await UniTask.CompletedTask;
+            ShopManager shop = ShopManager.Instance;
+            await shop.OpenAsync(playerId);
         }
     }
 }

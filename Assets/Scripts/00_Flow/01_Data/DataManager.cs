@@ -11,8 +11,9 @@ namespace BlueMarble
         public BoardSpaceTable BoardSpaces { get; } = new();
 
         public EquipmentTable Equipments { get; } = new();
-
         public DropTable Drops { get; } = new();
+        
+        public GoldCardTable GoldCards { get; } = new();
         
         public event Action OnDataLoaded;
         
@@ -36,8 +37,14 @@ namespace BlueMarble
                 Equipments.LoadAsync(),
                 Drops.LoadAsync()
             };
-
             await UniTask.WhenAll(tasks);
+
+            // 위의 데이터들이 필요한 테이블의 경우, 여기에 추가
+            List<UniTask> lateTasks = new()
+            {
+                GoldCards.LoadAsync(),
+            };
+            await UniTask.WhenAll(lateTasks);
         }
 
         public UniTask EnsureDataLoaded() 
