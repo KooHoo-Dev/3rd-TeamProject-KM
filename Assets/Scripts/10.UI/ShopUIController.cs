@@ -36,6 +36,12 @@ namespace BlueMarble
             public TMP_Text durabilityText;
         }
 
+        private class InventorySlotRefs
+        {
+            public Image iconImage;
+            public Button button;
+        }
+
         #endregion
 
         #region 필드
@@ -44,12 +50,12 @@ namespace BlueMarble
         private ShopService shopService;
         private IGold gold;
         private InventoryManager inventory;
-        private InventoryManager myinventory = InventoryManager.Instance;
 
         [Header("씬 참조 - 비워두면 이름으로 자동 탐색")]
         [SerializeField] private Transform itemListArea;
         [SerializeField] private TMP_Text currentGoldText;
         [SerializeField] private GameObject shopEntryPanelGo;
+        [SerializeField] private GameObject inventoryPanelGo;
 
         [Header("등급별 아이콘 색상 (임시)")]
         [SerializeField] private Color commonColor = new Color(0.6f, 0.6f, 0.65f, 1f);
@@ -57,13 +63,10 @@ namespace BlueMarble
         [SerializeField] private Color legendaryColor = new Color(0.9f, 0.65f, 0.15f, 1f);
 
         private readonly List<ShopCardRefs> _cards = new List<ShopCardRefs>();
+        private readonly List<InventorySlotRefs> _inventorySlots = new List<InventorySlotRefs>();
 
-        // 교체 팝업 (씬에 없으면 런타임에 직접 만든다)
-        private GameObject _replacePopupRoot;
-        private TMP_Text _newItemInfoText;
-        private readonly List<Button> _replaceSlotButtons = new List<Button>();
-        private readonly List<TMP_Text> _replaceSlotLabels = new List<TMP_Text>();
-        private Button _replaceCancelButton;
+        private InventoryManager myinventory = InventoryManager.Instance;
+        private SlotReplaceConfirmPopup _slotReplacePopup;
 
         #endregion
 
@@ -95,17 +98,26 @@ namespace BlueMarble
             shopService ??= new ShopService();
             CacheSceneReferences();
             CacheCardRefs();
-            EnsureReplacePopup();
+            CacheInventorySlotRefs();
+            _slotReplacePopup = new SlotReplaceConfirmPopup(transform.parent);
             WireShopEntryPanelCloseNotifier();
         }
 
         private void OnEnable()
         {
             // ShopPanel이 SetActive(true) 될 때마다(=상점 열릴 때마다) 자동으로 최신 상태로 갱신
+            if (inventoryPanelGo != null) inventoryPanelGo.SetActive(true);
+
             if (gold != null && inventory != null)
             {
                 RefreshAll();
             }
+        }
+
+        private void OnDisable()
+        {
+            // 아이템 목록과 인벤토리 표시는 항상 같이 켜지고 같이 꺼진다.
+            if (inventoryPanelGo != null) inventoryPanelGo.SetActive(false);
         }
 
         private void WireShopEntryPanelCloseNotifier()
@@ -216,6 +228,17 @@ namespace BlueMarble
                 string parentName = canvasRootForSearch != null ? canvasRootForSearch.name : "(부모 없음)";
                 Debug.LogWarning($"[ShopUIController] ShopEntryPanel을 찾지 못했습니다. 지금 이 오브젝트의 부모는 '{parentName}' 입니다. 하이어라키에서 ShopPanel과 ShopEntryPanel이 같은 부모 밑에 있는지 확인해주세요.");
             }
+
+            if (inventoryPanelGo == null)
+            {
+                Transform invFound = canvasRootForSearch != null ? canvasRootForSearch.Find("InventoryPanel") : null;
+                inventoryPanelGo = invFound != null ? invFound.gameObject : null;
+
+                if (inventoryPanelGo == null)
+                {
+                    Debug.LogWarning("[ShopUIController] InventoryPanel을 찾지 못했습니다. 인스펙터에서 직접 연결해주세요.");
+                }
+            }
         }
 
         // 비활성 오브젝트까지 포함해서 씬 전체에서 이름으로 찾는다 (Resources.FindObjectsOfTypeAll 사용).
@@ -286,8 +309,38 @@ namespace BlueMarble
 
             tooltip.SetActive(false); // 평소엔 숨김 상태로 리셋
         }
-        
-        
+
+        private void CacheInventorySlotRefs()
+        {
+            _inventorySlots.Clear();
+            if (inventoryPanelGo == null) return;
+
+            Transform grid = inventoryPanelGo.transform.Find("InventorySlotGrid");
+            if (grid == null) return;
+
+            for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
+            {
+                Transform slot = grid.Find($"InventorySlot_{i}");
+                if (slot == null) continue;
+
+                InventorySlotRefs refs = new InventorySlotRefs
+                {
+                    iconImage = slot.Find("IconImage")?.GetComponent<Image>(),
+                    button = slot.GetComponent<Button>(),
+                };
+
+                _inventorySlots.Add(refs);
+
+                if (refs.button != null)
+                {
+                    int capturedIndex = i; // 클로저 캡처 주의
+                    refs.button.onClick.RemoveAllListeners();
+                    refs.button.onClick.AddListener(() => OnInventorySlotClicked(capturedIndex));
+                }
+            }
+        }
+
+       
 
         #region 갱신
 
@@ -295,6 +348,7 @@ namespace BlueMarble
         {
             RefreshShopList();
             RefreshGoldText();
+            RefreshInventoryDisplay();
         }
 
         private void RefreshShopList()
@@ -340,6 +394,43 @@ namespace BlueMarble
                     int capturedIndex = i; // 클로저 캡처 주의
                     card.buyButton.onClick.RemoveAllListeners();
                     card.buyButton.onClick.AddListener(() => OnPurchaseClicked(capturedIndex));
+
+                    // 교체 대기 중에는 먼저 처리해야 하므로 구매 버튼을 잠근다.
+                    card.buyButton.interactable = inventory == null || !inventory.IsWaitingReplace;
+                }
+            }
+        }
+
+        private void RefreshInventoryDisplay()
+        {
+            if (inventory == null) return;
+
+            for (int i = 0; i < _inventorySlots.Count; i++)
+            {
+                Image iconImage = _inventorySlots[i].iconImage;
+                if (iconImage == null) continue;
+
+                EquipmentInstance instance = inventory.GetAt(i);
+
+                if (instance == null)
+                {
+                    iconImage.sprite = null;
+                    iconImage.color = new Color(1f, 1f, 1f, 0f); // 빈 칸 - 투명
+                    continue;
+                }
+
+                EquipmentDef def = instance.Def;
+                Sprite icon = string.IsNullOrEmpty(def.IconKey) ? null : Resources.Load<Sprite>(def.IconKey);
+
+                if (icon != null)
+                {
+                    iconImage.sprite = icon;
+                    iconImage.color = Color.white;
+                }
+                else
+                {
+                    iconImage.sprite = null;
+                    iconImage.color = GetGradeColor(def.Grade);
                 }
             }
         }
@@ -383,10 +474,12 @@ namespace BlueMarble
             }
 
             RefreshGoldText();
+            RefreshInventoryDisplay();
+            RefreshShopList(); // 인벤토리가 꽉 찼으면 여기서 구매 버튼들이 잠긴다.
 
             if (inventory.IsWaitingReplace)
             {
-                ShowReplacePopup(inventory.ReplaceDef);
+                Debug.Log("[ShopUIController] 인벤토리가 가득 찼습니다. 인벤토리 칸을 클릭해서 교체할 장비를 선택하세요.");
             }
             else
             {
@@ -394,184 +487,42 @@ namespace BlueMarble
             }
         }
 
-        #endregion
-
-        #region 교체 팝업 (씬에 없으면 런타임에 생성)
-
-        private void EnsureReplacePopup()
+        /// <summary>
+        /// 인벤토리 1~5번 칸 클릭 처리.
+        /// 교체 대기 중이 아니면 아무 일도 하지 않는다.
+        /// 빈 칸이면 확인 없이 바로 배치하고, 차있는 칸이면 Yes/No 확인 팝업을 띄운다.
+        /// </summary>
+        private void OnInventorySlotClicked(int slotIndex)
         {
-            Transform canvasRoot = transform.parent;
-            if (canvasRoot == null) return;
+            if (inventory == null || !inventory.IsWaitingReplace) return;
 
-            Transform existing = canvasRoot.Find("ReplacePopup");
-            if (existing != null)
+            EquipmentInstance current = inventory.GetAt(slotIndex);
+            EquipmentDef pendingDef = inventory.ReplaceDef;
+
+            if (current == null)
             {
-                _replacePopupRoot = existing.gameObject;
-                CacheExistingReplacePopupRefs(existing);
-                _replacePopupRoot.SetActive(false);
-                return;
+                // 빈 칸 - 확인 없이 바로 배치
+                inventory.ReplaceAt(slotIndex);
+                OnReplaceResolved();
             }
-
-            BuildReplacePopup(canvasRoot);
-        }
-
-        private void CacheExistingReplacePopupRefs(Transform popup)
-        {
-            _newItemInfoText = popup.Find("NewItemInfoText")?.GetComponent<TMP_Text>();
-            _replaceCancelButton = popup.Find("CancelButton")?.GetComponent<Button>();
-
-            _replaceSlotButtons.Clear();
-            _replaceSlotLabels.Clear();
-
-            for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
+            else
             {
-                Transform slotBtn = popup.Find($"SlotButton_{i}");
-                if (slotBtn == null) continue;
-
-                _replaceSlotButtons.Add(slotBtn.GetComponent<Button>());
-                _replaceSlotLabels.Add(slotBtn.GetComponentInChildren<TMP_Text>());
+                // 차있는 칸 - 교체 확인 팝업
+                _slotReplacePopup.Show(current.Def.Name, pendingDef.Name,
+                    onYes: () =>
+                    {
+                        inventory.ReplaceAt(slotIndex);
+                        _slotReplacePopup.Hide();
+                        OnReplaceResolved();
+                    },
+                    onNo: () => _slotReplacePopup.Hide());
             }
         }
 
-        // StoreUIBuilder가 ReplacePopup을 만들지 않았을 경우, 여기서 최소 구성으로 직접 만든다.
-        private void BuildReplacePopup(Transform canvasRoot)
+        private void OnReplaceResolved()
         {
-            GameObject rootGo = NewRect("ReplacePopup", canvasRoot, Vector2.zero);
-            RectTransform rootRect = rootGo.GetComponent<RectTransform>();
-            Stretch(rootRect);
-            Image dim = rootGo.AddComponent<Image>();
-            dim.color = new Color(0f, 0f, 0f, 0.6f);
-
-            GameObject boxGo = NewRect("PopupBox", rootGo.transform, new Vector2(560f, 420f));
-            RectTransform boxRect = boxGo.GetComponent<RectTransform>();
-            CenterRect(boxRect);
-            Image boxImg = boxGo.AddComponent<Image>();
-            boxImg.color = new Color(0.17f, 0.18f, 0.21f, 1f);
-
-            _newItemInfoText = CreateText("NewItemInfoText", boxGo.transform, "새 장비 정보", 26f,
-                new Vector2(0f, 150f), new Vector2(500f, 60f));
-
-            _replaceSlotButtons.Clear();
-            _replaceSlotLabels.Clear();
-
-            for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
-            {
-                float y = 90f - i * 60f;
-                GameObject slotGo = NewRect($"SlotButton_{i}", boxGo.transform, new Vector2(440f, 50f));
-                RectTransform slotRect = slotGo.GetComponent<RectTransform>();
-                CenterRect(slotRect);
-                slotRect.anchoredPosition = new Vector2(0f, y);
-
-                Image slotImg = slotGo.AddComponent<Image>();
-                slotImg.color = new Color(0.3f, 0.32f, 0.36f, 1f);
-                Button slotBtn = slotGo.AddComponent<Button>();
-                slotBtn.targetGraphic = slotImg;
-
-                TMP_Text label = CreateText($"SlotLabel_{i}", slotGo.transform, $"{i + 1}번 슬롯", 22f, Vector2.zero, new Vector2(420f, 50f));
-
-                _replaceSlotButtons.Add(slotBtn);
-                _replaceSlotLabels.Add(label);
-            }
-
-            GameObject cancelGo = NewRect("CancelButton", boxGo.transform, new Vector2(200f, 60f));
-            RectTransform cancelRect = cancelGo.GetComponent<RectTransform>();
-            CenterRect(cancelRect);
-            cancelRect.anchoredPosition = new Vector2(0f, -180f);
-            Image cancelImg = cancelGo.AddComponent<Image>();
-            cancelImg.color = new Color(0.45f, 0.3f, 0.3f, 1f);
-            _replaceCancelButton = cancelGo.AddComponent<Button>();
-            _replaceCancelButton.targetGraphic = cancelImg;
-            CreateText("Label", cancelGo.transform, "포기", 24f, Vector2.zero, new Vector2(200f, 60f));
-
-            _replacePopupRoot = rootGo;
-            _replacePopupRoot.SetActive(false);
-        }
-
-        private void ShowReplacePopup(EquipmentDef newDef)
-        {
-            if (_newItemInfoText != null)
-            {
-                _newItemInfoText.text = $"{newDef.Name} 획득!\n{EquipmentDisplayFormatter.GetEffectText(newDef)}";
-            }
-
-            for (int i = 0; i < _replaceSlotButtons.Count; i++)
-            {
-                int capturedIndex = i;
-                EquipmentInstance current = inventory.GetAt(i);
-
-                if (i < _replaceSlotLabels.Count && _replaceSlotLabels[i] != null)
-                {
-                    _replaceSlotLabels[i].text = current != null
-                        ? $"{i + 1}번 슬롯 - {current.Def.Name} (교체)"
-                        : $"{i + 1}번 슬롯 - 비어있음";
-                }
-
-                _replaceSlotButtons[i].onClick.RemoveAllListeners();
-                _replaceSlotButtons[i].onClick.AddListener(() => OnReplaceSlotSelected(capturedIndex));
-            }
-
-            if (_replaceCancelButton != null)
-            {
-                _replaceCancelButton.onClick.RemoveAllListeners();
-                _replaceCancelButton.onClick.AddListener(OnReplaceCancelClicked);
-            }
-
-            _replacePopupRoot.SetActive(true);
-        }
-
-        private void OnReplaceSlotSelected(int slotIndex)
-        {
-            inventory.ReplaceAt(slotIndex);
-            _replacePopupRoot.SetActive(false);
-        }
-
-        private void OnReplaceCancelClicked()
-        {
-            inventory.CancelReplace();
-            _replacePopupRoot.SetActive(false);
-        }
-
-        #endregion
-
-        #region UI 생성 도우미 (교체 팝업 전용 최소 버전)
-
-        private GameObject NewRect(string name, Transform parent, Vector2 size)
-        {
-            GameObject go = new GameObject(name, typeof(RectTransform));
-            go.transform.SetParent(parent, false);
-            go.GetComponent<RectTransform>().sizeDelta = size;
-            return go;
-        }
-
-        private void CenterRect(RectTransform rect)
-        {
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-        }
-
-        private void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-        }
-
-        private TMP_Text CreateText(string name, Transform parent, string text, float fontSize, Vector2 anchoredPosition, Vector2 size)
-        {
-            GameObject go = NewRect(name, parent, size);
-            RectTransform rect = go.GetComponent<RectTransform>();
-            CenterRect(rect);
-            rect.anchoredPosition = anchoredPosition;
-
-            TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = fontSize;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.white;
-
-            return tmp;
+            RefreshInventoryDisplay();
+            RefreshShopList(); // 교체가 끝났으니 구매 버튼 다시 활성화
         }
 
         #endregion

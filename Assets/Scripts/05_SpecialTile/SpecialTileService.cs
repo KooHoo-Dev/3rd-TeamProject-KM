@@ -18,6 +18,7 @@ namespace BlueMarble
         private readonly ITurnSkipRegistry turnSkipRegistry;
         private readonly IBoardTeleporter boardTeleporter;
         private readonly IShopOpener shopOpener;
+        
 
         public SpecialTileService(IGold gold, ITurnSkipRegistry turnSkipRegistry,
             IBoardTeleporter boardTeleporter, IShopOpener shopOpener)
