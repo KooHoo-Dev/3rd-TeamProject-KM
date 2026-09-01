@@ -412,8 +412,8 @@ namespace BlueMarble
             listRect.anchorMin = new Vector2(0.5f, 0f);
             listRect.anchorMax = new Vector2(0.5f, 0f);
             listRect.pivot = new Vector2(0.5f, 0f);
-            listRect.sizeDelta = new Vector2(1450f, 280f);
-            listRect.anchoredPosition = new Vector2(0f, 20f);
+            listRect.sizeDelta = new Vector2(1450f, 420f);
+            listRect.anchoredPosition = new Vector2(0f, 10f);
 
             HorizontalLayoutGroup layout = listGo.AddComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.LowerCenter;
@@ -437,9 +437,8 @@ namespace BlueMarble
 
         private void CreateShopItemCard(Transform parent, int index)
         {
-            // 카드 높이를 줄여서 가격~구매버튼 사이 빈 공간(간격)을 좁혔다.
-            // 상점 패널 자체가 축소됐으므로 카드도 비례해서 작게 만든다.
-            Vector2 cardSize = new Vector2(150f, 260f);
+            // 상점 패널 아래쪽에 남는 공간이 많아서 카드를 크게 키웠다.
+            Vector2 cardSize = new Vector2(200f, 400f);
 
             GameObject cardGo = NewPanel($"ShopItemCard_{index}", parent, cardSize, panelSprite);
             RectTransform cardRect = cardGo.GetComponent<RectTransform>();
@@ -452,22 +451,22 @@ namespace BlueMarble
             outline.effectDistance = new Vector2(3f, -3f);
 
             // 아이콘 자리 (색상 블록, 등급 색상 교체 지점)
-            GameObject iconGo = NewPanel("IconImage", cardGo.transform, new Vector2(110f, 110f));
+            GameObject iconGo = NewPanel("IconImage", cardGo.transform, new Vector2(170f, 170f));
             RectTransform iconRect = iconGo.GetComponent<RectTransform>();
             iconRect.anchorMin = new Vector2(0.5f, 1f);
             iconRect.anchorMax = new Vector2(0.5f, 1f);
             iconRect.pivot = new Vector2(0.5f, 1f);
-            iconRect.anchoredPosition = new Vector2(0f, -10f);
+            iconRect.anchoredPosition = new Vector2(0f, -15f);
             iconGo.GetComponent<Image>().color = new Color(0.6f, 0.6f, 0.65f, 1f); // Common 등급 임시색
 
             // 이름
-            TMP_Text nameText = NewText("NameText", cardGo.transform, "Sword", 20f, TextAlignmentOptions.Center);
+            TMP_Text nameText = NewText("NameText", cardGo.transform, "Sword", 24f, TextAlignmentOptions.Center);
             RectTransform nameRect = nameText.rectTransform;
             nameRect.anchorMin = new Vector2(0.5f, 1f);
             nameRect.anchorMax = new Vector2(0.5f, 1f);
             nameRect.pivot = new Vector2(0.5f, 1f);
-            nameRect.sizeDelta = new Vector2(140f, 34f);
-            nameRect.anchoredPosition = new Vector2(0f, -125f);
+            nameRect.sizeDelta = new Vector2(190f, 40f);
+            nameRect.anchoredPosition = new Vector2(0f, -195f);
 
             // 가격 표시 줄 (코인 아이콘 + 가격 텍스트)
             GameObject priceRowGo = NewUI("PriceRow", cardGo.transform);
@@ -475,20 +474,20 @@ namespace BlueMarble
             priceRowRect.anchorMin = new Vector2(0.5f, 1f);
             priceRowRect.anchorMax = new Vector2(0.5f, 1f);
             priceRowRect.pivot = new Vector2(0.5f, 1f);
-            priceRowRect.sizeDelta = new Vector2(140f, 34f);
-            priceRowRect.anchoredPosition = new Vector2(0f, -165f);
+            priceRowRect.sizeDelta = new Vector2(190f, 40f);
+            priceRowRect.anchoredPosition = new Vector2(0f, -245f);
 
             HorizontalLayoutGroup priceLayout = priceRowGo.AddComponent<HorizontalLayoutGroup>();
             priceLayout.childAlignment = TextAnchor.MiddleCenter;
-            priceLayout.spacing = 6f;
+            priceLayout.spacing = 8f;
             priceLayout.childControlWidth = false;
             priceLayout.childControlHeight = false;
 
-            GameObject coinGo = NewPanel("CoinIcon", priceRowGo.transform, new Vector2(20f, 20f));
+            GameObject coinGo = NewPanel("CoinIcon", priceRowGo.transform, new Vector2(26f, 26f));
             coinGo.GetComponent<Image>().color = ColorGold;
 
-            TMP_Text priceText = NewText("PriceText", priceRowGo.transform, "0", 20f, TextAlignmentOptions.Left);
-            priceText.rectTransform.sizeDelta = new Vector2(90f, 28f);
+            TMP_Text priceText = NewText("PriceText", priceRowGo.transform, "0", 24f, TextAlignmentOptions.Left);
+            priceText.rectTransform.sizeDelta = new Vector2(110f, 34f);
 
             // 구매 버튼
             Button buyButton = NewButton("BuyButton", cardGo.transform, "BUY", out _, buttonSprite);
@@ -496,8 +495,8 @@ namespace BlueMarble
             buyRect.anchorMin = new Vector2(0.5f, 0f);
             buyRect.anchorMax = new Vector2(0.5f, 0f);
             buyRect.pivot = new Vector2(0.5f, 0f);
-            buyRect.sizeDelta = new Vector2(130f, 40f);
-            buyRect.anchoredPosition = new Vector2(0f, 10f);
+            buyRect.sizeDelta = new Vector2(170f, 48f);
+            buyRect.anchoredPosition = new Vector2(0f, 15f);
             buyButton.image.color = ColorBuyButton;
 
             // 호버 시 표시되는 툴팁 (효과 / 쿨타임 / 내구도)
