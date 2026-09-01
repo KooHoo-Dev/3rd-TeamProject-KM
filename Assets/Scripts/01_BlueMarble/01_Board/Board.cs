@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BlueMarble
@@ -30,6 +31,22 @@ namespace BlueMarble
             return TryGetTileIndex(worldPos, out int idx) ? 
                 tiles[idx] : 
                 throw new Exception($"[Board] World position {worldPos} is out of bounds");
+        }
+
+        public List<Tile> GetOccupiedTiles(string playerId)
+        {
+            List<Tile> result = new();
+            
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                Tile tile = tiles[i];
+
+                if (tile.State.IsOccupied == false) continue;
+                if (tile.State.OwnerId != playerId) continue;
+
+                result.Add(tile);
+            }
+            return result;
         }
 
         #endregion

@@ -15,7 +15,9 @@ namespace BlueMarble
 
         public TileDef Def { get; private set; }
         public BoardSpaceDef SpaceDef { get; private set; }
-        
+
+        public TileState State { get; private set; } = new(); // 타일 상태
+
         public void Initialize(TileDef def, BoardSpaceDef spaceDef)
         {
             Def = def;

@@ -11,7 +11,8 @@ namespace BlueMarble
     public class RemotePlayer : MonoBehaviour, IPlayer
     {
         [field: ShowInInspector, ReadOnly] public string Id { get; private set; }
-        
+        public Vector3 Position => transform.position;
+
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
         [SerializeField] private float jumpDuration = 0.5f;

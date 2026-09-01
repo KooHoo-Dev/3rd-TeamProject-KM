@@ -6,7 +6,7 @@ namespace Epic3
 {
     public class TerritoryManager : MonoBehaviour
     {
-        public Dictionary<int, TileProperty> tileStates = new Dictionary<int, TileProperty>();
+        public Dictionary<int, TileState> tileStates = new Dictionary<int, TileState>();
 
         public int Coin = 500;
         public int TilePrice = 300;
@@ -16,11 +16,11 @@ namespace Epic3
         // 싱글톤으로 선언된 BlueMarbleWorld를 가져옵니다.
         private BlueMarbleWorld worldBoard => BlueMarbleWorld.Instance; 
 
-        public TileProperty GetTileState(int tileIndex)
+        public TileState GetTileState(int tileIndex)
         {
             if (tileStates.ContainsKey(tileIndex) == false)
             {
-                tileStates.Add(tileIndex, new TileProperty());
+                tileStates.Add(tileIndex, new TileState());
             }
             return tileStates[tileIndex];
         }
@@ -35,7 +35,7 @@ namespace Epic3
                 return;
             }
 
-            TileProperty currentTileState = GetTileState(tileIndex);
+            TileState currentTileState = GetTileState(tileIndex);
             Tile currentTile = worldBoard.Board.GetTile(tileIndex);
 
             if (currentTile.Def.Type != TileType.Property)
@@ -46,7 +46,7 @@ namespace Epic3
 
             string playerId = player.Id;
 
-            if (currentTileState.IsOwned == false)
+            if (currentTileState.IsOccupied == false)
             {
                 Debug.Log("빈 땅입니다. 영토 구매 UI를 띄우세요.");
                 PurchaseTile(playerId, tileIndex);
@@ -68,7 +68,7 @@ namespace Epic3
         public int CalculateTotalAssets(string ownerId)
         {
             int totalAssets = 0;
-            TileProperty currentState = new TileProperty();
+            TileState currentState = new TileState();
             for (int i = 0; i < worldBoard.Board.MaxTileIndex; i++)
             {
                 if (currentState.OwnerId == ownerId)
@@ -83,9 +83,9 @@ namespace Epic3
         
         public void PurchaseTile(string ownerId, int tileIndex)
         {
-            TileProperty currentTileState = GetTileState(tileIndex);
+            TileState currentTileState = GetTileState(tileIndex);
             
-            if(currentTileState.IsOwned)
+            if(currentTileState.IsOccupied)
             {
                 Debug.Log("이미 주인이 있습니다. 대전 신청으로 넘어갑니다");
                 return;
@@ -104,7 +104,7 @@ namespace Epic3
 
         public void PurchaseBuilding(string ownerId, int tileIndex)
         {
-            TileProperty currentTileState = GetTileState(tileIndex);
+            TileState currentTileState = GetTileState(tileIndex);
             
             if (currentTileState.OwnerId == ownerId && currentTileState.HasBuilding == false)
             {
@@ -121,7 +121,7 @@ namespace Epic3
 
         public void PurchaseLandMark(string ownerId, int tileIndex)
         {
-            TileProperty currentTileState = GetTileState(tileIndex);
+            TileState currentTileState = GetTileState(tileIndex);
             
             if (currentTileState.OwnerId == ownerId && currentTileState.HasBuilding && currentTileState.HasLandMark == false)
             {
@@ -138,9 +138,9 @@ namespace Epic3
 
         public void PayToll(string myPlayerId, int tileIndex)
         {
-            TileProperty currentTileState = GetTileState(tileIndex);
+            TileState currentTileState = GetTileState(tileIndex);
             
-            if (currentTileState.IsOwned == false) return;
+            if (currentTileState.IsOccupied == false) return;
             if (currentTileState.OwnerId == myPlayerId) return;
             
             int tollAmount = TilePrice;
@@ -163,7 +163,7 @@ namespace Epic3
         // 약탈 시 소유권 변경 (랜드마크 방어 포함)
         public void StolenTerritory(string loserId, string winnerId, int tileIndex)
         {
-            TileProperty currentTileState = GetTileState(tileIndex);
+            TileState currentTileState = GetTileState(tileIndex);
 
             // 랜드마크가 지어져 있으면 약탈 불가
             if (currentTileState.HasLandMark) return;
