@@ -27,6 +27,9 @@ namespace BlueMarble
         private int nextInstanceId = 1;
         
         
+        
+        
+        
         /// <summary>
         /// 인벤토리가 가득 찬 상태에서 새 장비를 획득했을 때, 교체 대기 중인 장비 정의.
         /// null이 아니면 "지금 교체 대기 모드"라는 뜻이다. 

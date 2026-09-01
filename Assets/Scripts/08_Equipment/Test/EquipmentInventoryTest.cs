@@ -1,4 +1,4 @@
-﻿using Study.Utilities;
+using Study.Utilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -16,7 +16,7 @@ namespace BlueMarble
     /// 7번 키: 보유 장비 전체 내구도 -1, 0되면 제거 (E8-T2-S1)
     /// ※ 교체 대기 모드 중에는 1~5번이 "교체할 슬롯 선택"으로 동작이 바뀐다.
     /// </summary>
-    /* public class EquipmentInventoryTest : MonoBehaviour
+    public class EquipmentInventoryTest : MonoBehaviour
     {
         private const int MinEquipmentId = 1;
         private const int MaxEquipmentId = 20;
@@ -246,5 +246,5 @@ namespace BlueMarble
             Debug.Log("===== [2] 인벤토리 비움 =====");
             LogInventory();
         }
-    }*/
+    }
 }
