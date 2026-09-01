@@ -8,10 +8,7 @@ namespace Epic3
     {
         public Dictionary<int, TileState> tileStates = new Dictionary<int, TileState>();
 
-        public int Coin = 500;
-        public int TilePrice = 300;
-        public int BuildingPrice = 200;
-        public int LandMarkPrice = 500;
+        public int Coin = 100000;
         
         // 싱글톤으로 선언된 BlueMarbleWorld를 가져옵니다.
         private BlueMarbleWorld worldBoard => BlueMarbleWorld.Instance; 
@@ -68,22 +65,20 @@ namespace Epic3
         public int CalculateTotalAssets(string ownerId)
         {
             int totalAssets = 0;
-            TileState currentState = new TileState();
-            for (int i = 0; i < worldBoard.Board.MaxTileIndex; i++)
+            foreach (Tile tile in worldBoard.Board.GetOccupiedTiles(ownerId))
             {
-                if (currentState.OwnerId == ownerId)
-                {
-                    Tile ownerTile = worldBoard.Board.GetTile(i);
-                    totalAssets = ownerTile.SpaceDef.Price;
-                }
+                if (tile.State.HasLandMark) totalAssets += tile.SpaceDef.Price * 6; 
+                else if (tile.State.HasBuilding) totalAssets += tile.SpaceDef.Price * 3;
+                else totalAssets = tile.SpaceDef.Price;
             }
-            
             return  totalAssets;
         }
         
         public void PurchaseTile(string ownerId, int tileIndex)
         {
             TileState currentTileState = GetTileState(tileIndex);
+
+            int tilePrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price;
             
             if(currentTileState.IsOccupied)
             {
@@ -91,13 +86,13 @@ namespace Epic3
                 return;
             }
 
-            if (Coin < TilePrice)
+            if (Coin < tilePrice)
             {
-                Debug.Log($"[Tile] :{TilePrice}원 [Coin] :{Coin} 돈 부족");
+                Debug.Log($"[Tile] :{tilePrice}원 [Coin] :{Coin} 돈 부족");
                 return;
             }
             
-            Coin -= TilePrice;
+            Coin -= tilePrice;
             Debug.Log($"[Tile] 구매 완료. 남은 돈: {Coin}");
             currentTileState.OwnerId = ownerId;
         }
@@ -106,14 +101,16 @@ namespace Epic3
         {
             TileState currentTileState = GetTileState(tileIndex);
             
+            int buildingPrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price * 2;
+            
             if (currentTileState.OwnerId == ownerId && currentTileState.HasBuilding == false)
             {
-                if (Coin < BuildingPrice)
+                if (Coin < buildingPrice)
                 {
-                    Debug.Log($"[Building] :{BuildingPrice}원 [Coin] :{Coin} 돈 부족");
+                    Debug.Log($"[Building] :{buildingPrice}원 [Coin] :{Coin} 돈 부족");
                     return;
                 }
-                Coin -= BuildingPrice;
+                Coin -= buildingPrice;
                 currentTileState.HasBuilding = true;
                 Debug.Log($"건물 건설 완료. 남은 돈: {Coin}");
             }
@@ -123,14 +120,16 @@ namespace Epic3
         {
             TileState currentTileState = GetTileState(tileIndex);
             
+            int landMarkPrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price * 3;
+            
             if (currentTileState.OwnerId == ownerId && currentTileState.HasBuilding && currentTileState.HasLandMark == false)
             {
-                if (Coin < LandMarkPrice)
+                if (Coin < landMarkPrice)
                 {
-                    Debug.Log($"[LandMark] :{LandMarkPrice}원 [Coin] :{Coin} 돈 부족");
+                    Debug.Log($"[LandMark] :{landMarkPrice}원 [Coin] :{Coin} 돈 부족");
                     return;
                 }
-                Coin -= LandMarkPrice;
+                Coin -= landMarkPrice;
                 currentTileState.HasLandMark = true;
                 Debug.Log($"랜드마크 건설 완료. 남은 돈: {Coin}");
             }
@@ -140,13 +139,15 @@ namespace Epic3
         {
             TileState currentTileState = GetTileState(tileIndex);
             
+            int tilePrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price;
+            
             if (currentTileState.IsOccupied == false) return;
             if (currentTileState.OwnerId == myPlayerId) return;
             
-            int tollAmount = TilePrice;
+            int tollAmount = tilePrice;
 
-            if (currentTileState.HasBuilding) tollAmount += BuildingPrice;
-            if (currentTileState.HasLandMark) tollAmount += LandMarkPrice;
+            if (currentTileState.HasBuilding) tollAmount += tilePrice * 2;
+            if (currentTileState.HasLandMark) tollAmount += tilePrice * 3;
 
             if (Coin < tollAmount)
             {
