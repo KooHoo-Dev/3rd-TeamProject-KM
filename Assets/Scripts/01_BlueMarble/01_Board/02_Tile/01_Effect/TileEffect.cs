@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using Epic3;
 
 namespace BlueMarble
 {
@@ -11,6 +12,7 @@ namespace BlueMarble
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
+            PropertyManager.Instance.RequestPurchaseTile(playerId, tile);
             await UniTask.CompletedTask;
         }
     }

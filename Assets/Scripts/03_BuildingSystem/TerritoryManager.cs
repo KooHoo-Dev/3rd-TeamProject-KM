@@ -74,6 +74,8 @@ namespace Epic3
             return  totalAssets;
         }
         
+        // 대대적인 공사가 필요. 이제는 tile의 Index가 아닌 그냥 Tile을 받아오면 됨.
+        // TileEffect 보셈
         public void PurchaseTile(string ownerId, int tileIndex)
         {
             TileState currentTileState = GetTileState(tileIndex);
