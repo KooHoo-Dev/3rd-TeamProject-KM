@@ -8,5 +8,12 @@
         public bool HasLandMark { get; set; } = false;
         
         public bool IsOccupied => !string.IsNullOrEmpty(OwnerId);
+
+        public void Clear()
+        {
+            OwnerId = string.Empty;
+            HasBuilding = false;
+            HasLandMark = false;
+        }
     }
 }
