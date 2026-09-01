@@ -9,6 +9,7 @@ namespace BlueMarble
         Prison,
         Treasure,
         GoldCard,
+        Teleport,
         Shop
     }
     

@@ -47,6 +47,14 @@ namespace BlueMarble
         }
     }
 
+    public class TeleportEffect : ITileEffect
+    {
+        public async UniTask Apply(string playerId, Tile tile)
+        {
+            await UniTask.CompletedTask;
+        }
+    }
+
     public class ShopEffect : ITileEffect //
     {
         public async UniTask Apply(string playerId, Tile tile)
