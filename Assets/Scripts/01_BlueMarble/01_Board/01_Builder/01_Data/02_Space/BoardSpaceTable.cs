@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Utility.Data;
@@ -24,11 +25,12 @@ namespace BlueMarble
                 int id = dto.Id;
                 string name = dto.Name;
                 int price = dto.Price;
+                TileEffectType effectType = Enum.Parse<TileEffectType>(dto.Effect);
                 bool isActiveOnPass = dto.IsActiveOnPass;
                 Sprite icon = iconMap.GetIcon(dto.IconIndex);
                 Color color = dto.ColorHex.HexToColor();
 
-                defs[dto.Id] = new BoardSpaceDef(id, name, price, isActiveOnPass, icon, color);
+                defs[dto.Id] = new BoardSpaceDef(id, name, price, effectType, isActiveOnPass, icon, color);
             }
         }
     }

@@ -1,31 +1,31 @@
-Id	Name	Price	IconIndex	ColorHex	IsActiveOnPass
-0	위그드라실의 뿌리	0	0	#FBBE28	TRUE
-1	요툰헤임 설원	100	1	#38B6FF	FALSE
-2	우트가르드 성채	100	2	#38B6FF	FALSE
-3	거인의 대장간	100	3	#38B6FF	FALSE
-4	미미르의 샘	100	24	#38B6FF	FALSE
-5	흐룽그니르의 돌산	100	4	#38B6FF	FALSE
-6	트림의 궁전	100	5	#38B6FF	FALSE
-7	헬라의 관문	0	6	#FBBE28	FALSE
-8	니플 헬	100	7	#5E17EB	FALSE
-9	니플헤임 빙원	100	8	#5E17EB	FALSE
-10	흐베르겔미르	100	9	#5E17EB	FALSE
-11	엘리바가르 얼음 강	100	10	#5E17EB	FALSE
-12	나스트론드	100	3	#5E17EB	FALSE
-13	서리 거인의 협곡	100	11	#5E17EB	FALSE
-14	니드호그의 보물 창고	0	12	#FBBE28	FALSE
-15	알프 헤임 숲	100	13	#7ED957	FALSE
-16	은빛 초원	100	14	#7ED957	FALSE
-17	빛의 정원	100	15	#7ED957	FALSE
-18	오딘의 신전	100	16	#7ED957	FALSE
-19	요정의 샘	100	24	#7ED957	FALSE
-20	여명의 회랑	100	17	#7ED957	FALSE
-21	비프로스트	0	18	#FBBE28	FALSE
-22	로키의 은신처	100	19	#FF0000	FALSE
-23	우르드의 샘	100	24	#FF0000	FALSE
-24	토르의 대장간	100	20	#FF0000	FALSE
-25	오딘의 옥좌	100	21	#FF0000	FALSE
-26	발키리 전당	100	22	#FF0000	FALSE
-27	발할라	100	23	#FF0000	FALSE
-28	라타토스크의 전언 	0	25	#ECD92D	FALSE
-29	상점	0	26	#A548FF	TRUE
+Id	Name	Price	IconIndex	ColorHex	Effect	IsActiveOnPass
+0	위그드라실의 뿌리	0	0	#FBBE28	Salary	TRUE
+1	요툰헤임 설원	100	1	#38B6FF	Property	FALSE
+2	우트가르드 성채	100	2	#38B6FF	Property	FALSE
+3	거인의 대장간	100	3	#38B6FF	Property	FALSE
+4	미미르의 샘	100	24	#38B6FF	Property	FALSE
+5	흐룽그니르의 돌산	100	4	#38B6FF	Property	FALSE
+6	트림의 궁전	100	5	#38B6FF	Property	FALSE
+7	헬라의 관문	0	6	#FBBE28	Prison	FALSE
+8	니플 헬	100	7	#5E17EB	Property	FALSE
+9	니플헤임 빙원	100	8	#5E17EB	Property	FALSE
+10	흐베르겔미르	100	9	#5E17EB	Property	FALSE
+11	엘리바가르 얼음 강	100	10	#5E17EB	Property	FALSE
+12	나스트론드	100	3	#5E17EB	Property	FALSE
+13	서리 거인의 협곡	100	11	#5E17EB	Property	FALSE
+14	니드호그의 보물 창고	0	12	#FBBE28	Treasure	FALSE
+15	알프 헤임 숲	100	13	#7ED957	Property	FALSE
+16	은빛 초원	100	14	#7ED957	Property	FALSE
+17	빛의 정원	100	15	#7ED957	Property	FALSE
+18	오딘의 신전	100	16	#7ED957	Property	FALSE
+19	요정의 샘	100	24	#7ED957	Property	FALSE
+20	여명의 회랑	100	17	#7ED957	Property	FALSE
+21	비프로스트	0	18	#FBBE28	Teleport	FALSE
+22	로키의 은신처	100	19	#FF0000	Property	FALSE
+23	우르드의 샘	100	24	#FF0000	Property	FALSE
+24	토르의 대장간	100	20	#FF0000	Property	FALSE
+25	오딘의 옥좌	100	21	#FF0000	Property	FALSE
+26	발키리 전당	100	22	#FF0000	Property	FALSE
+27	발할라	100	23	#FF0000	Property	FALSE
+28	라타토스크의 전언 	0	25	#ECD92D	GoldCard	FALSE
+29	상점	0	26	#A548FF	Shop	TRUE

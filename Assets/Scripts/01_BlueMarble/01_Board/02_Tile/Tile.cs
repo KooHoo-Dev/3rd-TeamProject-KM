@@ -1,4 +1,5 @@
-﻿using Epic3;
+﻿using Cysharp.Threading.Tasks;
+using Epic3;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -18,10 +19,16 @@ namespace BlueMarble
 
         public TileState State { get; private set; } = new(); // 타일 상태
 
+        private ITileEffect effect;
+
         public void Initialize(TileDef def, BoardSpaceDef spaceDef)
         {
             Def = def;
             SpaceDef = spaceDef;
+
+            State.Clear();
+
+            effect = TileEffectFactory.Create(SpaceDef.EffectType);
         }
 
         public void UpdateVisuals()
@@ -29,6 +36,11 @@ namespace BlueMarble
             AreaName.SetText(SpaceDef.Name);
             AreaIconRenderer.sprite = SpaceDef.Icon;
             if (RegionRenderer != null) RegionRenderer.color = SpaceDef.Color;
+        }
+
+        public async UniTask ExecuteEffect(string playerId)
+        {
+            await effect.Apply(playerId, this);
         }
     }
 }
