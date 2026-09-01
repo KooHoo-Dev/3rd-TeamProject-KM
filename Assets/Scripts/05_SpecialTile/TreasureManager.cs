@@ -1,13 +1,18 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 namespace BlueMarble
 {
-  
-    public class TreasureService
+    /// <summary>
+    /// E5 보물창고 효과를 처리하는 매니저.
+    /// DropService(가중 랜덤 뽑기)와 InventoryManager(지급)를 연결한다.
+    /// TreasureEffect에서 Instance로 호출한다.
+    /// </summary>
+    public class TreasureManager
     {
-        public static TreasureService Instance { get; } = new TreasureService();
+        public static TreasureManager Instance { get; } = new TreasureManager();
 
-        private TreasureService()
+        private TreasureManager()
         {
         }
 
@@ -16,8 +21,7 @@ namespace BlueMarble
         /// 인벤토리가 가득 찬 경우 InventoryManager가 자동으로 교체 대기 상태로 전환한다.
         /// </summary>
         /// <param name="playerId">지급 대상 플레이어 (현재는 로그용, 추후 플레이어별 인벤토리 분리 시 사용)</param>
-        /// <returns>지급을 시도한 장비 정의</returns>
-        public EquipmentDef Grant(string playerId)
+        public async UniTask GrantAsync(string playerId)
         {
             EquipmentDef def = DropService.DrawEquipment(DropType.Treasure);
 
@@ -25,15 +29,15 @@ namespace BlueMarble
 
             if (added)
             {
-                Debug.Log($"[TreasureService] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득");
+                Debug.Log($"[TreasureManager] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득");
             }
             else
             {
-                Debug.Log($"[TreasureService] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득, " +
+                Debug.Log($"[TreasureManager] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득, " +
                           "인벤토리가 가득 차서 교체 대기 상태입니다.");
             }
 
-            return def;
+            await UniTask.CompletedTask;
         }
     }
 }

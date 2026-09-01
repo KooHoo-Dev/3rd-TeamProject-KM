@@ -42,8 +42,8 @@ namespace BlueMarble
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
-            //TreasureService.Instance.Grant(playerId);
-            await UniTask.CompletedTask;
+            TreasureManager treasure = TreasureManager.Instance;
+            await treasure.GrantAsync(playerId);
         } 
     }
 
