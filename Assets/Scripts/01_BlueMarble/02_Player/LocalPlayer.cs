@@ -9,7 +9,9 @@ public interface IPlayer
 {
     string Id { get; }
     Vector3 Position { get; }
-    
+
+    int ActionDisabledTurnCount { get; set; }
+
     UniTask<Tile> MoveNext();
 }
 
@@ -25,6 +27,7 @@ namespace BlueMarble
         
         [field: Title("States")]
         [field: ShowInInspector, ReadOnly] public int CurrentTileIndex { get; private set; }
+        [field: ShowInInspector, ReadOnly] public int ActionDisabledTurnCount { get; set; } = 0;
 
         public Vector3 Position => transform.position;
         
@@ -62,6 +65,15 @@ namespace BlueMarble
                 .ToUniTask(TweenCancelBehaviour.Complete);
 
             return goal;
+        }
+
+        public async UniTask<Tile> MoveTo(Tile goal)
+        {
+            while (true)
+            {
+                Tile current = await MoveNext();
+                if (current == goal) return current;
+            }
         }
     }
 }
