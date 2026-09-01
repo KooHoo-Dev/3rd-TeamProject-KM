@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Sirenix.OdinInspector;
+using UnityEngine;
 
 namespace Jay
 {
@@ -8,6 +9,9 @@ namespace Jay
         private static readonly object lockObj = new object();
         private static bool applicationIsQuitting = false;
         private static bool isInitialized = false;
+        
+        [Title("Singleton")]
+        [SerializeField] private bool isDontDestroyOnLoad = true;
 
         public static bool IsInitialized => isInitialized && instance != null;
         
@@ -36,10 +40,14 @@ namespace Jay
                     {
                         var singletonObject = new GameObject(typeof(T).Name);
                         instance = singletonObject.AddComponent<T>();
-                        DontDestroyOnLoad(singletonObject);
                     }
+                    
+                    SingletonBase<T> singleton = instance as SingletonBase<T>;
 
-                    (instance as SingletonBase<T>)?.OnInitialize();
+                    if (singleton != null && singleton.isDontDestroyOnLoad)
+                        DontDestroyOnLoad(singleton.gameObject);
+
+                    singleton?.OnInitialize();
                     isInitialized = true;
 
                     return instance;
@@ -52,7 +60,9 @@ namespace Jay
             if (instance == null)
             {
                 instance = this as T;
-                DontDestroyOnLoad(gameObject);
+                
+                if (isDontDestroyOnLoad)
+                    DontDestroyOnLoad(gameObject);
 
                 OnInitialize();
                 isInitialized = true;
@@ -106,7 +116,7 @@ namespace Jay
 #if UNITY_EDITOR
                 DestroyImmediate((instance as MonoBehaviour)?.gameObject);
 #else
-                Destroy((_instance as MonoBehaviour)?.gameObject);
+                Destroy((instance as MonoBehaviour)?.gameObject);
 #endif
                 instance = null;
                 isInitialized = false;
