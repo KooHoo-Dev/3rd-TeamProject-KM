@@ -12,7 +12,7 @@ namespace BlueMarble
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
-            PropertyManager.Instance.RequestPurchaseTile(playerId, tile);
+            _ = PropertyManager.Instance.RequestPurchase(playerId, tile);
             await UniTask.CompletedTask;
         }
     }
