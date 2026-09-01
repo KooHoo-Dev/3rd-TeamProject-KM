@@ -17,7 +17,7 @@ namespace BlueMarble
 {
     public class LocalPlayer : SingletonBase<LocalPlayer>, IPlayer
     {
-        [field: SerializeField] public string Id { get; private set; }
+        [field: ShowInInspector, ReadOnly] public string Id { get; private set; }
 
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
@@ -29,8 +29,7 @@ namespace BlueMarble
         public Vector3 Position => transform.position;
         
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
-
-        [Button]
+        
         public void Initialize(string id)
         {
             Id = id;
