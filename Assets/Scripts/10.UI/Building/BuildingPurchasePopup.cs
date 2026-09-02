@@ -10,26 +10,33 @@ using UnityEditor.SceneManagement;
 namespace BlueMarble
 {
     /// <summary>
-    /// "태엽 북돌이" 건물 구매 팝업 화면을 코드만으로 조립하는 에디터 툴.
+    /// 영토 구매 팝업 화면을 코드만으로 조립하는 에디터 툴.
+    /// PropertyManager(Epic3)의 OnShowPurchaseUI(TileState, int) / SubmitPurchaseDecision(bool,bool,bool)
+    /// 구조에 맞춰 "영토(필수) / 건물(선택) / 랜드마크(선택)" 3항목 구조로 설계했다.
     /// 빈 GameObject에 붙인 뒤 컴포넌트 우클릭 메뉴로 실행한다.
-    /// 게임 로직은 전혀 연결하지 않으며, 화면(뼈대)만 생성한다.
+    /// 게임 로직은 전혀 연결하지 않으며, 화면(뼈대)만 생성한다. (연동은 BuildingPurchasePopupController가 담당)
     /// </summary>
     public class BuildingPurchasePopup : MonoBehaviour
     {
 #if UNITY_EDITOR
 
-        #region 필드 (인스펙터에서 교체할 스프라이트 슬롯)
+        #region 필드 (인스펙터에서 채울 것)
 
         [Header("공통")]
         [SerializeField] private TMP_FontAsset font; // 모든 텍스트에 공통 적용할 한글 폰트
 
-        [Header("아이콘 스프라이트 슬롯 (직접 채워 넣을 것)")]
-        [SerializeField] private Sprite closeIconSprite;   // 닫기(X) 버튼 아이콘
-        [SerializeField] private Sprite landIconSprite;     // 땅값 카드 아이콘
-        [SerializeField] private Sprite floor1IconSprite;   // 1층 별장 카드 아이콘
-        [SerializeField] private Sprite floor2IconSprite;   // 2층 별장 카드 아이콘
-        [SerializeField] private Sprite floor3IconSprite;   // 3층 별장 카드 아이콘
-        [SerializeField] private Sprite coinIconSprite;     // 구매 버튼 코인 아이콘
+        [Header("아이콘 스프라이트 슬롯")]
+        [SerializeField] private Sprite closeIconSprite; // 닫기(X) 버튼 아이콘
+        [SerializeField] private Sprite tileIconSprite;   // 영토 카드 아이콘
+        [SerializeField] private Sprite coinIconSprite;   // 구매 버튼 코인 아이콘
+
+        [Header("건물 / 랜드마크 아이콘 프리팹 (스프라이트 아님 - 직접 만든 프리팹 연결)")]
+        [SerializeField] private GameObject buildingIconPrefab;  // 건물 카드에 인스턴스로 배치
+        [SerializeField] private GameObject landmarkIconPrefab;  // 랜드마크 카드에 인스턴스로 배치
+
+        [Header("체크박스 체크 표시 스프라이트 슬롯")]
+        [SerializeField] private Sprite buildingCheckIconSprite;  // 건물 카드 체크박스 표시
+        [SerializeField] private Sprite landmarkCheckIconSprite;  // 랜드마크 카드 체크박스 표시
 
         private const string RootName = "BuildingPurchasePopup";
 
@@ -68,12 +75,10 @@ namespace BlueMarble
 
             CreateTitleBar(popupFrame);
             CreateCardArea(popupFrame);
-            CreateCostInfoArea(popupFrame);
             CreatePurchaseButton(popupFrame);
-            CreateTollRow(popupFrame);
 
             EditorSceneManager.MarkSceneDirty(gameObject.scene);
-            Debug.Log($"[{RootName}] 생성 완료.");
+            Debug.Log($"[{RootName}] 생성 완료. 실제 데이터 연동은 BuildingPurchasePopupController를 붙여서 진행하세요.");
         }
 
         [ContextMenu("2. Clear UI")]
@@ -199,11 +204,11 @@ namespace BlueMarble
 
         private Transform CreatePopupFrame(Transform canvas)
         {
-            Vector2 frameSize = new Vector2(900f, 800f);
+            Vector2 frameSize = new Vector2(900f, 600f);
 
             GameObject frame = NewPanel("PopupFrame", canvas, frameSize);
             Image img = frame.GetComponent<Image>();
-            img.color = new Color32(0xF3, 0xE3, 0xC0, 0xFF); // 크림색 배경(임시, 나중에 프레임 스프라이트로 교체 가능)
+            img.color = new Color32(0xF3, 0xE3, 0xC0, 0xFF); // 크림색 배경(임시)
 
             RectTransform rect = frame.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -237,10 +242,10 @@ namespace BlueMarble
             TMP_Text titleText = NewText("TitleText", titleBar.transform, "", 40f, TextAlignmentOptions.Center);
             Stretch(titleText.rectTransform, 20f);
 
-            // 닫기 버튼 (배경 색상 블록 + 스프라이트 자리)
+            // 닫기 버튼 (배경 투명 + 스프라이트 아이콘)
             GameObject closeButtonGO = NewUI("CloseButton", popupFrame);
             Image closeBg = closeButtonGO.AddComponent<Image>();
-            closeBg.color = new Color(1f, 1f, 1f, 0f); // 배경은 투명 처리(아이콘만 노출)
+            closeBg.color = new Color(1f, 1f, 1f, 0f);
             Button closeButton = closeButtonGO.AddComponent<Button>();
             closeButton.targetGraphic = closeBg;
 
@@ -253,7 +258,7 @@ namespace BlueMarble
 
             GameObject closeIconGO = NewUI("CloseIcon", closeButtonGO.transform);
             Image closeIcon = closeIconGO.AddComponent<Image>();
-            closeIcon.sprite = closeIconSprite; // 비어있으면 인스펙터에서 채울 것
+            closeIcon.sprite = closeIconSprite;
             closeIcon.color = closeIconSprite == null ? new Color(0.7f, 0.2f, 0.2f, 1f) : Color.white;
             Stretch(closeIconGO.GetComponent<RectTransform>(), 10f);
         }
@@ -261,7 +266,7 @@ namespace BlueMarble
         #endregion
 
 
-        #region 카드 영역
+        #region 카드 영역 (영토 / 건물 / 랜드마크)
 
         private void CreateCardArea(Transform popupFrame)
         {
@@ -281,25 +286,31 @@ namespace BlueMarble
             layout.childForceExpandHeight = true;
             layout.padding = new RectOffset(0, 0, 0, 0);
 
-            CreateCard(cardArea.transform, "Card_Land", "땅값", "필수 건설비", landIconSprite);
-            CreateCard(cardArea.transform, "Card_Floor1", "1층 별장", null, floor1IconSprite);
-            CreateCard(cardArea.transform, "Card_Floor2", "2층 별장", null, floor2IconSprite);
-            CreateCard(cardArea.transform, "Card_Floor3", "3층 별장", null, floor3IconSprite);
+            // 영토: 체크박스 없음(항상 필수) / 건물·랜드마크: 체크박스 있음, 아이콘은 프리팹
+            CreateCard(cardArea.transform, "Card_Tile", "영토", tileIconSprite, null, false, false, null);
+            CreateCard(cardArea.transform, "Card_Building", "건물", null, buildingIconPrefab, true, true, buildingCheckIconSprite);
+            CreateCard(cardArea.transform, "Card_Landmark", "랜드마크", null, landmarkIconPrefab, true, true, landmarkCheckIconSprite);
         }
 
-        private void CreateCard(Transform parent, string name, string headerLabel, string subTag, Sprite iconSprite)
+        /// <summary>
+        /// 카드 하나를 생성한다.
+        /// usePrefabIcon이 true면 iconPrefab을 인스턴스로 배치하고, false면 iconSprite를 Image로 사용한다.
+        /// </summary>
+        private void CreateCard(Transform parent, string name, string headerLabel,
+            Sprite iconSprite, GameObject iconPrefab, bool usePrefabIcon,
+            bool hasCheckbox, Sprite checkIconSprite)
         {
-            GameObject card = NewPanel(name, parent, new Vector2(195f, 300f));
+            GameObject card = NewPanel(name, parent, new Vector2(270f, 300f));
             Image cardBg = card.GetComponent<Image>();
             cardBg.color = new Color32(0xFD, 0xF6, 0xE3, 0xFF);
 
             // 카드 자체는 레이아웃 그룹이 크기를 통제하므로 LayoutElement로 선호 크기만 지정
             LayoutElement layoutElement = card.AddComponent<LayoutElement>();
-            layoutElement.preferredWidth = 195f;
+            layoutElement.preferredWidth = 270f;
             layoutElement.preferredHeight = 300f;
 
             // 헤더 라벨 (상단 고정)
-            TMP_Text header = NewText($"{name}_HeaderText", card.transform, headerLabel, 24f, TextAlignmentOptions.Center);
+            TMP_Text header = NewText($"{name}_HeaderText", card.transform, headerLabel, 26f, TextAlignmentOptions.Center);
             RectTransform headerRect = header.rectTransform;
             headerRect.anchorMin = new Vector2(0f, 1f);
             headerRect.anchorMax = new Vector2(1f, 1f);
@@ -307,26 +318,10 @@ namespace BlueMarble
             headerRect.anchoredPosition = new Vector2(0f, 0f);
             headerRect.sizeDelta = new Vector2(0f, 40f);
 
-            // 서브 태그 (땅값 카드에만 존재)
-            float iconTopOffset = 45f;
-            if (!string.IsNullOrEmpty(subTag))
-            {
-                TMP_Text subTagText = NewText($"{name}_SubTagText", card.transform, subTag, 16f, TextAlignmentOptions.Center);
-                RectTransform subTagRect = subTagText.rectTransform;
-                subTagRect.anchorMin = new Vector2(0f, 1f);
-                subTagRect.anchorMax = new Vector2(1f, 1f);
-                subTagRect.pivot = new Vector2(0.5f, 1f);
-                subTagRect.anchoredPosition = new Vector2(0f, -40f);
-                subTagRect.sizeDelta = new Vector2(0f, 24f);
-                iconTopOffset = 70f;
-            }
+            const float iconTopOffset = 45f;
 
-            // 아이콘 슬롯 (색상 블록 + 스프라이트 자리)
+            // 아이콘 슬롯 (스프라이트 또는 프리팹 인스턴스)
             GameObject iconSlotGO = NewUI($"{name}_IconSlot", card.transform);
-            Image iconImg = iconSlotGO.AddComponent<Image>();
-            iconImg.sprite = iconSprite;
-            iconImg.color = iconSprite == null ? new Color(0.6f, 0.8f, 0.6f, 1f) : Color.white;
-
             RectTransform iconRect = iconSlotGO.GetComponent<RectTransform>();
             iconRect.anchorMin = new Vector2(0.5f, 1f);
             iconRect.anchorMax = new Vector2(0.5f, 1f);
@@ -334,70 +329,68 @@ namespace BlueMarble
             iconRect.anchoredPosition = new Vector2(0f, -iconTopOffset);
             iconRect.sizeDelta = new Vector2(120f, 120f);
 
-            // 가격 텍스트 (하단 고정, 값은 비워둠)
-            TMP_Text priceText = NewText($"{name}_PriceText", card.transform, "", 22f, TextAlignmentOptions.Center);
-            RectTransform priceRect = priceText.rectTransform;
-            priceRect.anchorMin = new Vector2(0f, 0f);
-            priceRect.anchorMax = new Vector2(1f, 0f);
-            priceRect.pivot = new Vector2(0.5f, 0f);
-            priceRect.anchoredPosition = new Vector2(0f, 15f);
-            priceRect.sizeDelta = new Vector2(0f, 36f);
-            priceText.color = new Color32(0xB5, 0x2A, 0x2A, 0xFF);
-        }
+            if (usePrefabIcon)
+            {
+                if (iconPrefab != null)
+                {
+                    // 사용자가 직접 만든 프리팹을 슬롯 안에 인스턴스로 배치
+                    GameObject instance = Instantiate(iconPrefab, iconSlotGO.transform);
+                    instance.name = iconPrefab.name;
+                    Undo.RegisterCreatedObjectUndo(instance, $"Instantiate {name} Icon Prefab");
+                    instance.transform.localPosition = Vector3.zero;
+                    instance.transform.localScale = Vector3.one;
 
-        #endregion
+                    // 프리팹이 UI(RectTransform) 기반이면 슬롯에 꽉 채움
+                    RectTransform instanceRect = instance.GetComponent<RectTransform>();
+                    if (instanceRect != null)
+                    {
+                        Stretch(instanceRect, 0f);
+                    }
+                }
+                else
+                {
+                    // 프리팹이 비어있을 때 자리 표시용 색상 블록
+                    Image placeholder = iconSlotGO.AddComponent<Image>();
+                    placeholder.color = new Color(0.6f, 0.7f, 0.85f, 1f);
+                }
+            }
+            else
+            {
+                Image iconImg = iconSlotGO.AddComponent<Image>();
+                iconImg.sprite = iconSprite;
+                iconImg.color = iconSprite == null ? new Color(0.6f, 0.8f, 0.6f, 1f) : Color.white;
+            }
 
+            // 체크박스 (아이콘 바로 아래, 건물·랜드마크 카드에만 존재)
+            if (hasCheckbox)
+            {
+                float checkboxTopOffset = iconTopOffset + 120f + 10f; // 아이콘 하단에서 10px 여백
 
-        #region 비용 정보 영역
+                GameObject toggleGO = NewUI($"{name}_CheckboxToggle", card.transform);
+                Image toggleBg = toggleGO.AddComponent<Image>();
+                toggleBg.color = new Color32(0xEE, 0xEE, 0xEE, 0xFF); // 배경은 고정 색상 블록(스프라이트 슬롯 없음)
 
-        private void CreateCostInfoArea(Transform popupFrame)
-        {
-            GameObject costArea = NewUI("CostInfoArea", popupFrame);
-            RectTransform areaRect = costArea.GetComponent<RectTransform>();
-            areaRect.anchorMin = new Vector2(0f, 1f);
-            areaRect.anchorMax = new Vector2(1f, 1f);
-            areaRect.pivot = new Vector2(0.5f, 1f);
-            areaRect.anchoredPosition = new Vector2(0f, -450f);
-            areaRect.sizeDelta = new Vector2(-40f, 100f);
+                Toggle toggle = toggleGO.AddComponent<Toggle>();
+                toggle.targetGraphic = toggleBg;
+                toggle.isOn = false; // 초기 상태: 미체크
 
-            VerticalLayoutGroup layout = costArea.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 8f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = true;
+                RectTransform toggleRect = toggleGO.GetComponent<RectTransform>();
+                toggleRect.anchorMin = new Vector2(0.5f, 1f);
+                toggleRect.anchorMax = new Vector2(0.5f, 1f);
+                toggleRect.pivot = new Vector2(0.5f, 1f);
+                toggleRect.anchoredPosition = new Vector2(0f, -checkboxTopOffset);
+                toggleRect.sizeDelta = new Vector2(40f, 40f);
 
-            CreateInfoRow(costArea.transform, "BuildCostRow", "건설 비용");
-            CreateInfoRow(costArea.transform, "DiscountRow", "건설비용할인");
-        }
+                // 체크 표시 (스프라이트 슬롯 - 인스펙터에서 직접 교체 가능)
+                GameObject checkmarkGO = NewUI($"{name}_CheckboxCheckmark", toggleGO.transform);
+                Image checkmarkImg = checkmarkGO.AddComponent<Image>();
+                checkmarkImg.sprite = checkIconSprite;
+                checkmarkImg.color = checkIconSprite == null ? new Color(0.85f, 0.2f, 0.2f, 1f) : Color.white;
+                checkmarkImg.enabled = toggle.isOn; // 초기 상태와 일치(미체크면 숨김)
+                Stretch(checkmarkGO.GetComponent<RectTransform>(), 6f);
 
-        private void CreateInfoRow(Transform parent, string name, string label)
-        {
-            GameObject row = NewUI(name, parent);
-            LayoutElement le = row.AddComponent<LayoutElement>();
-            le.preferredHeight = 40f;
-
-            HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-
-            TMP_Text labelText = NewText($"{name}_LabelText", row.transform, label, 22f, TextAlignmentOptions.Right);
-            labelText.rectTransform.sizeDelta = new Vector2(200f, 40f);
-            LayoutElement labelLE = labelText.gameObject.AddComponent<LayoutElement>();
-            labelLE.preferredWidth = 200f;
-
-            TMP_Text arrowText = NewText($"{name}_ArrowText", row.transform, "->", 22f, TextAlignmentOptions.Center);
-            LayoutElement arrowLE = arrowText.gameObject.AddComponent<LayoutElement>();
-            arrowLE.preferredWidth = 40f;
-
-            // 값 텍스트 (내용은 비워둠)
-            TMP_Text valueText = NewText($"{name}_ValueText", row.transform, "", 22f, TextAlignmentOptions.Left);
-            LayoutElement valueLE = valueText.gameObject.AddComponent<LayoutElement>();
-            valueLE.preferredWidth = 300f;
+                toggle.graphic = checkmarkImg;
+            }
         }
 
         #endregion
@@ -418,7 +411,7 @@ namespace BlueMarble
             rect.anchorMin = new Vector2(0f, 1f);
             rect.anchorMax = new Vector2(1f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -570f);
+            rect.anchoredPosition = new Vector2(0f, -450f);
             rect.sizeDelta = new Vector2(-40f, 90f);
 
             // "구매" 라벨 (좌측)
@@ -444,7 +437,7 @@ namespace BlueMarble
             coinRect.anchoredPosition = new Vector2(-160f, 0f);
             coinRect.sizeDelta = new Vector2(44f, 44f);
 
-            // 가격 텍스트 (우측, 값은 비워둠)
+            // 가격 텍스트 (우측, 값은 비워둠 - Controller가 tilePrice로 채움)
             TMP_Text priceText = NewText("PurchaseButton_PriceText", buttonGO.transform, "", 28f, TextAlignmentOptions.Right);
             priceText.color = Color.white;
             RectTransform priceRect = priceText.rectTransform;
@@ -453,43 +446,6 @@ namespace BlueMarble
             priceRect.pivot = new Vector2(1f, 0.5f);
             priceRect.anchoredPosition = new Vector2(-30f, 0f);
             priceRect.sizeDelta = new Vector2(200f, 0f);
-        }
-
-        #endregion
-
-
-        #region 통행료 영역
-
-        private void CreateTollRow(Transform popupFrame)
-        {
-            GameObject row = NewUI("TollRow", popupFrame);
-            RectTransform rect = row.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -680f);
-            rect.sizeDelta = new Vector2(-40f, 50f);
-
-            HorizontalLayoutGroup layout = row.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
-
-            TMP_Text labelText = NewText("TollRow_LabelText", row.transform, "통행료", 22f, TextAlignmentOptions.Right);
-            LayoutElement labelLE = labelText.gameObject.AddComponent<LayoutElement>();
-            labelLE.preferredWidth = 200f;
-
-            TMP_Text arrowText = NewText("TollRow_ArrowText", row.transform, "->", 22f, TextAlignmentOptions.Center);
-            LayoutElement arrowLE = arrowText.gameObject.AddComponent<LayoutElement>();
-            arrowLE.preferredWidth = 40f;
-
-            // 값 텍스트 (내용은 비워둠)
-            TMP_Text valueText = NewText("TollRow_ValueText", row.transform, "", 22f, TextAlignmentOptions.Left);
-            LayoutElement valueLE = valueText.gameObject.AddComponent<LayoutElement>();
-            valueLE.preferredWidth = 300f;
         }
 
         #endregion
