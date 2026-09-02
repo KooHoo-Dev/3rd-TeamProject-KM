@@ -1,6 +1,8 @@
-﻿using BlueMarble;
+﻿using System;
+using BlueMarble;
 using Jay;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 namespace Epic3
 {
@@ -8,55 +10,44 @@ namespace Epic3
     {
         public TerritoryManager territoryManager;
         private BlueMarbleWorld worldBoard => BlueMarbleWorld.Instance;
-        
-        // [SerializeField] TerritoryUI territoryUI;
 
-        public void RequestPurchaseTile(string ownerId, Tile tile)
+        // UI에서 구독할 이벤트 함수
+        public event Action<TileState, int> OnShowPurchaseUI;
+
+        // UI에서 체크한 값을 받아온다
+        private UniTaskCompletionSource<(bool buyTile, bool buyBuilding, bool buyLandmark)> tcs;
+
+        public async UniTask RequestPurchase(string ownerId, Tile tile)
         {
-            int tileIndex = GetTileIndex(tile);
+            Tile targetTile = worldBoard.Board.GetTile(tile.transform.position);
+            int tilePrice = targetTile.SpaceDef.Price;
+            TileState state = targetTile.State;
 
-            if (tileIndex == -1)
-            {
-                Debug.LogError("타일 인덱스를 찾을 수 없습니다.");
-                return;
-            }
+            if (state.IsOccupied && state.OwnerId != ownerId) return;
+            if (state.IsOccupied && state.HasLandMark) return;
+            
+            tcs = new UniTaskCompletionSource<(bool, bool, bool)>();
 
-            TileState currentTileState = territoryManager.GetTileState(tileIndex);
+            // UI 팝업을 띄우라고 이벤트 알림
+            OnShowPurchaseUI?.Invoke(state, tilePrice);
 
-            if (currentTileState.IsOccupied == false)
-            {
-                Debug.Log("빈 땅입니다. 영토 구매 UI를 띄우세요.");
-                territoryManager.PurchaseTile(ownerId, tileIndex);
-            }
-            else if (currentTileState.OwnerId != ownerId)
-            {
-                Debug.Log($"남의 땅입니다 (소유자: {currentTileState.OwnerId}). 통행료 정산 및 야차 신청으로 넘어갑니다.");
-                territoryManager.PayToll(ownerId, tileIndex);
-            }
-            else 
-            {
-                Debug.Log("내 땅입니다. 건물 또는 랜드마크 건설 UI를 띄우세요.");
-                territoryManager.PurchaseLandMark(ownerId, tileIndex);
-                territoryManager.PurchaseBuilding(ownerId, tileIndex); 
-            }
+            // UI 쪽에서 스위치를 누를 때까지 여기서 대기
+            var decision = await tcs.Task;
+
+            // UI에서 넘어온 결과에 따라 건설 진행
+            if (decision.buyTile) territoryManager.PurchaseTile(targetTile, tilePrice);
+            if (decision.buyBuilding) territoryManager.PurchaseBuilding(targetTile, tilePrice);
+            if (decision.buyLandmark) territoryManager.PurchaseLandMark(targetTile, tilePrice);
         }
 
-        private int GetTileIndex(Tile targetTile)
+        // 구매/취소 버튼을 눌렀을 때 호출할 함수
+        public void SubmitPurchaseDecision(bool buyTile, bool buyBuilding, bool buyLandmark)
         {
-            if (worldBoard.IsBoardReady == false) return -1;
-
-            int maxIndex = worldBoard.Board.MaxTileIndex;
-
-            worldBoard.Board.TryGetTileIndex(targetTile.transform.position, out int index);
-            
-            for (int i = 0; i <= maxIndex; i++)
+            if (tcs != null)
             {
-                if (worldBoard.Board.GetTile(i) == targetTile)
-                {
-                    return i;
-                }
+                tcs.TrySetResult((buyTile, buyBuilding, buyLandmark));
+                tcs = null;
             }
-            return -1;
         }
     }
 }

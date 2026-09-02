@@ -22,45 +22,6 @@ namespace Epic3
             return tileStates[tileIndex];
         }
 
-        public void OnPlayerArrived(IPlayer player)
-        {
-            if (!worldBoard.IsBoardReady) return;
-
-            if (worldBoard.Board.TryGetTileIndex(player.Position, out int tileIndex) == false)
-            {
-                Debug.LogError("플레이어가 보드 밖에 있습니다!");
-                return;
-            }
-
-            TileState currentTileState = GetTileState(tileIndex);
-            Tile currentTile = worldBoard.Board.GetTile(tileIndex);
-
-            if (currentTile.Def.Type != TileType.Property)
-            {
-                Debug.Log($"이곳은 일반 영토가 아닌 특수 타일({currentTile.Def.Type})입니다.");
-                return;
-            }
-
-            string playerId = player.Id;
-
-            if (currentTileState.IsOccupied == false)
-            {
-                Debug.Log("빈 땅입니다. 영토 구매 UI를 띄우세요.");
-                PurchaseTile(playerId, tileIndex);
-            }
-            else if (currentTileState.OwnerId != playerId)
-            {
-                Debug.Log($"남의 땅입니다 (소유자: {currentTileState.OwnerId}). 통행료 정산 및 야차 신청으로 넘어갑니다.");
-                PayToll(playerId, tileIndex);
-            }
-            else 
-            {
-                Debug.Log("내 땅입니다. 건물 또는 랜드마크 건설 UI를 띄우세요.");
-                PurchaseLandMark(playerId, tileIndex);
-                PurchaseBuilding(playerId, tileIndex); 
-            }
-        }
-
         // 지어진 건물, 랜드마크의 가격까지 포함시켜야함
         public int CalculateTotalAssets(string ownerId)
         {
@@ -74,82 +35,55 @@ namespace Epic3
             return  totalAssets;
         }
         
-        // 대대적인 공사가 필요. 이제는 tile의 Index가 아닌 그냥 Tile을 받아오면 됨.
-        // TileEffect 보셈
-        public void PurchaseTile(string ownerId, int tileIndex)
+
+        public void PurchaseTile(Tile tile, int tilePrice)
         {
-            TileState currentTileState = GetTileState(tileIndex);
-
-            int tilePrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price;
-            
-            if(currentTileState.IsOccupied)
-            {
-                Debug.Log("이미 주인이 있습니다. 대전 신청으로 넘어갑니다");
-                return;
-            }
-
             if (Coin < tilePrice)
             {
                 Debug.Log($"[Tile] :{tilePrice}원 [Coin] :{Coin} 돈 부족");
                 return;
             }
-            
+
             Coin -= tilePrice;
             Debug.Log($"[Tile] 구매 완료. 남은 돈: {Coin}");
-            currentTileState.OwnerId = ownerId;
         }
 
-        public void PurchaseBuilding(string ownerId, int tileIndex)
+        public void PurchaseBuilding(Tile tile, int tilePrice)
         {
-            TileState currentTileState = GetTileState(tileIndex);
-            
-            int buildingPrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price * 2;
-            
-            if (currentTileState.OwnerId == ownerId && currentTileState.HasBuilding == false)
+            if (Coin < tilePrice * 2)
             {
-                if (Coin < buildingPrice)
-                {
-                    Debug.Log($"[Building] :{buildingPrice}원 [Coin] :{Coin} 돈 부족");
-                    return;
-                }
-                Coin -= buildingPrice;
-                currentTileState.HasBuilding = true;
-                Debug.Log($"건물 건설 완료. 남은 돈: {Coin}");
+                Debug.Log($"[Building]: {tilePrice*2}원 [Coin]: {Coin} 부족");
+                return;
             }
+            
+            Coin -= tilePrice*2;
+            Debug.Log($"[Building] 구매 완료. 남은 돈: {Coin}");
         }
 
-        public void PurchaseLandMark(string ownerId, int tileIndex)
+        public void PurchaseLandMark(Tile tile, int tilePrice)
         {
-            TileState currentTileState = GetTileState(tileIndex);
-            
-            int landMarkPrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price * 3;
-            
-            if (currentTileState.OwnerId == ownerId && currentTileState.HasBuilding && currentTileState.HasLandMark == false)
+            if (Coin < tilePrice * 3)
             {
-                if (Coin < landMarkPrice)
-                {
-                    Debug.Log($"[LandMark] :{landMarkPrice}원 [Coin] :{Coin} 돈 부족");
-                    return;
-                }
-                Coin -= landMarkPrice;
-                currentTileState.HasLandMark = true;
-                Debug.Log($"랜드마크 건설 완료. 남은 돈: {Coin}");
+                Debug.Log($"[LandMark]: {tilePrice*2}원 [Coin]: {Coin} 부족");
+                return;
             }
+            Coin -= tilePrice*3;
+            Debug.Log($"[LandMark] 구매 완료. 남은 돈: {Coin}");
         }
 
-        public void PayToll(string myPlayerId, int tileIndex)
+        public void PayToll(string myPlayerId, Tile tile)
         {
-            TileState currentTileState = GetTileState(tileIndex);
+            Tile currentTile = worldBoard.Board.GetTile(tile.transform.position);            
             
-            int tilePrice = worldBoard.Board.GetTile(tileIndex).SpaceDef.Price;
+            int tilePrice = currentTile.SpaceDef.Price;
             
-            if (currentTileState.IsOccupied == false) return;
-            if (currentTileState.OwnerId == myPlayerId) return;
+            if (currentTile.State.IsOccupied == false) return;
+            if (currentTile.State.OwnerId == myPlayerId) return;
             
             int tollAmount = tilePrice;
 
-            if (currentTileState.HasBuilding) tollAmount += tilePrice * 2;
-            if (currentTileState.HasLandMark) tollAmount += tilePrice * 3;
+            if (currentTile.State.HasBuilding) tollAmount += tilePrice * 2;
+            if (currentTile.State.HasLandMark) tollAmount += tilePrice * 3;
 
             if (Coin < tollAmount)
             {
