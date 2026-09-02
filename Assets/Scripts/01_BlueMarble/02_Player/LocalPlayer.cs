@@ -13,6 +13,7 @@ public interface IPlayer
     int ActionDisabledTurnCount { get; set; }
 
     UniTask<Tile> MoveNext();
+    UniTask<Tile> MoveTo(Tile goal);
 }
 
 namespace BlueMarble

@@ -7,7 +7,7 @@
         public string Description;
         public string FlavorText;
         public string IconKey;
-        public string Type;
+        public string Pattern;
         public string Scope;
         public int GoldAmount;
         public int DropTableId;

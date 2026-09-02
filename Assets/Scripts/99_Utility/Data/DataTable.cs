@@ -13,6 +13,7 @@ namespace Utility.Data
         public int Count => defs.Count;
         
         public Def Get(int id) => defs[id];
+        public IReadOnlyCollection<int> GetIds() => defs.Keys;
         public IReadOnlyCollection<Def> GetDefs() => defs.Values;
 
         public abstract UniTask LoadAsync();
