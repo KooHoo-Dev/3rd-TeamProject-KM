@@ -11,7 +11,7 @@ namespace BlueMarble
 
     public class PropertyEffect : ITileEffect
     {
-        public UniTask Apply(string playerId, Tile tile)
+        public async UniTask Apply(string playerId, Tile tile)
         {
             _ = PropertyManager.Instance.RequestPurchase(playerId, tile);
             await UniTask.CompletedTask;
