@@ -93,6 +93,10 @@ namespace Player
                 
                 IsCastingSkill = false;
             }
+            else
+            {
+                if(eq.RemainingCooldown>0) Debug.Log($"[쿨타임] {eq.Def.Name} 쿨타임 {eq.RemainingCooldown:F1}초");
+            }
         }
     }
 }
