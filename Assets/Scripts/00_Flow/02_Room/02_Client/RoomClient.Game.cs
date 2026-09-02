@@ -20,8 +20,11 @@ namespace BlueMarble.Server
 
         public event Action<User> OnTurnStarted;
         public event Action<User, int, int> OnDiceRolled;
+        public event Action<User, int> OnGoldCardDrawn;
 
         public event Action OnGameEnded;
+
+        public event Action<UserEconomy[]> OnEconomyUpdated;
         
         public IReadOnlyList<string> PlayerIds => playerIds;
 
@@ -30,7 +33,10 @@ namespace BlueMarble.Server
             RegisterHandler<GameStartedMessage>(ProtocolHeader.GAME_STARTED, HandleGameStarted);
             RegisterHandler<TurnStartedMessage>(ProtocolHeader.TURN_STARTED, HandleTurnStarted);
             RegisterHandler<DiceRolledMessage>(ProtocolHeader.DICE_ROLLED, HandleDiceRolled);
+            RegisterHandler<GoldCardDrawnMessage>(ProtocolHeader.GOLD_CARD_DRAWN, HandleGoldCardDrawn);
             RegisterHandler<GameEndedMessage>(ProtocolHeader.GAME_ENDED, HandleGameEnded);
+
+            RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
         }
         
         #region SEND_TO_SERVER
@@ -40,14 +46,23 @@ namespace BlueMarble.Server
             return SendAsync(new SetBoardReadyMessage());
         }
 
-        public UniTask AnnounceDiceAnimationEnded(int turnId)
+        public UniTask AnnounceTurnFinished(int turnId)
         {
-            return SendAsync(new DiceAnimationFinishedMessage { TurnId = turnId });
+            return SendAsync(new TurnFinishedMessage { TurnId = turnId });
         }
 
         public void RequestRollDice(int turnId)
         {
             SendAsync(new RollDiceMessage { TurnId = turnId }).Forget();
+        }
+
+        public void RequestDrawGoldCard(int turnId, int[] cardIds)
+        {
+            SendAsync(new DrawGoldCardMessage
+            {
+                TurnId = turnId,
+                CardIds = cardIds
+            }).Forget();
         }
         
         #endregion
@@ -85,12 +100,29 @@ namespace BlueMarble.Server
                       $"Turn Id: {message.TurnId}");
         }
 
+        private void HandleGoldCardDrawn(GoldCardDrawnMessage message)
+        {
+            if (message.TurnId != TurnId) return;
+            
+            User user = GetUser(message.PlayerId);
+            
+            OnGoldCardDrawn?.Invoke(user, message.CardId);
+            Debug.Log($"[RoomClient] {user.Nickname}({user.Id}) drew gold card: {message.CardId}. " +
+                      $"Turn Id: {message.TurnId}");
+        }
+
         private void HandleGameEnded(GameEndedMessage message)
         {
             CurrentTurnUser = null;
             
             OnGameEnded?.Invoke();
             Debug.Log("[RoomClient] Game ended");
+        }
+
+        private void HandleEconomyUpdated(EconomyUpdatedMessage message)
+        {
+            OnEconomyUpdated?.Invoke(message.Economies);
+            Debug.Log("[RoomClient] Economy updated");
         }
 
         #endregion

@@ -12,8 +12,6 @@ namespace BlueMarble
         
         public override async UniTask LoadAsync()
         {
-            DataManager data = DataManager.Instance;
-            
             defs.Clear();
             List<GoldCardDTO> rows = await GetRows();
 
@@ -23,21 +21,21 @@ namespace BlueMarble
                 
                 int id = dto.Id;
                 string name = dto.Name;
-                string desc = dto.Description;
+                string description = dto.Description;
                 string flavorText = dto.FlavorText;
                 Sprite icon = Resources.Load<Sprite>(dto.IconKey);
 
-                GoldCardType type = Enum.Parse<GoldCardType>(dto.Type);
-                GoldCardScope scope = Enum.Parse<GoldCardScope>(dto.Scope);
+                GoldCardPatternType patternType = Enum.Parse<GoldCardPatternType>(dto.Pattern);
+                GoldCardScopeType scopeType = Enum.Parse<GoldCardScopeType>(dto.Scope);
 
                 int goldAmount = dto.GoldAmount;
                 int dropTableId = dto.DropTableId;
-                BoardSpaceDef spaceDef = data.GetBoardSpaceDef(dto.SpaceId);
+                int spaceId = dto.SpaceId;
 
                 defs[dto.Id] = new GoldCardDef(
-                    id, name, desc, flavorText, icon,
-                    type, scope, 
-                    goldAmount, dropTableId, spaceDef);
+                    id, name, description, flavorText, icon,
+                    patternType, scopeType, 
+                    goldAmount, dropTableId, spaceId);
             }
         }
     }

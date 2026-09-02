@@ -2,7 +2,7 @@
 
 namespace BlueMarble
 {
-    public enum GoldCardType
+    public enum GoldCardPatternType
     {
         GainGold,
         LoseGold,
@@ -11,7 +11,7 @@ namespace BlueMarble
         GoTo,
     }
 
-    public enum GoldCardScope
+    public enum GoldCardScopeType
     {
         Self,
         All,
@@ -27,15 +27,15 @@ namespace BlueMarble
         public string FlavorText { get; private set; }
         public Sprite Icon { get; private set; }
         
-        public GoldCardType Type { get; private set; }
-        public GoldCardScope Scope { get; private set; }
+        public GoldCardPatternType PatternType { get; private set; }
+        public GoldCardScopeType ScopeType { get; private set; }
         
         public int GoldAmount { get; private set; }
         public int DropTableId { get; private set; } // 이건 나중에 수정
-        public BoardSpaceDef SpaceDef { get; private set; }
-        
+        public int SpaceId { get; private set; }
+
         public GoldCardDef(int id, string name, string description, string flavorText, Sprite icon, 
-            GoldCardType type, GoldCardScope scope, int goldAmount, int dropTableId, BoardSpaceDef spaceDef)
+            GoldCardPatternType patternType, GoldCardScopeType scopeType, int goldAmount, int dropTableId, int spaceId)
         {
             Id = id;
             Name = name;
@@ -43,12 +43,12 @@ namespace BlueMarble
             FlavorText = flavorText;
             Icon = icon;
             
-            Type = type;
-            Scope = scope;
+            PatternType = patternType;
+            ScopeType = scopeType;
             
             GoldAmount = goldAmount;
             DropTableId = dropTableId;
-            SpaceDef = spaceDef;
+            SpaceId = spaceId;
         }
     }
 }

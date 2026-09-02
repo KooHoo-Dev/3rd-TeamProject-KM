@@ -56,5 +56,14 @@ namespace BlueMarble
 
             return goal;
         }
+        
+        public async UniTask<Tile> MoveTo(Tile goal)
+        {
+            while (true)
+            {
+                Tile current = await MoveNext();
+                if (current == goal) return current;
+            }
+        }
     }
 }
