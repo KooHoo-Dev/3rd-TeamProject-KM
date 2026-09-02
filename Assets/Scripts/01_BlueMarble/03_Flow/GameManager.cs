@@ -77,15 +77,21 @@ namespace BlueMarble
         private void HandleDiceRolled(User user, int d1, int d2)
         {
             int turnId = Client.TurnId;
-            PlayDicePresentationAsync(user.Id, d1, d2, turnId).Forget();
+            ResolveTurnAsync(user.Id, d1, d2, turnId).Forget();
         }
 
-        private async UniTask PlayDicePresentationAsync(string playerId, int d1, int d2, int turnId)
+        private async UniTaskVoid ResolveTurnAsync(string playerId, int d1, int d2, int turnId)
         {
-            await Turn.ShowDiceResultAsync(playerId, d1, d2);
-            await Client.AnnounceDiceAnimationEnded(turnId);
+            // 1. 주사위 결과 연출
+            await Turn.ShowDiceResultAsync(d1, d2);
+            
+            // 2. 이동 및 타일 효과 처리
+            await Turn.MovePlayerAsync(playerId, d1 + d2);
+            
+            // 4. 현재 클라이언트의 턴이 끝났음을 서버에 보고
+            await Client.AnnounceTurnFinished(turnId);
         }
-
+        
         private void HandleGameEnded()
         {
             Turn.SetInputEnabled(false);

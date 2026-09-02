@@ -27,176 +27,156 @@
     },
     {
       "Id": 5,
-      "TileId": 4,
-      "SpaceId": 29
-    },
-    {
-      "Id": 6,
       "TileId": 0,
       "SpaceId": 4
     },
     {
-      "Id": 7,
+      "Id": 6,
       "TileId": 4,
       "SpaceId": 28
     },
     {
-      "Id": 8,
+      "Id": 7,
       "TileId": 0,
       "SpaceId": 5
     },
     {
-      "Id": 9,
+      "Id": 8,
       "TileId": 0,
       "SpaceId": 6
     },
     {
-      "Id": 10,
+      "Id": 9,
       "TileId": 7,
       "SpaceId": 7
     },
     {
-      "Id": 11,
+      "Id": 10,
       "TileId": 1,
       "SpaceId": 8
     },
     {
-      "Id": 12,
+      "Id": 11,
       "TileId": 6,
       "SpaceId": 28
     },
     {
-      "Id": 13,
+      "Id": 12,
       "TileId": 1,
       "SpaceId": 9
     },
     {
-      "Id": 14,
+      "Id": 13,
       "TileId": 1,
       "SpaceId": 10
     },
     {
-      "Id": 15,
+      "Id": 14,
       "TileId": 6,
       "SpaceId": 29
     },
     {
-      "Id": 16,
+      "Id": 15,
       "TileId": 1,
       "SpaceId": 11
     },
     {
-      "Id": 17,
-      "TileId": 6,
-      "SpaceId": 28
-    },
-    {
-      "Id": 18,
+      "Id": 16,
       "TileId": 1,
       "SpaceId": 12
     },
     {
-      "Id": 19,
+      "Id": 17,
       "TileId": 1,
       "SpaceId": 13
     },
     {
-      "Id": 20,
+      "Id": 18,
       "TileId": 7,
       "SpaceId": 14
     },
     {
-      "Id": 21,
+      "Id": 19,
       "TileId": 2,
       "SpaceId": 15
     },
     {
-      "Id": 22,
+      "Id": 20,
       "TileId": 5,
       "SpaceId": 28
     },
     {
-      "Id": 23,
+      "Id": 21,
       "TileId": 2,
       "SpaceId": 16
     },
     {
-      "Id": 24,
+      "Id": 22,
       "TileId": 2,
       "SpaceId": 17
     },
     {
-      "Id": 25,
-      "TileId": 5,
-      "SpaceId": 29
-    },
-    {
-      "Id": 26,
+      "Id": 23,
       "TileId": 2,
       "SpaceId": 18
     },
     {
-      "Id": 27,
+      "Id": 24,
       "TileId": 2,
       "SpaceId": 19
     },
     {
-      "Id": 28,
+      "Id": 25,
       "TileId": 5,
       "SpaceId": 28
     },
     {
-      "Id": 29,
+      "Id": 26,
       "TileId": 2,
       "SpaceId": 20
     },
     {
-      "Id": 30,
+      "Id": 27,
       "TileId": 7,
       "SpaceId": 21
     },
     {
-      "Id": 31,
+      "Id": 28,
       "TileId": 3,
       "SpaceId": 22
     },
     {
-      "Id": 32,
+      "Id": 29,
       "TileId": 3,
       "SpaceId": 23
     },
     {
-      "Id": 33,
+      "Id": 30,
       "TileId": 6,
       "SpaceId": 28
     },
     {
-      "Id": 34,
+      "Id": 31,
       "TileId": 3,
       "SpaceId": 24
     },
     {
-      "Id": 35,
-      "TileId": 6,
-      "SpaceId": 29
-    },
-    {
-      "Id": 36,
+      "Id": 32,
       "TileId": 3,
       "SpaceId": 25
     },
     {
-      "Id": 37,
+      "Id": 33,
       "TileId": 3,
       "SpaceId": 26
     },
     {
-      "Id": 38,
+      "Id": 34,
       "TileId": 6,
       "SpaceId": 28
     },
     {
-      "Id": 39,
+      "Id": 35,
       "TileId": 3,
       "SpaceId": 27
     }

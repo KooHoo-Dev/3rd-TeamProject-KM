@@ -35,16 +35,10 @@ namespace BlueMarble
                 Tiles.LoadAsync(),
                 BoardSpaces.LoadAsync(),
                 Equipments.LoadAsync(),
-                Drops.LoadAsync()
+                Drops.LoadAsync(),
+                GoldCards.LoadAsync()
             };
             await UniTask.WhenAll(tasks);
-
-            // 위의 데이터들이 필요한 테이블의 경우, 여기에 추가
-            List<UniTask> lateTasks = new()
-            {
-                GoldCards.LoadAsync(),
-            };
-            await UniTask.WhenAll(lateTasks);
         }
 
         public UniTask EnsureDataLoaded() 
@@ -56,8 +50,9 @@ namespace BlueMarble
         public BoardSpaceDef GetBoardSpaceDef(int id) => BoardSpaces.Get(id);
 
         public EquipmentDef GetEquipmentDef(int id) => Equipments.Get(id);
-
         public DropDef GetDropDef(int id) => Drops.Get(id);
+        
+        public GoldCardDef GetGoldCardDef(int id) => GoldCards.Get(id);
 
         #endregion
         
