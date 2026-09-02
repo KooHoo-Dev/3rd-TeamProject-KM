@@ -56,7 +56,7 @@ namespace BlueMarble
         private void HandleTurnStarted(User user)
         {
             bool isMyTurn = user.Id == Client.Me.Id;
-            Turn.SetInputEnabled(isMyTurn);
+            Turn.BeginTurn(isMyTurn);
             
             Debug.Log("[GameManager] " +
                       $"Round {Client.RoundCount}, " +

@@ -1,6 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using UnityEngine;
+using Cysharp.Threading.Tasks;
 using Epic3;
-using UnityEngine;
 
 namespace BlueMarble
 {
@@ -11,10 +11,12 @@ namespace BlueMarble
 
     public class PropertyEffect : ITileEffect
     {
-        public async UniTask Apply(string playerId, Tile tile)
+        public UniTask Apply(string playerId, Tile tile)
         {
-            _ = PropertyManager.Instance.RequestPurchase(playerId, tile);
-            await UniTask.CompletedTask;
+            PropertyManager property = PropertyManager.Instance;
+
+            Debug.Log($"[PropertyEffect] Applying effect to {playerId} on {tile.SpaceDef.Name}");
+            return property.RequestPurchase(playerId, tile);
         }
     }
 

@@ -1,0 +1,74 @@
+﻿using System;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using Jay;
+using Sirenix.OdinInspector;
+using UnityEngine;
+using UnityEngine.UI;
+using Utility;
+
+namespace BlueMarble
+{
+    public class DiceManager : SingletonBase<DiceManager>
+    {
+        [Title("Dices")]
+        [SerializeField] private Dice[] dices;
+
+        [Title("UI")]
+        [SerializeField] private Button rollButton;
+
+        [Title("Settings")]
+        [SerializeField] private float jumpPower = 8f;
+        [SerializeField] private float jumpDuration = 0.5f;
+
+        public event Action OnRollButtonClicked;
+
+        protected override void OnInitialize()
+        {
+            for (int i = 0; i < dices.Length; i++)
+            {
+                dices[i].Initialize();
+                dices[i].SetActive(false);
+            }
+
+            rollButton.gameObject.SetActive(false);
+            rollButton.onClick.AddListener(HandleRollButtonClicked);
+        }
+        
+        public void SetRollButtonActive(bool isActive) => rollButton.gameObject.SetActive(isActive);
+
+        public void ShowForTurn(bool showButton)
+        {
+            Debug.Log($"[DiceManager] ShowForTurn. ShowButton: {showButton}");
+
+            SetActiveDices(true);
+            SetRollButtonActive(showButton);
+        }
+        
+        public async UniTask RollAsync(int d1, int d2)
+        {
+            Sequence r1 = dices[0].CreateRoll(d1, jumpPower, jumpDuration);
+            Sequence r2 = dices[1].CreateRoll(d2, jumpPower, jumpDuration);
+            
+            Sequence sequence = DOTween.Sequence();
+            sequence.Join(r1).Join(r2);
+            
+            await sequence.ToUniTask(TweenCancelBehaviour.Complete);
+            await CustomUniTask.DelaySeconds(1f);
+
+            SetActiveDices(false);
+        }
+
+        private void HandleRollButtonClicked()
+        {
+            SetRollButtonActive(false);
+            OnRollButtonClicked?.Invoke();
+        }
+
+        private void SetActiveDices(bool isActive)
+        {
+            for (int i = 0; i < dices.Length; i++)
+                dices[i].SetActive(isActive);
+        }
+    }
+}
