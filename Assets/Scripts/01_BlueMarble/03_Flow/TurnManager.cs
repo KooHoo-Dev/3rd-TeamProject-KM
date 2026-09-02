@@ -18,32 +18,49 @@ namespace BlueMarble
         public event Action OnDiceRollRequested;
         
         private RoomClient Client => RoomClient.Instance;
+        
+        private DiceManager Dice => DiceManager.Instance;
 
-        private void Update()
+        private void Awake()
         {
-            if (Key.Digit1.GetKeyDown())
-                RequestRollDice(); // 테스트용. 멀티플레이 씬에서는 인스펙터 접근이 안되서...
+            Dice.OnRollButtonClicked += RequestRollDice;
+        }
+
+        private void OnDisable()
+        {
+            Dice.OnRollButtonClicked -= RequestRollDice;
         }
         
-        public void SetInputEnabled(bool enabled) => CanRoll = enabled;
-
-        [Button]
-        public void RequestRollDice()
+        private void RequestRollDice()
         {
             if (CanRoll == false) return;
 
             CanRoll = false;
+            Dice.SetRollButtonActive(false);
+            
             OnDiceRollRequested?.Invoke();
+        }
+
+        public void SetInputEnabled(bool enabled)
+        {
+            CanRoll = enabled;
+            Dice.SetRollButtonActive(enabled);
+        }
+
+        public void BeginTurn(bool isMyTurn)
+        {
+            Debug.Log($"[TurnManager] BeginTurn. IsMyTurn: {isMyTurn}");
+            
+            CanRoll = isMyTurn;
+            Dice.ShowForTurn(isMyTurn);
         }
 
         public async UniTask ShowDiceResultAsync(int d1, int d2)
         {
             CanRoll = false;
-            
-            // 여기에서 주사위 연출 넣으면 됨
-            // EX) await DiceUI.ShowAsync(d1, d2);
+            Dice.SetRollButtonActive(false);
 
-            await UniTask.CompletedTask;
+            await Dice.RollAsync(d1, d2);
         }
         
         public async UniTask MovePlayerAsync(string playerId, int steps)
