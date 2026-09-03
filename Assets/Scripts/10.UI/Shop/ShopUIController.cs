@@ -9,17 +9,17 @@ namespace BlueMarble
 {
     /// <summary>
     /// StoreUIBuilder가 만든 상점 화면(ShopPanel)에 부착해서 사용한다.
-    /// ShopService / IGold / InventoryManager와 실제로 연결해서
+    /// ShopService / InventoryManager와 실제로 연결해서
     /// 목록 표시, 구매, 인벤토리 초과 시 교체 팝업까지 처리한다.
+    /// 골드는 서버가 관리하는 EconomyManager를 직접 조회/차감한다 (IGold 어댑터를 거치지 않는다).
     ///
     /// 사용 순서:
     /// 1. StoreUIBuilder로 "Store UI"를 먼저 빌드한다.
     /// 2. "ShopPanel" 오브젝트에 이 컴포넌트를 붙인다.
-    /// 3. 턴/게임 매니저 쪽에서 Init(gold, inventory)를 한 번 호출해서 의존성을 주입한다.
-    ///    (또는 테스트용으로 컴포넌트 우클릭 → "테스트용 더미 데이터로 초기화")
+    /// 3. ShopManager 등에서 OpenShopAsync(playerId)를 호출하면 자동으로 초기화된다.
     /// </summary>
     [DisallowMultipleComponent] // 실수로 같은 오브젝트에 이 컴포넌트를 두 개 붙이는 것을 막는다 (참조가 꼬이기 쉬움).
-    public class ShopUIController : MonoBehaviour, IShopOpener
+    public class ShopUIController : MonoBehaviour
     {
         #region 카드 참조 캐시용 구조체
 
@@ -55,9 +55,9 @@ namespace BlueMarble
         #region 필드
 
         [Header("의존성 (Init으로 주입됨)")]
-        // 아래 세 개는 인스펙터에 노출하지 않는다 - 반드시 Init()을 통해서만 값이 채워져야 하기 때문.
-        private ShopService shopService;   // 상점 목록 조회 / 구매 처리를 담당하는 순수 C# 서비스 클래스
-        private IGold gold;                 // 이 상점을 이용 중인 플레이어의 골드 (인터페이스라 Mock으로도 테스트 가능)
+        // 아래 두 개는 인스펙터에 노출하지 않는다 - 반드시 Init()을 통해서만 값이 채워져야 하기 때문.
+        private ShopService shopService;    // 상점 목록 조회 / 구매 처리를 담당하는 순수 C# 서비스 클래스
+        private string currentPlayerId;     // 지금 이 상점을 이용 중인 플레이어의 ID (EconomyManager 조회용)
         private InventoryManager inventory; // 이 상점을 이용 중인 플레이어의 인벤토리
 
         [Header("씬 참조 - 비워두면 이름으로 자동 탐색")]
@@ -76,29 +76,24 @@ namespace BlueMarble
 
         // 상점 카드 5개, 인벤토리 슬롯 5개의 캐싱된 참조 목록.
         // CacheCardRefs() / CacheInventorySlotRefs()에서 Awake 시점에 한 번만 채워진다.
-        private readonly List<ShopCardRefs> _cards = new List<ShopCardRefs>();
-        private readonly List<InventorySlotRefs> _inventorySlots = new List<InventorySlotRefs>();
-
-        // 테스트용 더미 초기화(InitWithDummyData)에서 쓰는 인벤토리 싱글턴 참조.
-        // 실제 게임 플레이에서는 Init()으로 주입되는 'inventory' 필드를 쓰고, 이 필드는 테스트 전용이다.
-        private InventoryManager myinventory = InventoryManager.Instance;
+        private readonly List<ShopCardRefs> cards = new List<ShopCardRefs>();
+        private readonly List<InventorySlotRefs> inventorySlots = new List<InventorySlotRefs>();
 
         // 인벤토리 칸(차있는 칸)을 클릭했을 때 뜨는 "교체하시겠습니까?" 팝업.
         // 씬에 이미 있으면 그걸 재사용하고, 없으면 런타임에 직접 만든다 (SlotReplaceConfirmPopup 내부 로직).
-        private SlotReplaceConfirmPopup _slotReplacePopup;
+        private SlotReplaceConfirmPopup slotReplacePopup;
 
         #endregion
 
         #region 초기화
 
         /// <summary>
-        /// 외부(턴/게임 매니저 등 실제 플레이어 상태를 들고 있는 쪽)에서
-        /// 이 상점이 사용할 골드/인벤토리를 한 번 주입한다.
+        /// 외부(ShopManager 등)에서 이 상점을 이용할 플레이어 ID와 인벤토리를 한 번 주입한다.
         /// 이미 상점이 열려있는 상태(activeInHierarchy)에서 호출되면, 화면도 바로 최신화한다.
         /// </summary>
-        public void Init(IGold playerGold, InventoryManager playerInventory)
+        public void Init(string playerId, InventoryManager playerInventory)
         {
-            gold = playerGold;
+            currentPlayerId = playerId;
             inventory = playerInventory;
             shopService ??= new ShopService(); // 아직 안 만들어졌으면 여기서 한 번만 생성 (널 병합 대입 연산자)
 
@@ -107,13 +102,6 @@ namespace BlueMarble
                 RefreshAll();
             }
         }
-        
-        //골드 500, 빈 인벤토리로 즉시 Init을 호출해준다
-         [ContextMenu("테스트용 더미 데이터로 초기화")]
-        private void InitWithDummyData()
-         {
-            Init(new Gold(500), myinventory);
-         }
 
         /// <summary>
         /// 씬이 로드될 때 딱 한 번 실행된다 (오브젝트가 비활성 상태여도 실행됨).
@@ -125,7 +113,7 @@ namespace BlueMarble
             CacheSceneReferences();   // itemListArea / currentGoldText / inventoryPanelGo 자동 탐색
             CacheCardRefs();          // 상점 카드 5개 참조 캐싱 + 호버 툴팁 연결
             CacheInventorySlotRefs(); // 인벤토리 슬롯 5개 참조 캐싱 + 클릭 이벤트 연결
-            _slotReplacePopup = new SlotReplaceConfirmPopup(transform.parent); // 교체 확인 팝업 준비
+            slotReplacePopup = new SlotReplaceConfirmPopup(transform.parent); // 교체 확인 팝업 준비
         }
 
         /// <summary>
@@ -134,7 +122,7 @@ namespace BlueMarble
         /// </summary>
         private void OnEnable()
         {
-            if (gold != null && inventory != null)
+            if (!string.IsNullOrEmpty(currentPlayerId) && inventory != null)
             {
                 RefreshAll(); // 상점 목록/골드/인벤토리를 전부 최신 상태로 다시 그린다.
             }
@@ -147,21 +135,20 @@ namespace BlueMarble
         /// </summary>
         private void OnDisable()
         {
-            _shopClosedTcs?.TrySetResult(); // 대기 중인 태스크가 있으면 완료 처리 (없으면 null이라 안전하게 무시됨)
-            _shopClosedTcs = null;
+            shopClosedTcs?.TrySetResult(); // 대기 중인 태스크가 있으면 완료 처리 (없으면 null이라 안전하게 무시됨)
+            shopClosedTcs = null;
         }
 
         #endregion
 
-        #region IShopOpener 구현
+        #region 상점 열기 / 닫기 진입점
 
-        // SpecialTileService가 상점을 열고 "닫힐 때까지" 기다리기 위해 쓰는 완료 신호.
+        // SpecialTileService(ShopEffect 경유)가 상점을 열고 "닫힐 때까지" 기다리기 위해 쓰는 완료 신호.
         // OpenShopAsync에서 새로 만들고, OnDisable에서 완료시킨다.
-        private UniTaskCompletionSource _shopClosedTcs;
+        private UniTaskCompletionSource shopClosedTcs;
 
         /// <summary>
-        /// IShopOpener 인터페이스 구현체.
-        /// SpecialTileService 같은 게임 로직 쪽에서 "플레이어가 상점 타일에 도착/통과했다"는
+        /// ShopManager 등 게임 로직 쪽에서 "플레이어가 상점 타일에 도착/통과했다"는
         /// 이벤트가 발생했을 때 이 메서드를 호출한다.
         ///
         /// 동작: ShopPanel 전체(헤더+아이템목록+인벤토리)를 한 번에 활성화하고,
@@ -171,15 +158,16 @@ namespace BlueMarble
         /// </summary>
         public UniTask OpenShopAsync(string playerId)
         {
-            // TODO: 지금은 Init된 gold/inventory를 그대로 쓴다 (플레이어가 한 명이라는 전제).
-            // 실제 멀티플레이에서는 playerId로 해당 플레이어의 gold/inventory를 찾아서
-            // Init을 다시 호출하는 등의 라우팅 처리가 추가로 필요할 수 있다.
+            // 골드는 이제 EconomyManager를 화면단(RefreshGoldText/OnPurchaseClicked)에서 직접 조회한다.
+            // 여기서는 playerId만 기억해두면 된다.
+            Init(playerId, InventoryManager.Instance);
+
             Debug.Log($"[ShopUIController] {playerId}: 상점 오픈 (게임 로직에서 호출됨)");
 
-            _shopClosedTcs = new UniTaskCompletionSource(); // 새 "닫힘 대기" 신호 생성
+            shopClosedTcs = new UniTaskCompletionSource(); // 새 "닫힘 대기" 신호 생성
             gameObject.SetActive(true);                     // ShopPanel 활성화 -> OnEnable에서 화면 갱신됨
 
-            return _shopClosedTcs.Task; // 호출한 쪽은 이 Task를 await해서 "닫힐 때까지" 기다리게 된다.
+            return shopClosedTcs.Task; // 호출한 쪽은 이 Task를 await해서 "닫힐 때까지" 기다리게 된다.
         }
 
         #endregion
@@ -238,7 +226,7 @@ namespace BlueMarble
         /// </summary>
         private void CacheCardRefs()
         {
-            _cards.Clear();
+            cards.Clear();
             if (itemListArea == null) return;
 
             for (int i = 0; i < itemListArea.childCount; i++)
@@ -259,7 +247,7 @@ namespace BlueMarble
                     durabilityText = card.Find("TooltipPanel/DurabilityText")?.GetComponent<TMP_Text>(),
                 };
 
-                _cards.Add(refs);
+                cards.Add(refs);
                 EnsureCardHoverTooltip(refs); // 이 카드에 마우스 호버 이벤트를 연결
             }
         }
@@ -303,7 +291,7 @@ namespace BlueMarble
         /// </summary>
         private void CacheInventorySlotRefs()
         {
-            _inventorySlots.Clear();
+            inventorySlots.Clear();
             if (inventoryPanelGo == null) return;
 
             Transform grid = inventoryPanelGo.transform.Find("InventorySlotGrid");
@@ -320,7 +308,7 @@ namespace BlueMarble
                     button = slot.GetComponent<Button>(),
                 };
 
-                _inventorySlots.Add(refs);
+                inventorySlots.Add(refs);
 
                 if (refs.button != null)
                 {
@@ -357,9 +345,9 @@ namespace BlueMarble
         {
             IReadOnlyList<EquipmentDef> list = shopService.GetShopList();
 
-            for (int i = 0; i < _cards.Count; i++)
+            for (int i = 0; i < cards.Count; i++)
             {
-                ShopCardRefs card = _cards[i];
+                ShopCardRefs card = cards[i];
 
                 if (i >= list.Count)
                 {
@@ -416,9 +404,9 @@ namespace BlueMarble
         {
             if (inventory == null) return;
 
-            for (int i = 0; i < _inventorySlots.Count; i++)
+            for (int i = 0; i < inventorySlots.Count; i++)
             {
-                Image iconImage = _inventorySlots[i].iconImage;
+                Image iconImage = inventorySlots[i].iconImage;
                 if (iconImage == null) continue;
 
                 EquipmentInstance instance = inventory.GetAt(i);
@@ -448,12 +436,19 @@ namespace BlueMarble
             }
         }
 
-        /// <summary>헤더의 "Current Gold : n" 텍스트를 현재 골드 값으로 갱신한다.</summary>
+        /// <summary>헤더의 "Current Gold : n" 텍스트를 EconomyManager의 최신 값으로 갱신한다.</summary>
         private void RefreshGoldText()
         {
-            if (currentGoldText != null && gold != null)
+            if (currentGoldText == null || string.IsNullOrEmpty(currentPlayerId)) return;
+
+            if (EconomyManager.Instance.TryGetGold(currentPlayerId, out int gold))
             {
-                currentGoldText.text = $"Current Gold : {gold.CurrentGold}";
+                currentGoldText.text = $"Current Gold : {gold}";
+            }
+            else
+            {
+                // 아직 서버로부터 그 플레이어의 경제 데이터를 못 받은 상태
+                currentGoldText.text = "Current Gold : -";
             }
         }
 
@@ -479,16 +474,16 @@ namespace BlueMarble
         /// <param name="shopIndex">클릭된 카드가 상점 목록에서 몇 번째 항목인지</param>
         private void OnPurchaseClicked(int shopIndex)
         {
-            if (gold == null || inventory == null)
+            if (string.IsNullOrEmpty(currentPlayerId) || inventory == null)
             {
                 // Init()이 호출되기 전에 버튼을 누르는 경우 (테스트 중 실수 등)를 방어한다.
-                Debug.LogWarning("[ShopUIController] Init(gold, inventory)이 호출되지 않았습니다.");
+                Debug.LogWarning("[ShopUIController] Init(playerId, inventory)이 호출되지 않았습니다.");
                 return;
             }
 
-            // 실제 구매 로직: 골드 차감 + 인벤토리에 추가 (또는 꽉 찼으면 "교체 대기" 상태로 전환)까지
-            // ShopService.TryPurchase 내부에서 처리된다. 여기서는 결과만 받는다.
-            bool purchased = shopService.TryPurchase(shopIndex, gold, inventory);
+            // 실제 구매 로직: EconomyManager 골드 차감 요청 + 인벤토리에 추가
+            // (또는 꽉 찼으면 "교체 대기" 상태로 전환)까지 ShopService.TryPurchase 내부에서 처리된다.
+            bool purchased = shopService.TryPurchase(shopIndex, currentPlayerId, inventory);
 
             if (!purchased)
             {
@@ -517,7 +512,7 @@ namespace BlueMarble
         /// 인벤토리 1~5번 칸을 클릭했을 때 호출된다.
         /// "교체 대기" 상태가 아니면 클릭해도 아무 반응 없음 (평소엔 그냥 보여주기만 하는 슬롯).
         /// 빈 칸이면 확인 없이 바로 새 장비를 배치하고, 이미 뭔가 들어있는 칸이면
-        /// "이걸 이걸로 바꿀까요?" 확인 팝업(_slotReplacePopup)을 띄운다.
+        /// "이걸 이걸로 바꿀까요?" 확인 팝업(slotReplacePopup)을 띄운다.
         /// </summary>
         /// <param name="slotIndex">클릭된 인벤토리 슬롯 번호 (0부터 시작)</param>
         private void OnInventorySlotClicked(int slotIndex)
@@ -536,15 +531,15 @@ namespace BlueMarble
             else
             {
                 // 이미 장비가 들어있는 칸 - "정말 바꿀 건지" 한 번 확인받는다.
-                _slotReplacePopup.Show(current.Def.Name, pendingDef.Name,
+                slotReplacePopup.Show(current.Def.Name, pendingDef.Name,
                     onYes: () =>
                     {
                         // Yes를 누르면 실제로 교체를 확정하고 팝업을 닫는다.
                         inventory.ReplaceAt(slotIndex);
-                        _slotReplacePopup.Hide();
+                        slotReplacePopup.Hide();
                         OnReplaceResolved();
                     },
-                    onNo: () => _slotReplacePopup.Hide()); // No는 그냥 팝업만 닫고 교체 대기 상태 유지
+                    onNo: () => slotReplacePopup.Hide()); // No는 그냥 팝업만 닫고 교체 대기 상태 유지
             }
         }
 
