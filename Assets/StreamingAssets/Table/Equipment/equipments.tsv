@@ -1,11 +1,11 @@
 ﻿Id	Code	Name	Grade	AttackType	BaseDamage	Range	ProjectileSpeed	Radius	Cooldown	MaxDurability	Price	Prefab	IconKey
 1	eq_common_01	단검	Common	Straight	10	5.0	15.0	0	2.0	3	100	prefab/1	Icon/dagger
 2	eq_common_02	나무 활	Common	Straight	8	8.0	20.0	0	2.5	3	100	prefab/2	Icon/bow
-3	eq_common_03	돌 수류탄	Common	Parabola	12	6.0	10.0	0	3.0	3	120	prefab/3	
+3	eq_common_03	돌 수류탄	Common	Parabola	12	6.0	10.0	0	3.0	3	120	prefab/3	Icon/stone
 4	eq_common_04	가시 함정	Common	Area	9	0	0	2.0	4.0	3	110	prefab/4	
 5	eq_common_05	쇠뇌	Common	Straight	11	7.0	18.0	0	2.2	3	130	prefab/5	Icon/crossbow
-6	eq_rare_01	얼음창	Rare	Straight	20	8.0	22.0	0	3.0	4	300	prefab/6	
-7	eq_rare_02	화염 폭탄	Rare	Parabola	24	9.0	12.0	0	3.5	4	320	prefab/7	
-8	eq_rare_03	번개 폭풍	Rare	Area	22	0	0	3.5	4.5	4	330	prefab/8	
-9	eq_legendary_01	용의 숨결	Legendary	Area	40	0	0	4.5	6.0	5	800	prefab/9	
-10	eq_legendary_02	천공의 화살	Legendary	Straight	45	12.0	30.0	0	5.0	5	850	prefab/10	
+6	eq_rare_01	얼음창	Rare	Straight	20	8.0	22.0	0	3.0	4	300	prefab/6	Icon/icelance
+7	eq_rare_02	화염 폭탄	Rare	Parabola	24	9.0	12.0	0	3.5	4	320	prefab/7	Icon/fire
+8	eq_rare_03	번개 폭풍	Rare	Area	22	0	0	3.5	4.5	4	330	prefab/8	Icon/magic
+9	eq_legendary_01	용의 숨결	Legendary	Area	40	0	0	4.5	6.0	5	800	prefab/9	Icon/breath
+10	eq_legendary_02	천공의 화살	Legendary	Straight	45	12.0	30.0	0	5.0	5	850	prefab/10	Icon/arrow
