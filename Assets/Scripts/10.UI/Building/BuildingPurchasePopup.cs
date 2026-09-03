@@ -25,14 +25,12 @@ namespace BlueMarble
         [Header("공통")]
         [SerializeField] private TMP_FontAsset font; // 모든 텍스트에 공통 적용할 한글 폰트
 
-        [Header("아이콘 스프라이트 슬롯")]
-        [SerializeField] private Sprite closeIconSprite; // 닫기(X) 버튼 아이콘
-        [SerializeField] private Sprite tileIconSprite;   // 영토 카드 아이콘
-        [SerializeField] private Sprite coinIconSprite;   // 구매 버튼 코인 아이콘
-
-        [Header("건물 / 랜드마크 아이콘 프리팹 (스프라이트 아님 - 직접 만든 프리팹 연결)")]
-        [SerializeField] private GameObject buildingIconPrefab;  // 건물 카드에 인스턴스로 배치
-        [SerializeField] private GameObject landmarkIconPrefab;  // 랜드마크 카드에 인스턴스로 배치
+        [Header("아이콘 스프라이트 슬롯 (전체 스프라이트로 교체 가능)")]
+        [SerializeField] private Sprite closeIconSprite;    // 닫기(X) 버튼 아이콘
+        [SerializeField] private Sprite tileIconSprite;      // 영토 카드 아이콘
+        [SerializeField] private Sprite buildingIconSprite;  // 건물 카드 아이콘
+        [SerializeField] private Sprite landmarkIconSprite;  // 랜드마크 카드 아이콘
+        [SerializeField] private Sprite coinIconSprite;      // 구매 버튼 코인 아이콘
 
         [Header("체크박스 체크 표시 스프라이트 슬롯")]
         [SerializeField] private Sprite buildingCheckIconSprite;  // 건물 카드 체크박스 표시
@@ -286,19 +284,17 @@ namespace BlueMarble
             layout.childForceExpandHeight = true;
             layout.padding = new RectOffset(0, 0, 0, 0);
 
-            // 영토: 체크박스 없음(항상 필수) / 건물·랜드마크: 체크박스 있음, 아이콘은 프리팹
-            CreateCard(cardArea.transform, "Card_Tile", "영토", tileIconSprite, null, false, false, null);
-            CreateCard(cardArea.transform, "Card_Building", "건물", null, buildingIconPrefab, true, true, buildingCheckIconSprite);
-            CreateCard(cardArea.transform, "Card_Landmark", "랜드마크", null, landmarkIconPrefab, true, true, landmarkCheckIconSprite);
+            // 영토: 체크박스 없음(항상 필수) / 건물·랜드마크: 체크박스 있음, 아이콘도 전부 스프라이트
+            CreateCard(cardArea.transform, "Card_Tile", "영토", tileIconSprite, false, null);
+            CreateCard(cardArea.transform, "Card_Building", "건물", buildingIconSprite, true, buildingCheckIconSprite);
+            CreateCard(cardArea.transform, "Card_Landmark", "랜드마크", landmarkIconSprite, true, landmarkCheckIconSprite);
         }
 
         /// <summary>
-        /// 카드 하나를 생성한다.
-        /// usePrefabIcon이 true면 iconPrefab을 인스턴스로 배치하고, false면 iconSprite를 Image로 사용한다.
+        /// 카드 하나를 생성한다. 아이콘은 전부 Sprite 슬롯 방식으로 통일했다.
         /// </summary>
         private void CreateCard(Transform parent, string name, string headerLabel,
-            Sprite iconSprite, GameObject iconPrefab, bool usePrefabIcon,
-            bool hasCheckbox, Sprite checkIconSprite)
+            Sprite iconSprite, bool hasCheckbox, Sprite checkIconSprite)
         {
             GameObject card = NewPanel(name, parent, new Vector2(270f, 300f));
             Image cardBg = card.GetComponent<Image>();
@@ -320,7 +316,7 @@ namespace BlueMarble
 
             const float iconTopOffset = 45f;
 
-            // 아이콘 슬롯 (스프라이트 또는 프리팹 인스턴스)
+            // 아이콘 슬롯 (스프라이트 - 인스펙터에서 직접 교체 가능)
             GameObject iconSlotGO = NewUI($"{name}_IconSlot", card.transform);
             RectTransform iconRect = iconSlotGO.GetComponent<RectTransform>();
             iconRect.anchorMin = new Vector2(0.5f, 1f);
@@ -329,37 +325,9 @@ namespace BlueMarble
             iconRect.anchoredPosition = new Vector2(0f, -iconTopOffset);
             iconRect.sizeDelta = new Vector2(120f, 120f);
 
-            if (usePrefabIcon)
-            {
-                if (iconPrefab != null)
-                {
-                    // 사용자가 직접 만든 프리팹을 슬롯 안에 인스턴스로 배치
-                    GameObject instance = Instantiate(iconPrefab, iconSlotGO.transform);
-                    instance.name = iconPrefab.name;
-                    Undo.RegisterCreatedObjectUndo(instance, $"Instantiate {name} Icon Prefab");
-                    instance.transform.localPosition = Vector3.zero;
-                    instance.transform.localScale = Vector3.one;
-
-                    // 프리팹이 UI(RectTransform) 기반이면 슬롯에 꽉 채움
-                    RectTransform instanceRect = instance.GetComponent<RectTransform>();
-                    if (instanceRect != null)
-                    {
-                        Stretch(instanceRect, 0f);
-                    }
-                }
-                else
-                {
-                    // 프리팹이 비어있을 때 자리 표시용 색상 블록
-                    Image placeholder = iconSlotGO.AddComponent<Image>();
-                    placeholder.color = new Color(0.6f, 0.7f, 0.85f, 1f);
-                }
-            }
-            else
-            {
-                Image iconImg = iconSlotGO.AddComponent<Image>();
-                iconImg.sprite = iconSprite;
-                iconImg.color = iconSprite == null ? new Color(0.6f, 0.8f, 0.6f, 1f) : Color.white;
-            }
+            Image iconImg = iconSlotGO.AddComponent<Image>();
+            iconImg.sprite = iconSprite;
+            iconImg.color = iconSprite == null ? new Color(0.6f, 0.8f, 0.6f, 1f) : Color.white;
 
             // 체크박스 (아이콘 바로 아래, 건물·랜드마크 카드에만 존재)
             if (hasCheckbox)

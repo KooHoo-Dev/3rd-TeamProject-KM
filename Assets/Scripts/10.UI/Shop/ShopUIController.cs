@@ -107,17 +107,13 @@ namespace BlueMarble
                 RefreshAll();
             }
         }
-
-        /// <summary>
-        /// 실제 게임 로직(턴 매니저 등) 없이 상점 UI만 단독으로 테스트하고 싶을 때 쓰는 진입점.
-        /// 골드 500, 빈 인벤토리로 즉시 Init을 호출해준다.
-        /// 컴포넌트 우클릭 → "테스트용 더미 데이터로 초기화"로 실행.
-        /// </summary>
-        [ContextMenu("테스트용 더미 데이터로 초기화")]
+        
+        //골드 500, 빈 인벤토리로 즉시 Init을 호출해준다
+         [ContextMenu("테스트용 더미 데이터로 초기화")]
         private void InitWithDummyData()
-        {
+         {
             Init(new Gold(500), myinventory);
-        }
+         }
 
         /// <summary>
         /// 씬이 로드될 때 딱 한 번 실행된다 (오브젝트가 비활성 상태여도 실행됨).
