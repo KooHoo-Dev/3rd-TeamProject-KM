@@ -27,6 +27,7 @@ namespace BlueMarble
                 
                 Vector2 mousePos = SimpleInput.GetMousePosition();
                 Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
+                worldPos.z = 0;
 
                 if (board.TryGetTile(worldPos, out Tile tile) == false)
                 {

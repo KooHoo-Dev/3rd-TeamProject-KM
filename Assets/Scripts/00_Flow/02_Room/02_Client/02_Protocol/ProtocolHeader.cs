@@ -11,6 +11,9 @@
         public const string ROLL_DICE = "rollDice";
         public const string DRAW_GOLD_CARD = "drawGoldCard";
         public const string TURN_FINISHED = "turnFinished";
+        
+        public const string UPDATE_ECONOMY = "updateEconomy";
+        public const string BUY_OR_SELL_TERRITORY = "buyOrSellTerritory";
 
         #endregion
 
@@ -29,6 +32,7 @@
         public const string GAME_ENDED = "gameEnded";
         
         public const string ECONOMY_UPDATED = "economyUpdated";
+        public const string TERRITORY_UPDATED = "territoryUpdated";
 
         #endregion
     }
