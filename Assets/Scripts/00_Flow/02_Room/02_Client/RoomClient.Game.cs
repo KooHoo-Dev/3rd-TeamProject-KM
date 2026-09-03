@@ -64,6 +64,11 @@ namespace BlueMarble.Server
                 CardIds = cardIds
             }).Forget();
         }
+
+        public void RequestUpdateEconomy(params EconomyUpdate[] updates)
+        {
+            SendAsync(new UpdateEconomyMessage { Updates = updates }).Forget();
+        }
         
         #endregion
         

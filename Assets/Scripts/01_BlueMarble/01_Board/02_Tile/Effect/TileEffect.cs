@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using BlueMarble.Server;
+using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Epic3;
 
@@ -15,17 +16,23 @@ namespace BlueMarble
         {
             PropertyManager property = PropertyManager.Instance;
 
-            Debug.Log($"[PropertyEffect] Applying effect to {playerId} on {tile.SpaceDef.Name}");
-            return property.RequestPurchase(playerId, tile);
+            // Debug.Log($"[PropertyEffect] Applying effect to {playerId} on {tile.SpaceDef.Name}");
+            // return property.RequestPurchase(playerId, tile);
+
+            return UniTask.CompletedTask;
         }
     }
 
     public class SalaryEffect : ITileEffect
     {
-        public UniTask Apply(string playerId, Tile tile)
+        public UniTask Apply(string playerId, Tile _)
         {
-            // 이건 EconomyManager 들어오면 Config값 찾아와서 그 만큼 Add처리 하면 될듯?
-            Debug.Log($"[SalaryEffect] Adding 1000 to {playerId}'s salary");
+            RoomClient.Instance.RequestUpdateEconomy(new EconomyUpdate
+            {
+                UserId = playerId,
+                Amount = 10000             // 이건 EconomyManager 들어오면 Config값 찾아와서 그 만큼 Add처리 하면 될듯?
+            });
+            Debug.Log($"[SalaryEffect] Adding 10000 to {playerId}'s salary");
             return UniTask.CompletedTask;
         }   
     }

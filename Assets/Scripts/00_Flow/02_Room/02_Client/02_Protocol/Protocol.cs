@@ -82,9 +82,13 @@ namespace BlueMarble.Server
     public class UpdateEconomyMessage
     {
         public string Type { get; set; } = ProtocolHeader.UPDATE_ECONOMY;
-    
+        public EconomyUpdate[] Updates { get; set; }
+    }
+
+    public struct EconomyUpdate
+    {
+        public string UserId { get; set; }
         public int Amount { get; set; }
-        public bool IsIncrease { get; set; }
     }
 
     public class BuyOrSellTerritoryMessage
