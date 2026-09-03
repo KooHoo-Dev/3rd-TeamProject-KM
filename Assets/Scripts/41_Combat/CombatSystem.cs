@@ -1,3 +1,4 @@
+using BlueMarble;
 using Jay;
 using UnityEngine;
 using Epic3;
@@ -22,10 +23,12 @@ namespace Combat
 
         private string attackerId;
         private string defenderId;
-        private int combatTileIndex;
+        private Tile battleTile;
 
         private float attackerHp, attackerMaxHp;
         private float defenderHp, defenderMaxHp;
+
+        private CombatFlow combatFlow;
 
         protected override void OnDispose()
         {
@@ -33,11 +36,13 @@ namespace Combat
             if (combatTimer != null) combatTimer.OnTimeUp -= HandleTimeUp;
         }
 
-        public void StartCombat(string attacker, string defender, int tileIndex, float maxHp)
+        public void StartCombat(string attacker, string defender, Tile battleTile, float maxHp)
         {
             attackerId = attacker;
             defenderId = defender;
-            combatTileIndex = tileIndex;
+            this.battleTile = battleTile;
+            
+            
             
             attackerMaxHp = attackerHp = maxHp;
             defenderMaxHp = defenderHp = maxHp;
@@ -120,8 +125,7 @@ namespace Combat
 
             if (winnerId == attackerId)
             {
-                // TerritoryManager를 싱글톤으로 선언을 해야 하는지, 보드와 대전 씬을 나눴을 때 TerritoryManager는 보드 씬에만 넣는지 그런거...
-                // TerritoryManager.StolenTerritory(loserId, winnerId, combatTileIndex);
+                TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
             }
         }
     }
