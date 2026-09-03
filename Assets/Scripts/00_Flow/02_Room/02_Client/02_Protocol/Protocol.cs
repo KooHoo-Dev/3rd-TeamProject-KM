@@ -105,6 +105,21 @@ namespace BlueMarble.Server
         public int SpaceId { get; set; }
         public bool IsBuy { get; set; } // true = buy, false = sell
     }
+
+    public class AddIncapacitationCountMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.ADD_INCAPACITATION_COUNT;
+
+        public int Count { get; set; }
+    }
+    
+    public class MoveUserToMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.MOVE_USER_TO;
+
+        public string UserId { get; set; }
+        public int SpaceId { get; set; }
+    }
     
     #endregion
     
@@ -148,10 +163,12 @@ namespace BlueMarble.Server
     public class TurnStartedMessage
     {
         public string Type { get; set; } = ProtocolHeader.TURN_STARTED;
-        
+    
         public int RoundCount { get; set; }
         public int TurnId { get; set; }
+    
         public string PlayerId { get; set; }
+        public bool CanAct { get; set; }
     }
 
     public class DiceRolledMessage
@@ -188,6 +205,14 @@ namespace BlueMarble.Server
     {
         public string Type { get; set; } = ProtocolHeader.TERRITORY_UPDATED;
         public UserTerritory[] Territories { get; set; }
+    }
+    
+    public class UserMovedToMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.USER_MOVED_TO;
+    
+        public string UserId { get; set; }
+        public int SpaceId { get; set; }
     }
     
     #endregion

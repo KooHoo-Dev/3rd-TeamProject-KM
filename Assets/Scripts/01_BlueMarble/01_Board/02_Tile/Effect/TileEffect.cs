@@ -27,11 +27,7 @@ namespace BlueMarble
     {
         public UniTask Apply(string playerId, Tile _)
         {
-            RoomClient.Instance.RequestUpdateEconomy(new EconomyUpdate
-            {
-                UserId = playerId,
-                Amount = 10000             // 이건 EconomyManager 들어오면 Config값 찾아와서 그 만큼 Add처리 하면 될듯?
-            });
+            EconomyManager.Instance.GainGoldTo(playerId, 10000);
             return UniTask.CompletedTask;
         }   
     }
@@ -40,11 +36,10 @@ namespace BlueMarble
     {
         public UniTask Apply(string playerId, Tile tile)
         {
-            IPlayer target = PlayerRegistry.GetPlayer(playerId);
-            target.ActionDisabledTurnCount = 1; // 나중엔 Config에 등록된 값을 써야할듯?
+            RoomClient.Instance.RequestAddIncapacitationCount(3);
             
             Debug.Log($"[PrisonEffect] {playerId} is now in prison. " +
-                      $"That player cannot take any action for {target.ActionDisabledTurnCount} turn.");
+                      $"That player cannot take any action for 3 turn.");
             
             return UniTask.CompletedTask;
         }  

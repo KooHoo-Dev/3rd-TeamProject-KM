@@ -15,7 +15,9 @@ namespace BlueMarble
         [field: SerializeField] public TurnManager Turn { get; private set; }
 
         private RoomClient Client => RoomClient.Instance;
+        
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
+        private PlayerManager Player => PlayerManager.Instance;
         
         private async UniTaskVoid Start()
         {
@@ -53,15 +55,21 @@ namespace BlueMarble
             Turn.OnDiceRollRequested -= HandleDiceRollDiceRequested;
         }
 
-        private void HandleTurnStarted(User user)
+        private void HandleTurnStarted(User user, bool canAct)
         {
+            Debug.Log("[GameManager] " +
+                $"Round {Client.RoundCount}, " +
+                $"Turn {Client.TurnId}, " +
+                $"Player {user.Nickname}({user.Id})");
+
+            if (canAct == false)
+            {
+                Client.AnnounceTurnFinished(Client.TurnId);
+                return;
+            }
+            
             bool isMyTurn = user.Id == Client.Me.Id;
             Turn.BeginTurn(isMyTurn);
-            
-            Debug.Log("[GameManager] " +
-                      $"Round {Client.RoundCount}, " +
-                      $"Turn {Client.TurnId}, " +
-                      $"Player {user.Nickname}({user.Id})");
         }
 
         private void HandleDiceRollDiceRequested()
@@ -86,7 +94,7 @@ namespace BlueMarble
             await Turn.ShowDiceResultAsync(d1, d2);
             
             // 2. 이동 및 타일 효과 처리
-            await Turn.MovePlayerAsync(playerId, d1 + d2);
+            await Player.MoveBy(playerId, d1 + d2);
             
             // 4. 현재 클라이언트의 턴이 끝났음을 서버에 보고
             await Client.AnnounceTurnFinished(turnId);

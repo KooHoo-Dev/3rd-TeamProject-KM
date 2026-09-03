@@ -8,47 +8,47 @@
     {
       "Id": 1,
       "TileId": 0,
-      "SpaceId": 1
+      "SpaceId": 21
     },
     {
       "Id": 2,
       "TileId": 4,
-      "SpaceId": 28
+      "SpaceId": 21
     },
     {
       "Id": 3,
       "TileId": 0,
-      "SpaceId": 2
+      "SpaceId": 21
     },
     {
       "Id": 4,
       "TileId": 0,
-      "SpaceId": 3
+      "SpaceId": 21
     },
     {
       "Id": 5,
       "TileId": 0,
-      "SpaceId": 4
+      "SpaceId": 21
     },
     {
       "Id": 6,
       "TileId": 4,
-      "SpaceId": 28
+      "SpaceId": 21
     },
     {
       "Id": 7,
       "TileId": 0,
-      "SpaceId": 5
+      "SpaceId": 21
     },
     {
       "Id": 8,
       "TileId": 0,
-      "SpaceId": 6
+      "SpaceId": 21
     },
     {
       "Id": 9,
       "TileId": 7,
-      "SpaceId": 7
+      "SpaceId": 21
     },
     {
       "Id": 10,

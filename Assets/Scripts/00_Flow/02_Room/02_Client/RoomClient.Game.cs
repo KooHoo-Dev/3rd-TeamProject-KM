@@ -18,13 +18,14 @@ namespace BlueMarble.Server
 
         public event Action OnGameStarted;
 
-        public event Action<User> OnTurnStarted;
+        public event Action<User, bool> OnTurnStarted;
         public event Action<User, int, int> OnDiceRolled;
         public event Action<User, int> OnGoldCardDrawn;
 
         public event Action OnGameEnded;
 
         public event Action<UserEconomy[]> OnEconomyUpdated;
+        public event Action<User, int> OnUserMovedTo;
         
         public IReadOnlyList<string> PlayerIds => playerIds;
 
@@ -37,6 +38,7 @@ namespace BlueMarble.Server
             RegisterHandler<GameEndedMessage>(ProtocolHeader.GAME_ENDED, HandleGameEnded);
 
             RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
+            RegisterHandler<UserMovedToMessage>(ProtocolHeader.USER_MOVED_TO, HandleUserMovedTo);
         }
         
         #region SEND_TO_SERVER
@@ -69,6 +71,20 @@ namespace BlueMarble.Server
         {
             SendAsync(new UpdateEconomyMessage { Updates = updates }).Forget();
         }
+
+        public void RequestAddIncapacitationCount(int count)
+        {
+            SendAsync(new AddIncapacitationCountMessage { Count = count }).Forget();
+        }
+
+        public void RequestMovePlayerTo(string playerId, int spaceId)
+        {
+            SendAsync(new MoveUserToMessage
+            {
+                UserId = playerId,
+                SpaceId = spaceId
+            }).Forget();
+        }
         
         #endregion
         
@@ -88,9 +104,10 @@ namespace BlueMarble.Server
             
             RoundCount = message.RoundCount;
             TurnId = message.TurnId;
+            
             CurrentTurnUser = user;
             
-            OnTurnStarted?.Invoke(user);
+            OnTurnStarted?.Invoke(user, message.CanAct);
             Debug.Log($"[RoomClient] {user.Nickname}({user.Id}) turn started. Round: {RoundCount}, Turn Id: {TurnId}");
         }
 
@@ -128,6 +145,14 @@ namespace BlueMarble.Server
         {
             OnEconomyUpdated?.Invoke(message.Economies);
             Debug.Log("[RoomClient] Economy updated");
+        }
+
+        private void HandleUserMovedTo(UserMovedToMessage message)
+        {
+            User user = GetUser(message.UserId);
+            OnUserMovedTo?.Invoke(user, message.SpaceId);
+            
+            Debug.Log($"[RoomClient] {user.Nickname}({user.Id}) moved to space: {message.SpaceId}");
         }
 
         #endregion

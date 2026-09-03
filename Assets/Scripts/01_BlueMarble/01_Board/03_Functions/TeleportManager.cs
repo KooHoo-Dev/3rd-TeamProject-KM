@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using BlueMarble.Server;
+using Cysharp.Threading.Tasks;
 using Jay;
 using Sirenix.OdinInspector;
 using Study.Utilities;
@@ -10,7 +11,8 @@ namespace BlueMarble
     {
         [Title("Components")]
         [SerializeField] private Camera mainCamera;
-        
+
+        private RoomClient Client => RoomClient.Instance;
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
         
         public async UniTask ExecuteAsync(string playerId)
@@ -35,8 +37,8 @@ namespace BlueMarble
                     continue;
                 }
                 
-                // 얻어온 Tile을 이용해서 해당 칸으로 플레이어를 이동시킴
-                // 이건 서버랑 이케이케 해야할듯?
+                Client.RequestMovePlayerTo(playerId, tile.SpaceDef.Id); 
+
                 return;
             }
         }
