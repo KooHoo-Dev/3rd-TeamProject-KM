@@ -48,6 +48,8 @@ namespace BlueMarble
             }
             return result;
         }
+        
+        public int GetTileIndex(Tile tile) => Array.IndexOf(tiles, tile);
 
         #endregion
         

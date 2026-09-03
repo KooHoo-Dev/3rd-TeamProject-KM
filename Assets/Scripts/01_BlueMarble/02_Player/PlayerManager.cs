@@ -61,16 +61,18 @@ namespace BlueMarble
             }
         }
 
-        public async UniTask MoveTo(string playerId, int spaceId)
+        public async UniTask MoveTo(string playerId, int tileIdx)
         {
             if (TryGetPlayer(playerId, out IPlayer player) == false) return;
             bool isMe = Client.Me.Id == playerId;
+
+            Board board = BlueMarbleWorld.Instance.Board;
 
             while (true)
             {
                 Tile reached = await player.MoveNext();
 
-                bool isLanding = reached.SpaceDef.Id == spaceId;
+                bool isLanding = board.GetTileIndex(reached) == tileIdx;
 
                 if (isMe && (isLanding || reached.SpaceDef.IsActiveOnPass))
                     await reached.ExecuteEffect(playerId);

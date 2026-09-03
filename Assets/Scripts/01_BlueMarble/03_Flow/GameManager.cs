@@ -34,6 +34,7 @@ namespace BlueMarble
             
             Client.OnTurnStarted += HandleTurnStarted;
             Client.OnDiceRolled += HandleDiceRolled;
+            Client.OnUserMovedTo += HandleUserMovedTo;
             Client.OnGameEnded += HandleGameEnded;
             
             Turn.OnDiceRollRequested += HandleDiceRollDiceRequested;
@@ -50,6 +51,7 @@ namespace BlueMarble
         {
             Client.OnTurnStarted -= HandleTurnStarted;
             Client.OnDiceRolled -= HandleDiceRolled;
+            Client.OnUserMovedTo -= HandleUserMovedTo;
             Client.OnGameEnded -= HandleGameEnded;
             
             Turn.OnDiceRollRequested -= HandleDiceRollDiceRequested;
@@ -88,6 +90,17 @@ namespace BlueMarble
             ResolveTurnAsync(user.Id, d1, d2, turnId).Forget();
         }
 
+        private void HandleUserMovedTo(UserMovedToMessage message)
+        {
+            ResolveUserMovedToAsync(message).Forget();
+        }
+
+        private void HandleGameEnded()
+        {
+            Turn.SetInputEnabled(false);
+            Debug.Log($"[GameManager] Game Ended.");
+        }
+        
         private async UniTaskVoid ResolveTurnAsync(string playerId, int d1, int d2, int turnId)
         {
             // 1. 주사위 결과 연출
@@ -99,11 +112,11 @@ namespace BlueMarble
             // 4. 현재 클라이언트의 턴이 끝났음을 서버에 보고
             await Client.AnnounceTurnFinished(turnId);
         }
-        
-        private void HandleGameEnded()
+
+        private async UniTaskVoid ResolveUserMovedToAsync(UserMovedToMessage message)
         {
-            Turn.SetInputEnabled(false);
-            Debug.Log($"[GameManager] Game Ended.");
+            await Players.MoveTo(message.UserId, message.TileId);
+            await Client.AnnounceUserMoveFinished(message.TurnId, message.MoveId, message.RequestId);
         }
     }
 }

@@ -25,7 +25,8 @@ namespace BlueMarble.Server
         public event Action OnGameEnded;
 
         public event Action<UserEconomy[]> OnEconomyUpdated;
-        public event Action<User, int> OnUserMovedTo;
+        public event Action<UserMovedToMessage> OnUserMovedTo;
+        public event Action<UserMoveFinishedMessage> OnUserMoveFinished;
         
         public IReadOnlyList<string> PlayerIds => playerIds;
 
@@ -39,6 +40,7 @@ namespace BlueMarble.Server
 
             RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
             RegisterHandler<UserMovedToMessage>(ProtocolHeader.USER_MOVED_TO, HandleUserMovedTo);
+            RegisterHandler<UserMoveFinishedMessage>(ProtocolHeader.USER_MOVE_FINISHED, HandleUserMoveFinished);
         }
         
         #region SEND_TO_SERVER
@@ -51,6 +53,16 @@ namespace BlueMarble.Server
         public UniTask AnnounceTurnFinished(int turnId)
         {
             return SendAsync(new TurnFinishedMessage { TurnId = turnId });
+        }
+
+        public UniTask AnnounceUserMoveFinished(int turnId, long moveId, string requestId)
+        {
+            return SendAsync(new UserMoveFinishedMessage
+            {
+                TurnId = turnId,
+                MoveId = moveId,
+                RequestId = requestId
+            });
         }
 
         public void RequestRollDice(int turnId)
@@ -72,18 +84,20 @@ namespace BlueMarble.Server
             SendAsync(new UpdateEconomyMessage { Updates = updates }).Forget();
         }
 
-        public void RequestAddIncapacitationCount(int count)
+        public UniTask RequestAddIncapacitationCount(int count)
         {
-            SendAsync(new AddIncapacitationCountMessage { Count = count }).Forget();
+            return SendAsync(new AddIncapacitationCountMessage { Count = count });
         }
 
-        public void RequestMovePlayerTo(string playerId, int spaceId)
+        public UniTask RequestMovePlayerTo(string playerId, int tileId, int turnId, string requestId)
         {
-            SendAsync(new MoveUserToMessage
+            return SendAsync(new MoveUserToMessage
             {
-                UserId = playerId,
-                SpaceId = spaceId
-            }).Forget();
+                UserId = playerId, 
+                TileId = tileId, 
+                TurnId = turnId, 
+                RequestId = requestId
+            });
         }
         
         #endregion
@@ -149,10 +163,14 @@ namespace BlueMarble.Server
 
         private void HandleUserMovedTo(UserMovedToMessage message)
         {
-            User user = GetUser(message.UserId);
-            OnUserMovedTo?.Invoke(user, message.SpaceId);
-            
-            Debug.Log($"[RoomClient] {user.Nickname}({user.Id}) moved to space: {message.SpaceId}");
+            OnUserMovedTo?.Invoke(message);
+            Debug.Log("[RoomClient] User moved to");
+        }
+        
+        private void HandleUserMoveFinished(UserMoveFinishedMessage message)
+        {
+            OnUserMoveFinished?.Invoke(message);
+            Debug.Log("[RoomClient] User move finished");
         }
 
         #endregion

@@ -36,12 +36,10 @@ namespace BlueMarble
     {
         public UniTask Apply(string playerId, Tile tile)
         {
-            RoomClient.Instance.RequestAddIncapacitationCount(3);
-            
             Debug.Log($"[PrisonEffect] {playerId} is now in prison. " +
-                      $"That player cannot take any action for 3 turn.");
+                $"That player cannot take any action for 3 turn.");
             
-            return UniTask.CompletedTask;
+            return RoomClient.Instance.RequestAddIncapacitationCount(3);
         }  
     }
 
@@ -76,8 +74,8 @@ namespace BlueMarble
     {
         public async UniTask Apply(string playerId, Tile _)
         {
-            //ShopManager shop = ShopManager.Instance;
-            //await shop.OpenAsync(playerId);
+            ShopManager shop = ShopManager.Instance;
+            await shop.OpenAsync(playerId);
         }
     }
 }
