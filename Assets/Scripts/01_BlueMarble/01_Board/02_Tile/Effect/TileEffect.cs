@@ -50,13 +50,15 @@ namespace BlueMarble
         }  
     }
 
-    public class TreasureEffect : ITileEffect 
+    public class TreasureEffect : ITileEffect
     {
-        public UniTask Apply(string playerId, Tile tile)
+        public async UniTask Apply(string playerId, Tile tile)
         {
             Debug.Log($"[TreasureEffect] Adding 1000 to {playerId}'s treasure");
-            return UniTask.CompletedTask;
-        } 
+
+            TreasureManager treasure = TreasureManager.Instance;
+            await treasure.GrantAsync(playerId);
+        }
     }
 
     public class GoldCardEffect : ITileEffect //
