@@ -10,8 +10,8 @@ namespace Player
     public class EquipmentCaster : MonoBehaviour
     {
         [Header("References")]
-        public Transform spawnPoint;
-        public Transform firePoint; 
+        public Vector3 spawnPoint;
+        public Vector3 firePoint; 
         public GameObject basicArrowPrefab;
         
         [Header("Basic Attack Settings")]
@@ -64,17 +64,24 @@ namespace Player
                                      && !playerController.IsMoving 
                                      && !playerController.IsCastingSkill;
 
-                    if (canAttack&&Time.time>=nextAttackTime)
+                    if (canAttack && Time.time >= nextAttackTime)
                     {
                         int damage = Mathf.RoundToInt(baseDamage * CombatSystem.Instance.DamageMultiplier);
-                        
-                        basicAttackStrategy.Execute(spawnPoint, firePoint, damage, attackerName, basicArrowPrefab);
+    
+                        SkillCastMessage msg = new SkillCastMessage 
+                        {
+                            CasterId = attackerName,
+                            IsBasicAttack = true,
+                            EquipmentId = 0,
+                            SpawnX = spawnPoint.x,
+                            SpawnY = spawnPoint.y,
+                            Direction = 1f // 오른쪽을 보고 있다면 1, 왼쪽이면 -1
+                        };
+    
+                        // TODO: 생성한 msg를 서버로 전송합니다. (예: NetworkManager.Send(msg))
+                        Debug.Log($"[네트워크 전송] 기본 공격 발사 요청!");
 
                         nextAttackTime = Time.time + basicAttackInterval;
-                    }
-                    else
-                    {
-                        await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                     }
                 }
             }
