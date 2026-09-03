@@ -32,7 +32,7 @@ namespace BlueMarble
                 tiles[idx] : 
                 throw new Exception($"[Board] World position {worldPos} is out of bounds");
         }
-
+        
         public List<Tile> GetOccupiedTiles(string playerId)
         {
             List<Tile> result = new();
