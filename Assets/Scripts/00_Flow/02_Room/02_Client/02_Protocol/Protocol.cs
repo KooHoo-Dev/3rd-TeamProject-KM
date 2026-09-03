@@ -89,6 +89,12 @@ namespace BlueMarble.Server
     {
         public string UserId { get; set; }
         public int Amount { get; set; }
+
+        public EconomyUpdate(string userId, int amount)
+        {
+            UserId = userId;
+            Amount = amount;
+        }
     }
 
     public class BuyOrSellTerritoryMessage

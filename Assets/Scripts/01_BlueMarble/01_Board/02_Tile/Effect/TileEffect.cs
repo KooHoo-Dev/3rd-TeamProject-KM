@@ -32,7 +32,6 @@ namespace BlueMarble
                 UserId = playerId,
                 Amount = 10000             // 이건 EconomyManager 들어오면 Config값 찾아와서 그 만큼 Add처리 하면 될듯?
             });
-            Debug.Log($"[SalaryEffect] Adding 10000 to {playerId}'s salary");
             return UniTask.CompletedTask;
         }   
     }
