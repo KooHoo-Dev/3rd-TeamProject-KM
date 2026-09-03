@@ -19,14 +19,19 @@ namespace BlueMarble.Server
         public event Action OnGameStarted;
 
         public event Action<User, bool> OnTurnStarted;
+        
         public event Action<User, int, int> OnDiceRolled;
+        public event Action<UserEconomy[]> OnEconomyUpdated;
+        public event Action<TileEffectSyncMessage> OnTileEffectSync;
+        
         public event Action<User, int> OnGoldCardDrawn;
-
+        
+        public event Action<MoveUserToMessage> OnUserMovedTo;
+        public event Action<UserMoveFinishedMessage> OnUserMoveFinished;
+        
         public event Action OnGameEnded;
 
-        public event Action<UserEconomy[]> OnEconomyUpdated;
-        public event Action<UserMovedToMessage> OnUserMovedTo;
-        public event Action<UserMoveFinishedMessage> OnUserMoveFinished;
+        
         
         public IReadOnlyList<string> PlayerIds => playerIds;
 
@@ -35,11 +40,14 @@ namespace BlueMarble.Server
             RegisterHandler<GameStartedMessage>(ProtocolHeader.GAME_STARTED, HandleGameStarted);
             RegisterHandler<TurnStartedMessage>(ProtocolHeader.TURN_STARTED, HandleTurnStarted);
             RegisterHandler<DiceRolledMessage>(ProtocolHeader.DICE_ROLLED, HandleDiceRolled);
+            RegisterHandler<TileEffectSyncMessage>(ProtocolHeader.TILE_EFFECT_SYNC, HandleTileEffectSync);
+            
             RegisterHandler<GoldCardDrawnMessage>(ProtocolHeader.GOLD_CARD_DRAWN, HandleGoldCardDrawn);
             RegisterHandler<GameEndedMessage>(ProtocolHeader.GAME_ENDED, HandleGameEnded);
 
             RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
-            RegisterHandler<UserMovedToMessage>(ProtocolHeader.USER_MOVED_TO, HandleUserMovedTo);
+
+            RegisterHandler<MoveUserToMessage>(ProtocolHeader.MOVE_USER_TO, HandleMoveUserTo);
             RegisterHandler<UserMoveFinishedMessage>(ProtocolHeader.USER_MOVE_FINISHED, HandleUserMoveFinished);
         }
         
@@ -50,18 +58,19 @@ namespace BlueMarble.Server
             return SendAsync(new SetBoardReadyMessage());
         }
 
+        public UniTask AnnounceTileEffectSync(TileEffectSyncMessage msg) => SendAsync(msg);
+
         public UniTask AnnounceTurnFinished(int turnId)
         {
             return SendAsync(new TurnFinishedMessage { TurnId = turnId });
         }
 
-        public UniTask AnnounceUserMoveFinished(int turnId, long moveId, string requestId)
+        public UniTask AnnounceUserMoveFinished(int turnId, long moveId)
         {
             return SendAsync(new UserMoveFinishedMessage
             {
                 TurnId = turnId,
-                MoveId = moveId,
-                RequestId = requestId
+                MoveId = moveId
             });
         }
 
@@ -136,6 +145,18 @@ namespace BlueMarble.Server
                       $"Turn Id: {message.TurnId}");
         }
 
+        private void HandleTileEffectSync(TileEffectSyncMessage message)
+        {
+            if (message.TurnId != TurnId) return;
+
+            OnTileEffectSync?.Invoke(message);
+            Debug.Log("[RoomClient] Tile effect sync. " +
+                $"Turn: {message.TurnId}, " +
+                $"Move: {message.MoveId}, " +
+                $"Step: {message.StepIndex}, " +
+                $"Phase: {message.Phase}");
+        }
+
         private void HandleGoldCardDrawn(GoldCardDrawnMessage message)
         {
             if (message.TurnId != TurnId) return;
@@ -161,16 +182,26 @@ namespace BlueMarble.Server
             Debug.Log("[RoomClient] Economy updated");
         }
 
-        private void HandleUserMovedTo(UserMovedToMessage message)
+        private void HandleMoveUserTo(MoveUserToMessage message)
         {
+            if (message.TurnId != TurnId) return;
+
             OnUserMovedTo?.Invoke(message);
-            Debug.Log("[RoomClient] User moved to");
+            Debug.Log(
+                $"[RoomClient] User move requested. " +
+                $"Turn: {message.TurnId}, " +
+                $"Move: {message.MoveId}, " +
+                $"User: {message.UserId}, " +
+                $"Tile: {message.TileId}");
         }
         
         private void HandleUserMoveFinished(UserMoveFinishedMessage message)
         {
             OnUserMoveFinished?.Invoke(message);
-            Debug.Log("[RoomClient] User move finished");
+            Debug.Log(
+                $"[RoomClient] User move finished. " +
+                $"Turn: {message.TurnId}, " +
+                $"Move: {message.MoveId}");
         }
 
         #endregion

@@ -60,6 +60,7 @@ namespace BlueMarble
         private ShopService shopService;    // 상점 목록 조회 / 구매 처리를 담당하는 순수 C# 서비스 클래스
         private string currentPlayerId;     // 지금 이 상점을 이용 중인 플레이어의 ID (EconomyManager 조회용)
         private InventoryManager inventory; // 이 상점을 이용 중인 플레이어의 인벤토리
+        private bool isPurchasing;           // 서버의 골드 갱신 완료를 기다리는 동안 중복 구매를 막는다.
 
         [Header("씬 참조 - 비워두면 이름으로 자동 탐색")]
         // 셋 다 StoreUIBuilder가 만든 하이어라키 이름을 기준으로 자동으로 찾아서 채워진다 (CacheSceneReferences 참고).
@@ -123,6 +124,8 @@ namespace BlueMarble
         /// </summary>
         private void OnEnable()
         {
+            EconomyManager.Instance.OnUpdated += RefreshGoldText;
+
             if (!string.IsNullOrEmpty(currentPlayerId) && inventory != null)
             {
                 RefreshAll(); // 상점 목록/골드/인벤토리를 전부 최신 상태로 다시 그린다.
@@ -136,6 +139,8 @@ namespace BlueMarble
         /// </summary>
         private void OnDisable()
         {
+            EconomyManager.Instance.OnUpdated -= RefreshGoldText;
+
             shopClosedTcs?.TrySetResult(); // 대기 중인 태스크가 있으면 완료 처리 (없으면 null이라 안전하게 무시됨)
             shopClosedTcs = null;
         }
@@ -389,11 +394,11 @@ namespace BlueMarble
                 {
                     int capturedIndex = i; // 클로저 캡처 주의 (위 인벤토리 슬롯과 같은 이유)
                     card.buyButton.onClick.RemoveAllListeners();
-                    card.buyButton.onClick.AddListener(() => OnPurchaseClicked(capturedIndex));
+                    card.buyButton.onClick.AddListener(() => OnPurchaseClickedAsync(capturedIndex).Forget());
 
                     // 인벤토리가 꽉 차서 교체를 기다리는 중이면, 새로 구매하지 못하도록 버튼을 잠근다.
                     // (교체를 먼저 마쳐야 다음 구매가 가능하다는 정책)
-                    card.buyButton.interactable = inventory == null || !inventory.IsWaitingReplace;
+                    card.buyButton.interactable = !isPurchasing && (inventory == null || !inventory.IsWaitingReplace);
                 }
             }
         }
@@ -474,8 +479,11 @@ namespace BlueMarble
         /// 실제 구매 처리는 ShopService에 위임하고, 결과에 따라 화면을 갱신한다.
         /// </summary>
         /// <param name="shopIndex">클릭된 카드가 상점 목록에서 몇 번째 항목인지</param>
-        private void OnPurchaseClicked(int shopIndex)
+        private async UniTask OnPurchaseClickedAsync(int shopIndex)
         {
+            if (isPurchasing)
+                return;
+
             if (string.IsNullOrEmpty(currentPlayerId) || inventory == null)
             {
                 // Init()이 호출되기 전에 버튼을 누르는 경우 (테스트 중 실수 등)를 방어한다.
@@ -483,30 +491,38 @@ namespace BlueMarble
                 return;
             }
 
-            // 실제 구매 로직: EconomyManager 골드 차감 요청 + 인벤토리에 추가
-            // (또는 꽉 찼으면 "교체 대기" 상태로 전환)까지 ShopService.TryPurchase 내부에서 처리된다.
-            bool purchased = shopService.TryPurchase(shopIndex, currentPlayerId, inventory);
+            isPurchasing = true;
+            RefreshShopList();
 
-            if (!purchased)
+            try
             {
-                // 자금 부족 등으로 실패한 경우 - 화면 갱신 없이 그냥 로그만 남기고 종료
-                Debug.Log("[ShopUIController] 자금이 부족합니다.");
-                return;
+                // 실제 구매 로직: 인벤토리에 추가한 뒤 서버의 골드 갱신 완료까지 기다린다.
+                // 인벤토리가 꽉 찼으면 차감하지 않고 "교체 대기" 상태로 전환한다.
+                bool purchased = await shopService.TryPurchaseAsync(shopIndex, currentPlayerId, inventory);
+
+                if (!purchased)
+                {
+                    // 자금 부족 등으로 실패한 경우 - 화면 갱신 없이 그냥 로그만 남기고 종료
+                    Debug.Log("[ShopUIController] 자금이 부족합니다.");
+                    return;
+                }
+
+                RefreshInventoryDisplay();
+
+                if (inventory.IsWaitingReplace)
+                {
+                    // 인벤토리가 가득 차서 새 장비를 어느 칸에 넣을지 플레이어가 직접 골라야 하는 상태.
+                    Debug.Log("[ShopUIController] 인벤토리가 가득 찼습니다. 인벤토리 칸을 클릭해서 교체할 장비를 선택하세요.");
+                }
+                else
+                {
+                    Debug.Log("[ShopUIController] 구매 완료.");
+                }
             }
-
-            // 구매 성공 - 골드/인벤토리/상점목록(버튼 잠금 상태 포함) 전부 다시 그린다.
-            RefreshGoldText();
-            RefreshInventoryDisplay();
-            RefreshShopList(); // 인벤토리가 꽉 찼으면 여기서 모든 BUY 버튼이 잠긴다.
-
-            if (inventory.IsWaitingReplace)
+            finally
             {
-                // 인벤토리가 가득 차서 새 장비를 어느 칸에 넣을지 플레이어가 직접 골라야 하는 상태.
-                Debug.Log("[ShopUIController] 인벤토리가 가득 찼습니다. 인벤토리 칸을 클릭해서 교체할 장비를 선택하세요.");
-            }
-            else
-            {
-                Debug.Log("[ShopUIController] 구매 완료.");
+                isPurchasing = false;
+                RefreshShopList();
             }
         }
 
@@ -519,7 +535,7 @@ namespace BlueMarble
         /// <param name="slotIndex">클릭된 인벤토리 슬롯 번호 (0부터 시작)</param>
         private void OnInventorySlotClicked(int slotIndex)
         {
-            if (inventory == null || !inventory.IsWaitingReplace) return; // 교체 대기 중이 아니면 무시
+            if (isPurchasing || inventory == null || !inventory.IsWaitingReplace) return; // 교체 대기 중이 아니면 무시
 
             EquipmentInstance current = inventory.GetAt(slotIndex); // 지금 그 칸에 있는 장비 (없으면 null)
             EquipmentDef pendingDef = inventory.ReplaceDef;         // 새로 구매해서 대기 중인 장비 정보
@@ -527,8 +543,7 @@ namespace BlueMarble
             if (current == null)
             {
                 // 빈 칸을 클릭한 경우 - 굳이 확인할 필요 없이 바로 채워 넣는다.
-                inventory.ReplaceAt(slotIndex);
-                OnReplaceResolved();
+                CompleteReplaceAsync(slotIndex, pendingDef).Forget();
             }
             else
             {
@@ -536,12 +551,37 @@ namespace BlueMarble
                 slotReplacePopup.Show(current.Def.Name, pendingDef.Name,
                     onYes: () =>
                     {
-                        // Yes를 누르면 실제로 교체를 확정하고 팝업을 닫는다.
-                        inventory.ReplaceAt(slotIndex);
+                        // Yes를 누르면 실제로 교체를 확정한 뒤 서버의 골드 갱신 완료까지 기다린다.
+                        CompleteReplaceAsync(slotIndex, pendingDef).Forget();
+                    },
+                    onNo: () =>
+                    {
+                        inventory.CancelReplace();
                         slotReplacePopup.Hide();
                         OnReplaceResolved();
-                    },
-                    onNo: () => slotReplacePopup.Hide()); // No는 그냥 팝업만 닫고 교체 대기 상태 유지
+                    });
+            }
+        }
+
+        private async UniTask CompleteReplaceAsync(int slotIndex, EquipmentDef pendingDef)
+        {
+            if (isPurchasing)
+                return;
+
+            isPurchasing = true;
+            inventory.ReplaceAt(slotIndex);
+            slotReplacePopup.Hide();
+            RefreshInventoryDisplay();
+            RefreshShopList();
+
+            try
+            {
+                await EconomyManager.Instance.LoseGoldTo(currentPlayerId, pendingDef.Price);
+            }
+            finally
+            {
+                isPurchasing = false;
+                OnReplaceResolved();
             }
         }
 

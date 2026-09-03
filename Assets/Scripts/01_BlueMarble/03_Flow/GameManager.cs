@@ -34,8 +34,9 @@ namespace BlueMarble
             
             Client.OnTurnStarted += HandleTurnStarted;
             Client.OnDiceRolled += HandleDiceRolled;
-            Client.OnUserMovedTo += HandleUserMovedTo;
             Client.OnGameEnded += HandleGameEnded;
+
+            Client.OnUserMovedTo += HandleUserMovedTo;
             
             Turn.OnDiceRollRequested += HandleDiceRollDiceRequested;
 
@@ -51,8 +52,9 @@ namespace BlueMarble
         {
             Client.OnTurnStarted -= HandleTurnStarted;
             Client.OnDiceRolled -= HandleDiceRolled;
-            Client.OnUserMovedTo -= HandleUserMovedTo;
             Client.OnGameEnded -= HandleGameEnded;
+
+            Client.OnUserMovedTo -= HandleUserMovedTo;
             
             Turn.OnDiceRollRequested -= HandleDiceRollDiceRequested;
         }
@@ -89,16 +91,16 @@ namespace BlueMarble
             int turnId = Client.TurnId;
             ResolveTurnAsync(user.Id, d1, d2, turnId).Forget();
         }
-
-        private void HandleUserMovedTo(UserMovedToMessage message)
-        {
-            ResolveUserMovedToAsync(message).Forget();
-        }
-
+        
         private void HandleGameEnded()
         {
             Turn.SetInputEnabled(false);
             Debug.Log($"[GameManager] Game Ended.");
+        }
+
+        private void HandleUserMovedTo(MoveUserToMessage message)
+        {
+            ResolveUserMovedToAsync(message).Forget();
         }
         
         private async UniTaskVoid ResolveTurnAsync(string playerId, int d1, int d2, int turnId)
@@ -107,16 +109,23 @@ namespace BlueMarble
             await Turn.ShowDiceResultAsync(d1, d2);
             
             // 2. 이동 및 타일 효과 처리
-            await Player.MoveBy(playerId, d1 + d2);
+            await Player.MoveBy(playerId, d1 + d2, turnId);
             
             // 4. 현재 클라이언트의 턴이 끝났음을 서버에 보고
             await Client.AnnounceTurnFinished(turnId);
         }
 
-        private async UniTaskVoid ResolveUserMovedToAsync(UserMovedToMessage message)
+        private async UniTaskVoid ResolveUserMovedToAsync(MoveUserToMessage message)
         {
-            await Players.MoveTo(message.UserId, message.TileId);
-            await Client.AnnounceUserMoveFinished(message.TurnId, message.MoveId, message.RequestId);
+            await Players.MoveTo(
+                message.UserId,
+                message.TileId,
+                message.TurnId,
+                message.MoveId);
+
+            await Client.AnnounceUserMoveFinished(
+                message.TurnId,
+                message.MoveId);
         }
     }
 }

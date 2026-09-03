@@ -27,8 +27,7 @@ namespace BlueMarble
     {
         public UniTask Apply(string playerId, Tile _)
         {
-            EconomyManager.Instance.GainGoldTo(playerId, 10000);
-            return UniTask.CompletedTask;
+            return EconomyManager.Instance.GainGoldTo(playerId, 10000);
         }   
     }
 
