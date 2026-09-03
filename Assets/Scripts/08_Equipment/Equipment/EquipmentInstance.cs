@@ -33,7 +33,7 @@ namespace BlueMarble
         public void Cooldown(float deltaTime) 
         {
             if (RemainingCooldown <= 0f) return;
-            RemainingCooldown = -deltaTime;
+            RemainingCooldown -= deltaTime;
 
             if (RemainingCooldown < 0f) RemainingCooldown = 0f;
         }

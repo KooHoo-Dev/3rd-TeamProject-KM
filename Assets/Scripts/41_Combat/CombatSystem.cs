@@ -1,52 +1,64 @@
+using BlueMarble;
 using Jay;
 using UnityEngine;
+using Epic3;
 
 namespace Combat
 {
     public class CombatSystem : SingletonBase<CombatSystem>
     {
-        [Header("Ref")]
-        public Dummy dummy;
+        [Header("References")]
         public Timer combatTimer;
-
+        
         [Header("Damage Multiplier")]
-        // 대미지 배율 증가 시점(초)
         public float multiplierIncreaseStartTime = 10f;
-        // 대미지 배율 증가 주기
         public float multiplierIncreaseInterval = 5f;
-        // 대미지 배율 증가 폭
         public float multiplierIncreaseAmount = 1f;
 
         public float DamageMultiplier { get; private set; } = 1.0f;
-        public bool  IsCombatActive   { get; private set; } = false;
+        public bool IsCombatActive { get; private set; } = false;
 
         private float elapsedTime;
         private float nextMultiplierIncreaseTime;
-        
-        protected override void OnInitialize()
-        {
-            base.OnInitialize();
 
-            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
+        private string attackerId;
+        private string defenderId;
+        private Tile battleTile;
 
-            dummy.OnDied += HandleDummyDied;
-            combatTimer.OnTimeUp += HandleTimeUp;
-            combatTimer.StartTimer();
+        private float attackerHp, attackerMaxHp;
+        private float defenderHp, defenderMaxHp;
 
-            IsCombatActive = true;
-        }
+        private CombatFlow combatFlow;
 
         protected override void OnDispose()
         {
             base.OnDispose();
-
-            if (dummy != null) dummy.OnDied -= HandleDummyDied;
             if (combatTimer != null) combatTimer.OnTimeUp -= HandleTimeUp;
+        }
+
+        public void StartCombat(string attacker, string defender, Tile battleTile, float maxHp)
+        {
+            attackerId = attacker;
+            defenderId = defender;
+            this.battleTile = battleTile;
+            
+            
+            
+            attackerMaxHp = attackerHp = maxHp;
+            defenderMaxHp = defenderHp = maxHp;
+
+            elapsedTime = 0f;
+            DamageMultiplier = 1.0f;
+            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
+
+            combatTimer.OnTimeUp += HandleTimeUp;
+            combatTimer.StartTimer();
+            IsCombatActive = true;
         }
 
         private void Update()
         {
-            if (IsCombatActive == false) return;
+            if (!IsCombatActive) return;
 
             elapsedTime += Time.deltaTime;
 
@@ -54,45 +66,67 @@ namespace Combat
             {
                 DamageMultiplier += multiplierIncreaseAmount;
                 nextMultiplierIncreaseTime += multiplierIncreaseInterval;
-
-                Debug.Log($"[CombatSystem] 데미지 배율이 증가했다. 현재 배율: x{DamageMultiplier:F2}");
+                Debug.Log($"[CombatSystem] 데미지 배율 증가: x{DamageMultiplier:F2}");
             }
         }
         
-        public void ReportDamage(string attackePlayer, Dummy targetPlayer, int amount)
+        public void ApplyDamage(string targetId, int amount)
         {
-            if (IsCombatActive == false) return;
+            if (!IsCombatActive) return;
 
-            Debug.Log($"[CombatSystem] {attackePlayer}가 {targetPlayer.name}에게 {amount}의 대미지를 주었다.");
-            targetPlayer.TakeDamage(amount);
+            if (targetId == attackerId) attackerHp -= amount;
+            else if (targetId == defenderId) defenderHp -= amount; 
+
+            CheckInstantWin();
         }
 
-        private void HandleDummyDied()
+        private void CheckInstantWin()
         {
-            EndCombat("Player");
+            if (attackerHp <= 0) EndCombat(defenderId, attackerId);
+            else if (defenderHp <= 0) EndCombat(attackerId, defenderId);
         }
 
         private void HandleTimeUp()
         {
-            float playerRatio = 1.0f;
-            float dummyRatio  = dummy.HpRatio;
+            float attackerRatio = attackerHp / attackerMaxHp;
+            float defenderRatio = defenderHp / defenderMaxHp;
 
-            string winner;
-            if (playerRatio > dummyRatio) winner = "Player";
-            else if (dummyRatio > playerRatio) winner = "Dummy";
-            else winner = "Dummy";
+            string winner, loser;
 
-            EndCombat(winner);
+            if (attackerRatio > defenderRatio)
+            {
+                winner = attackerId;
+                loser = defenderId;
+            }
+            else if (defenderRatio > attackerRatio)
+            {
+                winner = defenderId;
+                loser = attackerId;
+            }
+            else
+            {
+                Debug.Log("[CombatSystem] 동점으로 인한 점령자 방어 성공!");
+                winner = defenderId;
+                loser = attackerId;
+            }
+
+            EndCombat(winner, loser);
         }
 
-        private void EndCombat(string winner)
+        private void EndCombat(string winnerId, string loserId)
         {
-            if (IsCombatActive == false) return;
+            if (!IsCombatActive) return;
 
             IsCombatActive = false;
             combatTimer.StopTimer();
+            combatTimer.OnTimeUp -= HandleTimeUp;
 
-            Debug.Log($"[CombatSystem] {winner}의 승리!");
+            Debug.Log($"[CombatSystem] {winnerId}의 승리!");
+
+            if (winnerId == attackerId)
+            {
+                TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
+            }
         }
     }
 }

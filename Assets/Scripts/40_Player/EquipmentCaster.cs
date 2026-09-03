@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using BlueMarble;
 using Combat;
-using Utility;
 
 namespace Player
 {
