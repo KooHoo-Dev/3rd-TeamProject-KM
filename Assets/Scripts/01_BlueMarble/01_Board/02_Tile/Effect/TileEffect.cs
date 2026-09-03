@@ -81,8 +81,8 @@ namespace BlueMarble
     {
         public async UniTask Apply(string playerId, Tile _)
         {
-            //ShopManager shop = ShopManager.Instance;
-            //await shop.OpenAsync(playerId);
+            ShopManager shop = ShopManager.Instance;
+            await shop.OpenAsync(playerId);
         }
     }
 }

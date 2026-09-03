@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Cysharp.Threading.Tasks;
+using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
@@ -156,6 +157,7 @@ namespace BlueMarble
         /// 즉 호출하는 쪽에서 "await OpenShopAsync(...)"로 대기하면,
         /// 플레이어가 상점을 다 보고 닫을 때까지 보드 이동 로직이 자동으로 멈춰 있게 된다.
         /// </summary>
+        [Button]
         public UniTask OpenShopAsync(string playerId)
         {
             // 골드는 이제 EconomyManager를 화면단(RefreshGoldText/OnPurchaseClicked)에서 직접 조회한다.
