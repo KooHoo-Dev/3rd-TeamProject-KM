@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace BlueMarble
 {
-    public static class BoardPlayerRegistry
+    public static class PlayerRegistry
     {
         private static List<Player> all = new();
         

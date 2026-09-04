@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using BlueMarble.Server;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace BlueMarble
@@ -48,7 +49,7 @@ namespace BlueMarble
                           "인벤토리가 가득 차서 교체 대기 상태입니다.");
             }
 
-            bool isLocalPlayer = playerId == LocalPlayer.Instance.Id; // TODO: 실제 프로퍼티명 확인 필요
+            bool isLocalPlayer = playerId == RoomClient.Instance.Me.Id; // TODO: 실제 프로퍼티명 확인 필요
 
             if (isLocalPlayer && presenter != null)
             {

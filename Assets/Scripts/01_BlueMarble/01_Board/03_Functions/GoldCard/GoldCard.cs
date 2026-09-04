@@ -7,8 +7,11 @@ using UnityEngine.InputSystem;
 
 namespace BlueMarble
 {
-    public class GoldenKey : MonoBehaviour
+    public class GoldCard : MonoBehaviour
     {
+        [Header("Components")]
+        [SerializeField] private SpriteRenderer iconRenderer;
+        
         [Header("Flip VFX")]
         [SerializeField] private ParticleSystem preFlipVfx;         // 뒤집기 시작 시 재생 
         [SerializeField] private ParticleSystem durationFlipVfx;    // 뒤집을 때 재생 
@@ -19,10 +22,20 @@ namespace BlueMarble
 
         private bool flipped = false;
         private Tween flipTween;
-        
+
+        public GoldCardDef Def { get; private set; }
+
         private void OnDisable()
         {
             Clear(); // 오브젝트 비활성화 시 트윈/파티클 정리 (씬 전환, 팝업 닫힘 등)
+        }
+
+        public void Initialize(GoldCardDef def)
+        {
+            Clear();
+
+            Def = def;
+            // iconImage.sprite = def.Icon;
         }
         
         /// <summary>
@@ -35,7 +48,7 @@ namespace BlueMarble
             Clear();
         }
 
-        public UniTask Flip()
+        public UniTask FlipAsync()
         {
             StopVfx(preFlipVfx);
             PlayVfx(durationFlipVfx);

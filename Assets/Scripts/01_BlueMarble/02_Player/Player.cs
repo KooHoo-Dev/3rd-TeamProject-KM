@@ -7,7 +7,7 @@ using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
-    public class BoardPlayer : MonoBehaviour
+    public class Player : MonoBehaviour
     {
         [field: ShowInInspector, ReadOnly] public string Id { get; private set; }
 
@@ -26,12 +26,12 @@ namespace BlueMarble
         public void Initialize(string id)
         {
             Id = id;
-            BoardPlayerRegistry.Register(this);
+            PlayerRegistry.Register(this);
         }
 
         public void OnDisable()
         {
-            BoardPlayerRegistry.Unregister(this);
+            PlayerRegistry.Unregister(this);
         }
         
         public async UniTask<Tile> MoveNext()

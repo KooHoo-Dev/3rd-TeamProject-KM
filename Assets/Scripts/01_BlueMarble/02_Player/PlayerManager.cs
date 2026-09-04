@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace BlueMarble
 {
-    public class BoardPlayerManager : SingletonBase<BoardPlayerManager>
+    public class PlayerManager : SingletonBase<PlayerManager>
     {
         [Title("Components")]
         [SerializeField] private GameObject[] dummies;
@@ -89,7 +89,7 @@ namespace BlueMarble
 
         private bool TryGetPlayer(string playerId, out Player result)
         {
-            if (BoardPlayerRegistry.TryGetPlayer(playerId, out result)) return true;
+            if (PlayerRegistry.TryGetPlayer(playerId, out result)) return true;
             
             Debug.LogError($"[TurnManager] Player not found: {playerId}");
             return false;
