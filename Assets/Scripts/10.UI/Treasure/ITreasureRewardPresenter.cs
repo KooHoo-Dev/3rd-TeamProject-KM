@@ -16,6 +16,16 @@ namespace BlueMarble
     }
 
     /// <summary>
+    /// 인벤토리 UI를 띄우고, 유저가 닫을 때까지 대기한다.
+    /// 인벤토리가 가득 차 교체 대기 중이면, 슬롯 클릭 시 자동 교체까지 이 프리젠터 범위에서 처리한다.
+    /// </summary>
+    public interface IInventoryPresenter
+    {
+        UniTask ShowAsync();
+    }
+
+
+    /// <summary>
     /// 등급에 맞는 폭죽 VFX 프리팹을 재생하고 정리하는 책임만 가진다.
     /// </summary>
     public interface ITreasureVfxPlayer

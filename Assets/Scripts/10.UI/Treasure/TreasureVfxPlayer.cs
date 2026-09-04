@@ -59,6 +59,9 @@ namespace BlueMarble
             instance.Play();
 
             float duration = instance.main.duration + instance.main.startLifetime.constantMax;
+            const float maxWaitSeconds = 3f; // 루프형 프리팹이 잘못 들어와도 팝업이 무한 대기하지 않도록 상한선
+            duration = Mathf.Min(duration, maxWaitSeconds);
+
             Debug.Log($"[TreasureVfxPlayer] 재생 시작. {duration}초 후 정리");
 
             await UniTask.Delay(TimeSpan.FromSeconds(duration));
