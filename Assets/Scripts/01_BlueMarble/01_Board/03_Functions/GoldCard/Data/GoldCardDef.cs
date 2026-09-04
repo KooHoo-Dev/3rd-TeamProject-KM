@@ -22,9 +22,7 @@ namespace BlueMarble
     public class GoldCardDef
     {
         public int Id { get; private set; }
-        public string Name { get; private set; }
         public string Description { get; private set; }
-        public string FlavorText { get; private set; }
         public Sprite Icon { get; private set; }
         
         public GoldCardPatternType PatternType { get; private set; }
@@ -32,15 +30,13 @@ namespace BlueMarble
         
         public int GoldAmount { get; private set; }
         public int DropTableId { get; private set; } // 이건 나중에 수정
-        public int SpaceId { get; private set; }
+        public int TileId { get; private set; }
 
-        public GoldCardDef(int id, string name, string description, string flavorText, Sprite icon, 
-            GoldCardPatternType patternType, GoldCardScopeType scopeType, int goldAmount, int dropTableId, int spaceId)
+        public GoldCardDef(int id, string description, Sprite icon, 
+            GoldCardPatternType patternType, GoldCardScopeType scopeType, int goldAmount, int dropTableId, int tileId)
         {
             Id = id;
-            Name = name;
             Description = description;
-            FlavorText = flavorText;
             Icon = icon;
             
             PatternType = patternType;
@@ -48,7 +44,7 @@ namespace BlueMarble
             
             GoldAmount = goldAmount;
             DropTableId = dropTableId;
-            SpaceId = spaceId;
+            TileId = tileId;
         }
     }
 }
