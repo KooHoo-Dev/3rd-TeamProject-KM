@@ -14,7 +14,7 @@ namespace BlueMarble
 
         private void Update()
         {
-            if (SimpleInput.GetKeyDown(Key.Digit1))
+            if (SimpleInput.GetKeyDown(Key.T))
             {
                 EquipmentDef def = DataManager.Instance.GetEquipmentDef(testEquipmentId);
 

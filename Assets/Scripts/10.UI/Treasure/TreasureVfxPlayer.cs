@@ -55,7 +55,7 @@ namespace BlueMarble
 
             Debug.Log($"[TreasureVfxPlayer] {prefab.name} 인스턴스화 시도");
 
-            ParticleSystem instance = Instantiate(prefab, spawnAnchor.position, Quaternion.identity, spawnAnchor);
+            ParticleSystem instance = Instantiate(prefab, spawnAnchor.position, Quaternion.identity);
             instance.Play();
 
             float duration = instance.main.duration + instance.main.startLifetime.constantMax;
