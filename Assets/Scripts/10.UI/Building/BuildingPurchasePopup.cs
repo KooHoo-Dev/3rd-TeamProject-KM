@@ -58,7 +58,7 @@ namespace BlueMarble
             }
 
             // 씬에 EventSystem이 없으면 경고만 남기고 계속 진행
-            if (FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 Debug.LogWarning("씬에 EventSystem이 없습니다. 버튼 입력을 받으려면 EventSystem을 추가하세요.");
             }

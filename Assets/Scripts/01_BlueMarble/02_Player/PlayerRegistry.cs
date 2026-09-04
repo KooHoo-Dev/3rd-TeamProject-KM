@@ -24,6 +24,8 @@ namespace BlueMarble
             all.Remove(player);
             OnUpdated?.Invoke();
         }
+        
+        public static bool IsRegistered(string playerId) => all.Exists(p => p.Id == playerId);
 
         public static IPlayer GetPlayer(string playerId)
         {

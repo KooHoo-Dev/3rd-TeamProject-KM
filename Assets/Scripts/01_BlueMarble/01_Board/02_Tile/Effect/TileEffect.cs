@@ -10,7 +10,7 @@ namespace BlueMarble
         UniTask Apply(string playerId, Tile tile);
     }
 
-    public class PropertyEffect : ITileEffect
+    public class PropertyEffect : ITileEffect // 오늘 해야함
     {
         public UniTask Apply(string playerId, Tile tile)
         {
@@ -23,34 +23,23 @@ namespace BlueMarble
         }
     }
 
-    public class SalaryEffect : ITileEffect
+    public class SalaryEffect : ITileEffect // DONE
     {
         public UniTask Apply(string playerId, Tile _)
         {
-            RoomClient.Instance.RequestUpdateEconomy(new EconomyUpdate
-            {
-                UserId = playerId,
-                Amount = 10000             // 이건 EconomyManager 들어오면 Config값 찾아와서 그 만큼 Add처리 하면 될듯?
-            });
-            return UniTask.CompletedTask;
+            return EconomyManager.Instance.GainGoldTo(playerId, 10000);
         }   
     }
 
-    public class PrisonEffect : ITileEffect
+    public class PrisonEffect : ITileEffect // DONE
     {
         public UniTask Apply(string playerId, Tile tile)
         {
-            IPlayer target = PlayerRegistry.GetPlayer(playerId);
-            target.ActionDisabledTurnCount = 1; // 나중엔 Config에 등록된 값을 써야할듯?
-            
-            Debug.Log($"[PrisonEffect] {playerId} is now in prison. " +
-                      $"That player cannot take any action for {target.ActionDisabledTurnCount} turn.");
-            
-            return UniTask.CompletedTask;
+            return RoomClient.Instance.RequestAddIncapacitationCount(3);
         }  
     }
 
-    public class TreasureEffect : ITileEffect
+    public class TreasureEffect : ITileEffect // 서버랑 연동해야함
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
@@ -61,7 +50,7 @@ namespace BlueMarble
         }
     }
 
-    public class GoldCardEffect : ITileEffect //
+    public class GoldCardEffect : ITileEffect // 살짝 수정해야함 (장비 획득 관련)
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
@@ -70,16 +59,16 @@ namespace BlueMarble
         }
     }
 
-    public class TeleportEffect : ITileEffect
+    public class TeleportEffect : ITileEffect // DONE
     {
         public async UniTask Apply(string playerId, Tile _)
         {
             TeleportManager teleport = TeleportManager.Instance;
-            await teleport.ExecuteAsync(playerId);
+            await teleport.MoveToSelected(playerId);
         }
     }
 
-    public class ShopEffect : ITileEffect
+    public class ShopEffect : ITileEffect // 살짝 수정해야함
     {
         public async UniTask Apply(string playerId, Tile _)
         {
