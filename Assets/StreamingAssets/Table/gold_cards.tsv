@@ -2,9 +2,12 @@ Id	Description	IconKey	Pattern	Scope	GoldAmount	DropTableId	TileId
 0	자신에게 금화 +500		GainGold	Self	500	-1	-1
 1	모두에게 금화 +300		GainGold	All	300	-1	-1
 2	나를 제외한 모두가 금화 +600		GainGold	ExceptSelf	600	-1	-1
-3	나를 포함해 무작위 인원에게 금화 +500		GainGold	Random	500	-1	-1
+3	무작위 인원에게 금화 +500		GainGold	Random	500	-1	-1
 4	자신의 금화 -300		LoseGold	Self	300	-1	-1
 5	모두에게 금화 -200		LoseGold	All	200	-1	-1
 6	나를 제외한 모두가 금화 -300		LoseGold	ExceptSelf	300	-1	-1
 7	무작위 인원이 금화 -400		LoseGold	Random	400	-1	-1
-10	감옥으로 순간이동한다		GoTo	Self	-1	-1	-1
+8	감옥으로 순간이동한다		GoTo	Self	-1	-1	9
+9	무작위 인원을 감옥으로 보낸다		GoTo	Random	-1	-1	9
+10	발할라로 순간이동한다		GoTo	Self	-1	-1	35
+11	라타토스크의 전언으로 보낸다		GoTo	ExceptSelf	-1	-1	25
