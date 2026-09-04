@@ -11,6 +11,7 @@ namespace BlueMarble
         public BoardSpaceTable BoardSpaces { get; } = new();
 
         public EquipmentTable Equipments { get; } = new();
+        public DropProbTable DropProbs { get; } = new();
         public DropTable Drops { get; } = new();
         
         public GoldCardTable GoldCards { get; } = new();
@@ -35,8 +36,10 @@ namespace BlueMarble
                 Tiles.LoadAsync(),
                 BoardSpaces.LoadAsync(),
                 Equipments.LoadAsync(),
+                DropProbs.LoadAsync(),
+                GoldCards.LoadAsync(),
+                
                 Drops.LoadAsync(),
-                GoldCards.LoadAsync()
             };
             await UniTask.WhenAll(tasks);
         }
@@ -50,9 +53,11 @@ namespace BlueMarble
         public BoardSpaceDef GetBoardSpaceDef(int id) => BoardSpaces.Get(id);
 
         public EquipmentDef GetEquipmentDef(int id) => Equipments.Get(id);
-        public DropDef GetDropDef(int id) => Drops.Get(id);
+        public DropProbDef GetDropProbDef(int id) => DropProbs.Get(id);
         
         public GoldCardDef GetGoldCardDef(int id) => GoldCards.Get(id);
+        
+        public DropDef GetDropDef(int id) => Drops.Get(id);
 
         #endregion
         

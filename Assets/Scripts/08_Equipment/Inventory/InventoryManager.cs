@@ -2,7 +2,6 @@
 using Study.Utilities;
 using UnityEngine.InputSystem;
 
-
 namespace BlueMarble
 {
     /// <summary>
