@@ -26,7 +26,6 @@ namespace BlueMarble
         [SerializeField] private Button closeButton;
 
         [Header("테스트 설정")]
-        [SerializeField] private KeyCode showPopupKey = KeyCode.P;
         [SerializeField] private int testTilePrice = 1105000; // 예: 110만5000
 
         private void OnEnable()

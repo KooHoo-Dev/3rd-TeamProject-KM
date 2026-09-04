@@ -51,9 +51,12 @@ namespace BlueMarble
             Sequence r2 = dices[1].CreateRoll(d2, jumpPower, jumpDuration);
             
             Sequence sequence = DOTween.Sequence();
-            sequence.Join(r1).Join(r2);
             
-            await sequence.ToUniTask(TweenCancelBehaviour.Complete);
+            await sequence
+                .Join(r1)
+                .Join(r2)
+                .ToUniTask(TweenCancelBehaviour.Complete);
+            
             await CustomUniTask.DelaySeconds(1f);
 
             SetActiveDices(false);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using Jay;
@@ -16,7 +17,7 @@ namespace BlueMarble
         private RoomClient Client => RoomClient.Instance;
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
         
-        public async UniTask ExecuteAsync(string playerId)
+        public async UniTask MoveToSelected(string playerId)
         {
             Board board = World.Board;
 
@@ -38,31 +39,50 @@ namespace BlueMarble
 
                 if (board.TryGetTile(worldPos, out Tile tile) == false) continue;
                 if (board.GetTile(player.Position) == tile) continue;
+                if (await MoveToAsync(playerId, tile)) break;
+            }
+        }
+        
+        public async UniTask<bool> MoveToAsync(string playerId, int tileIdx)
+        {
+            return 
+                World.Board.TryGetTile(tileIdx, out Tile tile) && 
+                await MoveToAsync(playerId, tile);
+        }
+        
+        public async UniTask<bool> MoveToAsync(string playerId, Tile tile)
+        {
+            if (PlayerRegistry.IsRegistered(playerId) == false)
+            {
+                Debug.Log($"[TeleportManager] Cannot find player: {playerId}");
+                return false;
+            }
+            
+            Board board = World.Board;
                 
-                int tileIdx = World.Board.GetTileIndex(tile);
+            int tileIdx = board.GetTileIndex(tile);
 
-                string requestId = Guid.NewGuid().ToString("N");
-                UniTaskCompletionSource<bool> completionSource = new();
+            string requestId = Guid.NewGuid().ToString("N");
+            UniTaskCompletionSource<bool> completionSource = new();
 
-                Client.OnUserMoveFinished += HandleMoveFinished;
+            Client.OnUserMoveFinished += HandleMoveFinished;
 
-                try
-                {
-                    await Client.RequestMovePlayerTo(playerId, tileIdx, Client.TurnId, requestId);
-                    await completionSource.Task;
-                }
-                finally
-                {
-                    Client.OnUserMoveFinished -= HandleMoveFinished;
-                }
+            try
+            {
+                await Client.RequestMovePlayerTo(playerId, tileIdx, Client.TurnId, requestId);
+                await completionSource.Task;
+            }
+            finally
+            {
+                Client.OnUserMoveFinished -= HandleMoveFinished;
+            }
+
+            return true;
                 
-                return;
-                
-                void HandleMoveFinished(UserMoveFinishedMessage msg)
-                {
-                    if (msg.RequestId != requestId) return;
-                    completionSource.TrySetResult(true);
-                }
+            void HandleMoveFinished(UserMoveFinishedMessage msg)
+            {
+                if (msg.RequestId != requestId) return;
+                completionSource.TrySetResult(true);
             }
         }
     }

@@ -20,9 +20,7 @@ namespace BlueMarble
                 GoldCardDTO dto = rows[i];
                 
                 int id = dto.Id;
-                string name = dto.Name;
                 string description = dto.Description;
-                string flavorText = dto.FlavorText;
                 Sprite icon = Resources.Load<Sprite>(dto.IconKey);
 
                 GoldCardPatternType patternType = Enum.Parse<GoldCardPatternType>(dto.Pattern);
@@ -30,12 +28,12 @@ namespace BlueMarble
 
                 int goldAmount = dto.GoldAmount;
                 int dropTableId = dto.DropTableId;
-                int spaceId = dto.SpaceId;
+                int tileId = dto.TileId;
 
                 defs[dto.Id] = new GoldCardDef(
-                    id, name, description, flavorText, icon,
+                    id, description, icon,
                     patternType, scopeType, 
-                    goldAmount, dropTableId, spaceId);
+                    goldAmount, dropTableId, tileId);
             }
         }
     }

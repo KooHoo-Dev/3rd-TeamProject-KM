@@ -55,7 +55,7 @@ namespace BlueMarble
                 GoldCardDef drawn = await completionSource.Task;
 
                 Debug.Log($"[GoldCardManager] {playerId} drew Gold Card " +
-                          $"{drawn.Id}: {drawn.Name}");
+                          $"{drawn.Id}: {drawn.Description}");
                 
                 await ApplyCardEffectAsync(playerId, drawn);
             }
@@ -84,7 +84,7 @@ namespace BlueMarble
                 targetIds,
                 drawn.GoldAmount,
                 drawn.DropTableId,
-                drawn.SpaceId);
+                drawn.TileId);
         }
     }
 }
