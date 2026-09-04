@@ -36,6 +36,14 @@ namespace Combat
                 { AttackType.Parabola, new ParabolaAttackStrategy() },
                 { AttackType.Area, new AreaAttackStrategy() }
             };
+            
+            equipmentTable = new EquipmentTable();
+            LoadTableAsync();
+        }
+        
+        private async void LoadTableAsync()
+        {
+            await equipmentTable.LoadAsync();
         }
 
         public void ExecuteSkillFromNetwork(SkillCastMessage msg)
@@ -53,7 +61,7 @@ namespace Combat
 
                 basicAttackStrategy.Execute(spawnPoint, targetPoint, basicDamage, msg.CasterId, basicArrowPrefab);
             }
-            // 일반 장비 스킬인 경우
+            // 장비 스킬인 경우
             else
             {
                 EquipmentDef def = equipmentTable.Get(msg.EquipmentId);

@@ -181,6 +181,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1955245549}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &899647208
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 899647210}
+  - component: {fileID: 899647209}
+  m_Layer: 0
+  m_Name: BattleManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &899647209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899647208}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d089462e088d45ee9c5028fd016afbe9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Combat.BattleManager
+  isDontDestroyOnLoad: 1
+  basicArrowPrefab: {fileID: 7287951908874623754, guid: 28131a276e8274f4aa973b2162c9057a, type: 3}
+--- !u!4 &899647210
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899647208}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.58888, y: 2.6386, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &915816792
 GameObject:
   m_ObjectHideFlags: 0
@@ -690,7 +736,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.CombatSystem
   isDontDestroyOnLoad: 1
-  dummy: {fileID: 915816793}
   combatTimer: {fileID: 2142098323}
   multiplierIncreaseStartTime: 10
   multiplierIncreaseInterval: 5
@@ -889,8 +934,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player.EquipmentCaster
   spawnPoint: {fileID: 779107235}
-  firePoint: {fileID: 386125607}
-  basicArrowPrefab: {fileID: 7287951908874623754, guid: 28131a276e8274f4aa973b2162c9057a, type: 3}
   basicAttackInterval: 1.3
   baseDamage: 1
   attackerName: Player
@@ -1099,3 +1142,4 @@ SceneRoots:
   - {fileID: 915816797}
   - {fileID: 1651222453}
   - {fileID: 2142098324}
+  - {fileID: 899647210}

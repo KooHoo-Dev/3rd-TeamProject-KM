@@ -86,12 +86,15 @@ namespace Player
             if (eq.TryUse())
             {
                 IsCastingSkill = true;
-                
-                myCaster.ActivateEquipment(eq.Def);
-                
-                await UniTask.Delay(500); 
-                
-                IsCastingSkill = false;
+                try
+                {
+                    myCaster.ActivateEquipment(eq.Def);
+                    await UniTask.Delay(500);
+                }
+                finally
+                {
+                    IsCastingSkill = false;
+                }
             }
             else
             {

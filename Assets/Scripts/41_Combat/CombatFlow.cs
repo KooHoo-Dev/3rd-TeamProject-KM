@@ -8,6 +8,8 @@ namespace Combat
         private TerritoryManager territoryManager => TerritoryManager.Instance;
         
         
+        
+        
         // 통행료를 내려면,
         public bool CanBattleRequest(string attackerId, string defenderId, Tile tile)
         {

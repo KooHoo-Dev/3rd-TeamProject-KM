@@ -2,6 +2,7 @@ using BlueMarble;
 using Jay;
 using UnityEngine;
 using Epic3;
+using Sirenix.OdinInspector;
 
 namespace Combat
 {
@@ -36,13 +37,17 @@ namespace Combat
             if (combatTimer != null) combatTimer.OnTimeUp -= HandleTimeUp;
         }
 
+        [Button]
+        public void TestCombat()
+        {
+            IsCombatActive = true;
+        }
+        
         public void StartCombat(string attacker, string defender, Tile battleTile, float maxHp)
         {
             attackerId = attacker;
             defenderId = defender;
             this.battleTile = battleTile;
-            
-            
             
             attackerMaxHp = attackerHp = maxHp;
             defenderMaxHp = defenderHp = maxHp;

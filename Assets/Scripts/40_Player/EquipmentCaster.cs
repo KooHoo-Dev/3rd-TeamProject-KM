@@ -10,9 +10,7 @@ namespace Player
     public class EquipmentCaster : MonoBehaviour
     {
         [Header("References")]
-        public Vector3 spawnPoint;
-        public Vector3 firePoint; 
-        public GameObject basicArrowPrefab;
+        public Transform spawnPoint;
         
         [Header("Basic Attack Settings")]
         public float basicAttackInterval = 1.3f;
@@ -21,24 +19,12 @@ namespace Player
 
         private float nextAttackTime = 0f;
 
-        private Dictionary<AttackType, IAttackStrategy> strategies;
-        private IAttackStrategy basicAttackStrategy;
-        
         private CancellationTokenSource attackCts;
         private PlayerController playerController;
 
         private void Awake()
         {
             playerController = GetComponent<PlayerController>();
-            
-            strategies = new Dictionary<AttackType, IAttackStrategy>
-            {
-                { AttackType.Straight, new StraightAttackStrategy() },
-                {AttackType.Parabola, new ParabolaAttackStrategy()},
-                { AttackType.Area , new AreaAttackStrategy()}
-            };
-            
-            basicAttackStrategy = new BasicAttackStrategy();
         }
 
         private void OnEnable()
@@ -66,23 +52,23 @@ namespace Player
 
                     if (canAttack && Time.time >= nextAttackTime)
                     {
-                        int damage = Mathf.RoundToInt(baseDamage * CombatSystem.Instance.DamageMultiplier);
-    
                         SkillCastMessage msg = new SkillCastMessage 
                         {
                             CasterId = attackerName,
                             IsBasicAttack = true,
                             EquipmentId = 0,
-                            SpawnX = spawnPoint.x,
-                            SpawnY = spawnPoint.y,
+                            SpawnX = spawnPoint.position.x,
+                            SpawnY = spawnPoint.position.y,
                             Direction = 1f // 오른쪽을 보고 있다면 1, 왼쪽이면 -1
                         };
-    
-                        // TODO: 생성한 msg를 서버로 전송합니다. (예: NetworkManager.Send(msg))
+
+                        BattleManager.Instance.ExecuteSkillFromNetwork(msg);
                         Debug.Log($"[네트워크 전송] 기본 공격 발사 요청!");
 
                         nextAttackTime = Time.time + basicAttackInterval;
                     }
+
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                 }
             }
             catch (System.OperationCanceledException) { }
@@ -90,18 +76,18 @@ namespace Player
 
         public void ActivateEquipment(EquipmentDef def)
         {
-            GameObject prefab = Resources.Load<GameObject>(def.PrefabPath);
-
-            if (prefab != null)
+            SkillCastMessage msg = new SkillCastMessage
             {
-                if (strategies.TryGetValue(def.AttackType, out IAttackStrategy strategy))
-                {
-                    int damage = Mathf.RoundToInt(def.BaseDamage * CombatSystem.Instance.DamageMultiplier);
-                    
-                    strategy.Execute(spawnPoint, firePoint, damage, attackerName, prefab, def);
-                    Debug.Log($"[Caster] {def.Name} 스킬 발동!");
-                }
-            }
+                CasterId = attackerName,
+                IsBasicAttack = false,
+                EquipmentId = def.Id,
+                SpawnX = spawnPoint.position.x,
+                SpawnY = spawnPoint.position.y,
+                Direction = 1f
+            };
+            
+            BattleManager.Instance.ExecuteSkillFromNetwork(msg);
+            Debug.Log($"[로컬 전송] {def.Name} 스킬 발사 요청!");
         }
     }
 }
