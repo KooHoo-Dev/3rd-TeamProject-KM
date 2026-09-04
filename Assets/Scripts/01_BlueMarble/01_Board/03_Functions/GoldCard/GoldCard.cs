@@ -1,4 +1,5 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 using Study.Utilities;
@@ -18,26 +19,32 @@ namespace BlueMarble
 
         private bool flipped = false;
         private Tween flipTween;
-
         
-
-        private void Update()
+        private void OnDisable()
         {
-            if (SimpleInput.GetKeyDown(Key.Digit1))
-            {
-                Flip();
-            }
+            Clear(); // 오브젝트 비활성화 시 트윈/파티클 정리 (씬 전환, 팝업 닫힘 등)
+        }
+        
+        /// <summary>
+        /// 팝업이 닫히거나 카드가 재사용될 때 외부(팝업 컨트롤러)에서 호출.
+        /// 파티클 잔상 없이 완전히 초기화한다.
+        /// </summary>
+        public void ResetVisual()
+        {
+            PlayVfx(preFlipVfx);
+            Clear();
         }
 
-        private void Flip()
+        public UniTask Flip()
         {
             StopVfx(preFlipVfx);
             PlayVfx(durationFlipVfx);
             PlayVfx(resultFlipVfx);
             
             flipped = !flipped;
-
             flipTween = transform.DORotate(new Vector3(0, flipped ? 180f : 0f, 0), flipDuration);
+            
+            return flipTween.ToUniTask();
         }
 
         private void PlayVfx(ParticleSystem vfx)
@@ -53,25 +60,12 @@ namespace BlueMarble
             vfx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
-        /// <summary>
-        /// 팝업이 닫히거나 카드가 재사용될 때 외부(팝업 컨트롤러)에서 호출.
-        /// 파티클 잔상 없이 완전히 초기화한다.
-        /// </summary>
-        public void ResetVisual()
+        private void Clear()
         {
-            PlayVfx(preFlipVfx);
             flipTween?.Kill();
             flipped = false;
             transform.rotation = Quaternion.identity;
-            StopVfx(preFlipVfx);
-            StopVfx(resultFlipVfx);
-            StopVfx(durationFlipVfx);
-        }
-
-        private void OnDisable()
-        {
-            // 오브젝트 비활성화 시 트윈/파티클 정리 (씬 전환, 팝업 닫힘 등)
-            flipTween?.Kill();
+            
             StopVfx(preFlipVfx);
             StopVfx(resultFlipVfx);
             StopVfx(durationFlipVfx);

@@ -4,22 +4,22 @@ using UnityEngine;
 
 namespace BlueMarble
 {
-    public static class PlayerRegistry
+    public static class BoardPlayerRegistry
     {
-        private static List<IPlayer> all = new();
+        private static List<Player> all = new();
         
-        public static IReadOnlyList<IPlayer> All => all;
+        public static IReadOnlyList<Player> All => all;
         public static int Count => all.Count;
 
         public static event Action OnUpdated;
 
-        public static void Register(IPlayer player)
+        public static void Register(Player player)
         {
             all.Add(player);
             OnUpdated?.Invoke();
         }
         
-        public static void Unregister(IPlayer player)
+        public static void Unregister(Player player)
         {
             all.Remove(player);
             OnUpdated?.Invoke();
@@ -27,7 +27,7 @@ namespace BlueMarble
         
         public static bool IsRegistered(string playerId) => all.Exists(p => p.Id == playerId);
 
-        public static IPlayer GetPlayer(string playerId)
+        public static Player GetPlayer(string playerId)
         {
             for (int i = 0; i < all.Count; i++)
             {
@@ -39,10 +39,10 @@ namespace BlueMarble
             return null;
         }
 
-        public static bool TryGetPlayer(string id, out IPlayer result)
+        public static bool TryGetPlayer(string id, out Player result)
         {
             result = GetPlayer(id);
-            return result != null;
+            return result;
         }
     }
 }

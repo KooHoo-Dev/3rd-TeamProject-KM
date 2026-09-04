@@ -1,17 +1,15 @@
-﻿using UnityEngine;
-using Sirenix.OdinInspector;
-using DG.Tweening;
+﻿using BlueMarble;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
+using DG.Tweening;
 using Jay;
+using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
-    // 나중에 다 구현되고 나서 LocalPlayer와 RemotePlayer를 하나의 Player 클래스로 통합 할 수도 있음
-    // 현재 상태로는... 일단 구분은 해놨지만 이걸 구분해둘 이유가 뭔가 싶기도 하고...
-    public class RemotePlayer : MonoBehaviour, IPlayer
+    public class BoardPlayer : MonoBehaviour
     {
         [field: ShowInInspector, ReadOnly] public string Id { get; private set; }
-        public Vector3 Position => transform.position;
 
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
@@ -20,18 +18,20 @@ namespace BlueMarble
         [field: Title("States")]
         [field: ShowInInspector, ReadOnly] public int CurrentTileIndex { get; private set; }
         [field: ShowInInspector, ReadOnly] public int ActionDisabledTurnCount { get; set; } = 0;
+
+        public Vector3 Position => transform.position;
         
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
         
         public void Initialize(string id)
         {
             Id = id;
-            PlayerRegistry.Register(this);
+            BoardPlayerRegistry.Register(this);
         }
-        
+
         public void OnDisable()
         {
-            PlayerRegistry.Unregister(this);
+            BoardPlayerRegistry.Unregister(this);
         }
         
         public async UniTask<Tile> MoveNext()
@@ -50,20 +50,11 @@ namespace BlueMarble
             Tile goal = board.GetTile(CurrentTileIndex);
             
             await transform
-                  .DOJump(goal.transform.position, jumpPower, 1, jumpDuration)
-                  .SetEase(Ease.OutCubic)
-                  .ToUniTask(TweenCancelBehaviour.Complete);
+                .DOJump(goal.transform.position, jumpPower, 1, jumpDuration)
+                .SetEase(Ease.OutCubic)
+                .ToUniTask(TweenCancelBehaviour.Complete);
 
             return goal;
-        }
-        
-        public async UniTask<Tile> MoveTo(Tile goal)
-        {
-            while (true)
-            {
-                Tile current = await MoveNext();
-                if (current == goal) return current;
-            }
         }
     }
 }
