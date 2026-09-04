@@ -20,7 +20,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 96cb2ddd55075fb4696b78f567dcbd95, type: 2}
+  m_Motion: {fileID: 7400000, guid: c49be05193aa8a34dba2cfbf48ed4e6b, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -32,7 +32,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Icon_01 (1)
+  m_Name: open
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: Open
@@ -90,16 +90,16 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: 4640342805524251803}
-    m_Position: {x: -80, y: 160, z: 0}
+    m_Position: {x: 20, y: 150, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -7045518023070927513}
-    m_Position: {x: 70, y: 290, z: 0}
+    m_Position: {x: 20, y: 290, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
   m_StateMachineTransitions: {}
   m_StateMachineBehaviours: []
-  m_AnyStatePosition: {x: 190, y: -20, z: 0}
+  m_AnyStatePosition: {x: 320, y: 90, z: 0}
   m_EntryPosition: {x: 40, y: 20, z: 0}
   m_ExitPosition: {x: 800, y: 120, z: 0}
   m_ParentStateMachinePosition: {x: 800, y: 20, z: 0}
