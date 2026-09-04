@@ -1160,6 +1160,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7b225a52b8b49eea905b2131a2187a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.PlayerManager
+  isDontDestroyOnLoad: 1
   dummies:
   - {fileID: 2011658272}
   - {fileID: 493021757}
@@ -2344,7 +2345,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8549228664952136578, guid: cf2fe24de3e665e49a7343ad0a25d374, type: 3}
       propertyPath: m_Name
-      value: Store UI
+      value: Shop
       objectReference: {fileID: 0}
     - target: {fileID: 8772353972762828817, guid: cf2fe24de3e665e49a7343ad0a25d374, type: 3}
       propertyPath: m_AnchorMax.y

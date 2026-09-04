@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
 using BlueMarble;
+using Jay;
 using UnityEngine;
 
 namespace Epic3
 {
-    public class TerritoryManager : MonoBehaviour
+    public class TerritoryManager : SingletonBase<TerritoryManager>
     {
+        public EconomyManager economyManager = EconomyManager.Instance;
+        
         public Dictionary<int, TileState> tileStates = new Dictionary<int, TileState>();
 
         public int Coin = 100000;
@@ -84,7 +87,7 @@ namespace Epic3
 
             if (currentTile.State.HasBuilding) tollAmount += tilePrice * 2;
             if (currentTile.State.HasLandMark) tollAmount += tilePrice * 3;
-
+            
             if (Coin < tollAmount)
             {
                 Debug.Log($"[Toll] {tollAmount}원 필요. 자금 부족! 급매/파산 처리 필요.");
@@ -98,17 +101,17 @@ namespace Epic3
         }
 
         // 약탈 시 소유권 변경 (랜드마크 방어 포함)
-        public void StolenTerritory(string loserId, string winnerId, int tileIndex)
+        public void StolenTerritory(string loserId, string winnerId, Tile tile)
         {
-            TileState currentTileState = GetTileState(tileIndex);
+            Tile currentTile = worldBoard.Board.GetTile(tile.transform.position);
 
             // 랜드마크가 지어져 있으면 약탈 불가
-            if (currentTileState.HasLandMark) return;
+            if (currentTile.State.HasLandMark) return;
             
-            if (currentTileState.OwnerId == loserId)
+            if (currentTile.State.OwnerId == loserId)
             {
-                currentTileState.OwnerId = winnerId;
-                Debug.Log($"{tileIndex}번 타일의 소유권이 {winnerId}에게 넘어갔습니다.");
+                currentTile.State.OwnerId = winnerId;
+                Debug.Log($"{currentTile.AreaName} 타일의 소유권이 {winnerId}에게 넘어갔습니다.");
             }
         }
     }

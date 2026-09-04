@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BlueMarble.Server;
+using Cysharp.Threading.Tasks;
 using Jay;
 using UnityEngine;
 
@@ -53,31 +54,43 @@ namespace BlueMarble
             Debug.Log($"[EconomyManager] Update {amount} gold to {playerId}");
         }
         
-        private void UpdateGoldTo(string[] playerId, int amount)
+        private async UniTask UpdateGoldToAsync(string playerId, int amount)
         {
-            EconomyUpdate[] updates = new EconomyUpdate[playerId.Length];
-            
-            for (int i = 0; i < playerId.Length; i++)
+            if (TryGetGold(playerId, out int currentGold) == false)
+                return;
+
+            int expectedGold = currentGold + amount;
+            UniTaskCompletionSource completionSource = new();
+
+            OnUpdated += HandleUpdated;
+
+            try
             {
-                updates[i] = new EconomyUpdate
-                {
-                    UserId = playerId[i],
-                    Amount = amount
-                };
-                Debug.Log($"[EconomyManager] Update {amount} gold to {playerId[i]}");
+                UpdateGoldTo(playerId, amount);
+                await completionSource.Task;
             }
-            
-            Client.RequestUpdateEconomy(updates);
+            finally
+            {
+                OnUpdated -= HandleUpdated;
+            }
+
+            void HandleUpdated()
+            {
+                if (TryGetGold(playerId, out int updatedGold) == false)
+                    return;
+
+                if (updatedGold != expectedGold)
+                    return;
+
+                completionSource.TrySetResult();
+            }
         }
-        
-        public void GainGoldTo(string playerId, int amount) => UpdateGoldTo(playerId, amount);
-        public void GainGoldTo(string[] playerId, int amount) => UpdateGoldTo(playerId, amount);
-        
-        public void SpendGold(string playerId, int amount) => UpdateGoldTo(playerId, -amount);
-        public void SpendGoldTo(string[] playerId, int amount) => UpdateGoldTo(playerId, -amount);
-        
+
+        public UniTask GainGoldTo(string playerId, int amount) => UpdateGoldToAsync(playerId, amount);
+        public UniTask LoseGoldTo(string playerId, int amount) => UpdateGoldToAsync(playerId, -amount);
+
         #endregion
 
-        
+
     }
 }

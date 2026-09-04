@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System;
+using BlueMarble.Server;
+using Cysharp.Threading.Tasks;
 using Jay;
 using Sirenix.OdinInspector;
 using Study.Utilities;
@@ -10,34 +12,57 @@ namespace BlueMarble
     {
         [Title("Components")]
         [SerializeField] private Camera mainCamera;
-        
+
+        private RoomClient Client => RoomClient.Instance;
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
         
         public async UniTask ExecuteAsync(string playerId)
         {
             Board board = World.Board;
+
+            if (PlayerRegistry.TryGetPlayer(playerId, out IPlayer player) == false)
+            {
+                Debug.Log($"[TeleportManager] Cannot find player: {playerId}");
+                return;
+            }
             
             while (true)
             {
-                if (SimpleInput.GetMouseButtonDown(0) == false)
-                {
-                    await UniTask.Yield();
-                    continue;
-                }
+                await UniTask.Yield();
+                
+                if (SimpleInput.GetMouseButtonDown(0) == false) continue;
                 
                 Vector2 mousePos = SimpleInput.GetMousePosition();
                 Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
                 worldPos.z = 0;
 
-                if (board.TryGetTile(worldPos, out Tile tile) == false)
+                if (board.TryGetTile(worldPos, out Tile tile) == false) continue;
+                if (board.GetTile(player.Position) == tile) continue;
+                
+                int tileIdx = World.Board.GetTileIndex(tile);
+
+                string requestId = Guid.NewGuid().ToString("N");
+                UniTaskCompletionSource<bool> completionSource = new();
+
+                Client.OnUserMoveFinished += HandleMoveFinished;
+
+                try
                 {
-                    await UniTask.Yield();
-                    continue;
+                    await Client.RequestMovePlayerTo(playerId, tileIdx, Client.TurnId, requestId);
+                    await completionSource.Task;
+                }
+                finally
+                {
+                    Client.OnUserMoveFinished -= HandleMoveFinished;
                 }
                 
-                // 얻어온 Tile을 이용해서 해당 칸으로 플레이어를 이동시킴
-                // 이건 서버랑 이케이케 해야할듯?
                 return;
+                
+                void HandleMoveFinished(UserMoveFinishedMessage msg)
+                {
+                    if (msg.RequestId != requestId) return;
+                    completionSource.TrySetResult(true);
+                }
             }
         }
     }

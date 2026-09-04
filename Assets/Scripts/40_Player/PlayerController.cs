@@ -71,10 +71,10 @@ namespace Player
         private void HandleEquipmentUse()
         {
             if (SimpleInput.GetKeyDown(Key.Digit1)) TryUseEquipmentSlot(0);
-            if (SimpleInput.GetKeyDown(Key.Digit1)) TryUseEquipmentSlot(1);
-            if (SimpleInput.GetKeyDown(Key.Digit1)) TryUseEquipmentSlot(2);
-            if (SimpleInput.GetKeyDown(Key.Digit1)) TryUseEquipmentSlot(3);
-            if (SimpleInput.GetKeyDown(Key.Digit1)) TryUseEquipmentSlot(4);
+            if (SimpleInput.GetKeyDown(Key.Digit2)) TryUseEquipmentSlot(1);
+            if (SimpleInput.GetKeyDown(Key.Digit3)) TryUseEquipmentSlot(2);
+            if (SimpleInput.GetKeyDown(Key.Digit4)) TryUseEquipmentSlot(3);
+            if (SimpleInput.GetKeyDown(Key.Digit5)) TryUseEquipmentSlot(4);
         }
 
         private async UniTaskVoid TryUseEquipmentSlot(int slotIndex)
@@ -92,6 +92,10 @@ namespace Player
                 await UniTask.Delay(500); 
                 
                 IsCastingSkill = false;
+            }
+            else
+            {
+                if(eq.RemainingCooldown>0) Debug.Log($"[쿨타임] {eq.Def.Name} 쿨타임 {eq.RemainingCooldown:F1}초");
             }
         }
     }
