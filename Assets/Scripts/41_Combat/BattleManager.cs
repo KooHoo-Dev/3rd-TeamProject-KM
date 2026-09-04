@@ -1,19 +1,73 @@
 ﻿using BlueMarble;
 using Jay;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Combat
 {
+    public class SkillCastMessage
+    {
+        public string Type { get; set; } = "skillCast";
+        public string CasterId { get; set; }
+    
+        public bool IsBasicAttack { get; set; } // 기본 공격인지 장비 공격인지 확인. true면 기본 공격
+    
+        public int EquipmentId { get; set; }
+        public float SpawnX { get; set; }
+        public float SpawnY { get; set; }
+        public float Direction { get; set; } 
+    }
+    
     public class BattleManager : SingletonBase<BattleManager>
     {
-        // 공격을 하는 방식
-        // 내가 이 장비를 사용한다 라는 정보를 장비Id와 발사했을 때의 위치를 BattleManager에게 보내면
-        // BattleManager에서 그 정보를 받아서 그 정보에 맞는 장비 Id의 스킬 방식, 사거리, 데미지 등을 담은 프리팹을 플레이어의 위치에서 생성해 발사한다.
+        private Dictionary<AttackType, IAttackStrategy> strategies;
+        
+        public GameObject basicArrowPrefab;
+        private IAttackStrategy basicAttackStrategy = new BasicAttackStrategy();
+        
+        public EquipmentTable equipmentTable;
 
-        public void SkillInfo(EquipmentDef equipmentId, Vector3 position)
+        protected override void OnInitialize()
         {
-            int id = equipmentId.Id;
-            
+            base.OnInitialize();
+            strategies = new Dictionary<AttackType, IAttackStrategy>
+            {
+                { AttackType.Straight, new StraightAttackStrategy() },
+                { AttackType.Parabola, new ParabolaAttackStrategy() },
+                { AttackType.Area, new AreaAttackStrategy() }
+            };
+        }
+
+        public void ExecuteSkillFromNetwork(SkillCastMessage msg)
+        {
+            Vector3 spawnPoint = new Vector3(msg.SpawnX, msg.SpawnY, 0f);
+            Vector3 targetPoint = Vector3.zero;
+
+            // 기본 공격인 경우
+            if (msg.IsBasicAttack)
+            {
+                float basicRange = 5f; // 기본 공격 사거리
+                targetPoint = spawnPoint + (Vector3.right * msg.Direction * basicRange);
+                
+                int basicDamage = 10; 
+
+                basicAttackStrategy.Execute(spawnPoint, targetPoint, basicDamage, msg.CasterId, basicArrowPrefab);
+            }
+            // 일반 장비 스킬인 경우
+            else
+            {
+                EquipmentDef def = equipmentTable.Get(msg.EquipmentId);
+                if (def != null)
+                {
+                    targetPoint = spawnPoint + (Vector3.right * msg.Direction * def.Range);
+                    GameObject prefab = Resources.Load<GameObject>(def.PrefabPath.Trim());
+                    
+                    if (strategies.TryGetValue(def.AttackType, out IAttackStrategy strategy))
+                    {
+                        strategy.Execute(spawnPoint, targetPoint, (int)def.BaseDamage, msg.CasterId, prefab, def);
+                    }
+                }
+            }
         }
     }
 }
