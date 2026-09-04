@@ -20,17 +20,17 @@ namespace BlueMarble
     /// </summary>
     public class BuildingPurchasePopupController : MonoBehaviour
     {
-        [Header("팝업 표시/숨김 대상 (예: PopupFrame의 상위 Canvas 또는 PopupFrame 자체)")]
+        [Header("팝업 표시/숨김 대상")]
         [SerializeField] private GameObject popupRoot;
 
-        [Header("가격 표시 텍스트 (PurchaseButton_PriceText 연결)")]
+        [Header("가격 표시 텍스트")]
         [SerializeField] private TMP_Text priceText;
 
-        [Header("체크박스 (Card_Building_CheckboxToggle / Card_Landmark_CheckboxToggle 연결)")]
+        [Header("체크박스")]
         [SerializeField] private Toggle buildingToggle;
         [SerializeField] private Toggle landmarkToggle;
 
-        [Header("버튼 (PurchaseButton / CloseButton 연결)")]
+        [Header("버튼")]
         [SerializeField] private Button purchaseButton;
         [SerializeField] private Button closeButton;
         

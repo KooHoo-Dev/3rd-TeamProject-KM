@@ -12,15 +12,26 @@ namespace BlueMarble
     {
         public static TreasureManager Instance { get; } = new TreasureManager();
 
+        private ITreasureRewardPresenter presenter;
+
         private TreasureManager()
         {
         }
 
         /// <summary>
+        /// 보물창고 UI 팝업(presenter)을 등록한다. 씬 진입 시 팝업 프리팹 쪽에서 1회 호출한다.
+        /// </summary>
+        public void SetPresenter(ITreasureRewardPresenter presenter)
+        {
+            this.presenter = presenter;
+        }
+
+        /// <summary>
         /// 보물창고 드롭 테이블에서 장비 하나를 뽑아 플레이어 인벤토리에 지급한다.
         /// 인벤토리가 가득 찬 경우 InventoryManager가 자동으로 교체 대기 상태로 전환한다.
+        /// 보상 팝업은 로컬 플레이어 본인의 턴일 때만 띄운다 (다른 플레이어 화면에는 안 뜸).
         /// </summary>
-        /// <param name="playerId">지급 대상 플레이어 (현재는 로그용, 추후 플레이어별 인벤토리 분리 시 사용)</param>
+        /// <param name="playerId">지급 대상 플레이어</param>
         public async UniTask GrantAsync(string playerId)
         {
             EquipmentDef def = DropService.DrawEquipment(DropType.Treasure);
@@ -37,7 +48,12 @@ namespace BlueMarble
                           "인벤토리가 가득 차서 교체 대기 상태입니다.");
             }
 
-            await UniTask.CompletedTask;
+            bool isLocalPlayer = playerId == LocalPlayer.Instance.Id; // TODO: 실제 프로퍼티명 확인 필요
+
+            if (isLocalPlayer && presenter != null)
+            {
+                await presenter.ShowRewardAsync(def);
+            }
         }
     }
 }
