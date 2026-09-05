@@ -3,7 +3,7 @@ using BlueMarble;
 using Jay;
 using UnityEngine;
 
-namespace Epic3
+namespace BlueMarble
 {
     public class TerritoryManager : SingletonBase<TerritoryManager>
     {

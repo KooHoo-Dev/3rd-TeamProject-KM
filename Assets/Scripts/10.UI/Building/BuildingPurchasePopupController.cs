@@ -1,22 +1,15 @@
-﻿using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using Epic3;
-using Study.Utilities;
-using UnityEngine.InputSystem;
 
 namespace BlueMarble
 {
     /// <summary>
-    /// BuildingPurchasePopup이 생성한 화면을 PropertyManager(Epic3)와 연결하는 런타임 컨트롤러.
+    /// BuildingPurchasePopup이 생성한 화면을 TerritoryManager_와 연결하는 런타임 컨트롤러.
     ///
-    /// - PropertyManager.OnShowPurchaseUI(TileState, int tilePrice) 구독 → 팝업 표시 + 가격 반영
-    /// - 구매 버튼 클릭 → SubmitPurchaseDecision(true, buyBuilding, buyLandmark) 호출
-    /// - 닫기(X) 버튼 클릭 → SubmitPurchaseDecision(false, false, false) 호출 (전부 포기 처리)
-    ///
-    /// 타 팀원 소유 파일(PropertyManager.cs)은 직접 수정하지 않고, 이 컨트롤러만 새로 추가해서 연결한다.
-    /// 씬에 배치 후 인스펙터에서 아래 필드를 BuildingPurchasePopup이 생성한 오브젝트에 직접 연결할 것.
+    /// - TerritoryManager_.OnPurchaseRequested 구독 → 팝업 표시
+    /// - 구매 버튼 클릭 → 현재 토글 상태 제출
+    /// - 닫기(X) 버튼 클릭 → 구매 포기 처리
     /// </summary>
     public class BuildingPurchasePopupController : MonoBehaviour
     {
@@ -33,70 +26,142 @@ namespace BlueMarble
         [Header("버튼")]
         [SerializeField] private Button purchaseButton;
         [SerializeField] private Button closeButton;
-        
 
+        private Tile currentTile;
+        private int currentGold;
 
         private void OnEnable()
         {
-            if (PropertyManager.Instance != null)
-            {
-                PropertyManager.Instance.OnShowPurchaseUI += HandleShowPurchaseUI;
-            }
+            TerritoryManager_.Instance.OnPurchaseRequested += HandlePurchaseRequested;
 
             if (purchaseButton != null) purchaseButton.onClick.AddListener(OnPurchaseClicked);
             if (closeButton != null) closeButton.onClick.AddListener(OnCloseClicked);
+            if (buildingToggle != null) buildingToggle.onValueChanged.AddListener(HandleToggleChanged);
+            if (landmarkToggle != null) landmarkToggle.onValueChanged.AddListener(HandleToggleChanged);
 
             HidePopup();
         }
 
         private void OnDisable()
         {
-            if (PropertyManager.Instance != null)
+            if (TerritoryManager_.IsInitialized)
             {
-                PropertyManager.Instance.OnShowPurchaseUI -= HandleShowPurchaseUI;
+                TerritoryManager_.Instance.OnPurchaseRequested -= HandlePurchaseRequested;
+
+                if (currentTile != null)
+                    TerritoryManager_.Instance.SubmitPurchase(false, false, false);
             }
 
             if (purchaseButton != null) purchaseButton.onClick.RemoveListener(OnPurchaseClicked);
             if (closeButton != null) closeButton.onClick.RemoveListener(OnCloseClicked);
+            if (buildingToggle != null) buildingToggle.onValueChanged.RemoveListener(HandleToggleChanged);
+            if (landmarkToggle != null) landmarkToggle.onValueChanged.RemoveListener(HandleToggleChanged);
         }
 
-        /// <summary>
-        /// PropertyManager가 팝업을 띄우라고 알려올 때 호출된다.
-        /// TileState 자체는 이번 화면에서 별도로 쓰지 않고, 가격만 표시한다.
-        /// </summary>
-        private void HandleShowPurchaseUI(TileState state, int tilePrice)
+        private void HandlePurchaseRequested(Tile tile, int gold)
         {
-            ResetToggles();
+            currentTile = tile;
+            currentGold = gold;
 
-            if (priceText != null)
-            {
-                priceText.text = $"{tilePrice:N0}";
-            }
+            TileState state = tile.State;
+            int tilePrice = tile.SpaceDef.Price;
 
+            bool canBuyBuilding =
+                state.HasBuilding == false &&
+                gold >= tilePrice * (state.IsOccupied ? 2 : 3);
+
+            bool canBuyLandMark =
+                state.IsOccupied &&
+                state.HasBuilding &&
+                state.HasLandMark == false &&
+                gold >= tilePrice * 3;
+
+            SetToggleState(
+                buildingToggle,
+                state.HasBuilding,
+                canBuyBuilding);
+
+            SetToggleState(
+                landmarkToggle,
+                state.HasLandMark,
+                canBuyLandMark);
+
+            RefreshPurchaseState();
             ShowPopup();
+        }
+
+        private void HandleToggleChanged(bool _)
+        {
+            RefreshPurchaseState();
         }
 
         private void OnPurchaseClicked()
         {
-            bool buyBuilding = buildingToggle != null && buildingToggle.isOn;
-            bool buyLandmark = landmarkToggle != null && landmarkToggle.isOn;
+            if (currentTile == null) return;
 
-            // 영토(buyTile)는 항상 필수이므로 true 고정
-            PropertyManager.Instance?.SubmitPurchaseDecision(true, buyBuilding, buyLandmark);
+            bool buyTile = currentTile.State.IsOccupied == false;
+            bool buyBuilding =
+                buildingToggle != null &&
+                buildingToggle.interactable &&
+                buildingToggle.isOn;
+            bool buyLandMark =
+                landmarkToggle != null &&
+                landmarkToggle.interactable &&
+                landmarkToggle.isOn;
+
+            TerritoryManager_.Instance.SubmitPurchase(
+                buyTile,
+                buyBuilding,
+                buyLandMark);
+
             HidePopup();
         }
 
         private void OnCloseClicked()
         {
-            // 전부 포기 처리
-            PropertyManager.Instance?.SubmitPurchaseDecision(false, false, false);
+            TerritoryManager_.Instance.SubmitPurchase(false, false, false);
             HidePopup();
         }
 
-        private void ResetToggles()
+        private void RefreshPurchaseState()
         {
-            if (buildingToggle != null) buildingToggle.SetIsOnWithoutNotify(false);
-            if (landmarkToggle != null) landmarkToggle.SetIsOnWithoutNotify(false);
+            if (currentTile == null) return;
+
+            TileState state = currentTile.State;
+            int tilePrice = currentTile.SpaceDef.Price;
+
+            bool buyTile = state.IsOccupied == false;
+            bool buyBuilding =
+                state.HasBuilding == false &&
+                buildingToggle != null &&
+                buildingToggle.isOn;
+            bool buyLandMark =
+                state.HasLandMark == false &&
+                landmarkToggle != null &&
+                landmarkToggle.isOn;
+
+            int totalPrice = 0;
+
+            if (buyTile) totalPrice += tilePrice;
+            if (buyBuilding) totalPrice += tilePrice * 2;
+            if (buyLandMark) totalPrice += tilePrice * 3;
+
+            if (priceText != null)
+                priceText.text = $"{totalPrice:N0}";
+
+            if (purchaseButton != null)
+            {
+                bool hasPurchase = buyTile || buyBuilding || buyLandMark;
+                purchaseButton.interactable = hasPurchase && totalPrice <= currentGold;
+            }
+        }
+
+        private static void SetToggleState(Toggle toggle, bool isOn, bool interactable)
+        {
+            if (toggle == null) return;
+
+            toggle.SetIsOnWithoutNotify(isOn);
+            toggle.interactable = interactable;
         }
 
         private void ShowPopup()
@@ -107,6 +172,7 @@ namespace BlueMarble
         private void HidePopup()
         {
             if (popupRoot != null) popupRoot.SetActive(false);
+            currentTile = null;
         }
     }
 }

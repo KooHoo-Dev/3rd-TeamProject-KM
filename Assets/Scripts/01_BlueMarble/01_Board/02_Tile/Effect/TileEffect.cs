@@ -1,7 +1,7 @@
 ﻿using BlueMarble.Server;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using Epic3;
+using BlueMarble;
 
 namespace BlueMarble
 {
@@ -10,16 +10,12 @@ namespace BlueMarble
         UniTask Apply(string playerId, Tile tile);
     }
 
-    public class PropertyEffect : ITileEffect // 오늘 해야함
+    public class TerritoryEffect : ITileEffect // 오늘 해야함
     {
         public UniTask Apply(string playerId, Tile tile)
         {
-            PropertyManager property = PropertyManager.Instance;
-
-            // Debug.Log($"[PropertyEffect] Applying effect to {playerId} on {tile.SpaceDef.Name}");
-            // return property.RequestPurchase(playerId, tile);
-
-            return UniTask.CompletedTask;
+            TerritoryManager_ territory = TerritoryManager_.Instance;
+            return territory.ResolveAsync(playerId, tile);
         }
     }
 

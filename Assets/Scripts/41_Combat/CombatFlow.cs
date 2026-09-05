@@ -1,5 +1,4 @@
 ﻿using BlueMarble;
-using Epic3;
 
 namespace Combat
 {

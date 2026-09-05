@@ -22,8 +22,9 @@ namespace BlueMarble.Server
         
         public event Action<User, int, int> OnDiceRolled;
         public event Action<UserEconomy[]> OnEconomyUpdated;
-        public event Action<TileEffectSyncMessage> OnTileEffectSync;
+        public event Action<UpdateTerritoryMessage> OnTerritoryUpdated;
         
+        public event Action<TileEffectSyncMessage> OnTileEffectSync;
         public event Action<User, int> OnGoldCardDrawn;
         
         public event Action<MoveUserToMessage> OnUserMovedTo;
@@ -47,8 +48,10 @@ namespace BlueMarble.Server
 
             RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
 
-            RegisterHandler<MoveUserToMessage>(ProtocolHeader.MOVE_USER_TO, HandleMoveUserTo);
+            RegisterHandler<MoveUserToMessage>(ProtocolHeader.MOVE_USER_TO, HandleUserMovedTo);
             RegisterHandler<UserMoveFinishedMessage>(ProtocolHeader.USER_MOVE_FINISHED, HandleUserMoveFinished);
+
+            RegisterHandler<UpdateTerritoryMessage>(ProtocolHeader.UPDATE_TERRITORY, HandleTerritoryUpdated);
         }
         
         #region SEND_TO_SERVER
@@ -91,6 +94,17 @@ namespace BlueMarble.Server
         public void RequestUpdateEconomy(params EconomyUpdate[] updates)
         {
             SendAsync(new UpdateEconomyMessage { Updates = updates }).Forget();
+        }
+
+        public UniTask RequestUpdateTerritory(string ownerId, int tileId, bool hasBuilding, bool hasLandMark)
+        {
+            return SendAsync(new UpdateTerritoryMessage
+            {
+                TileId = tileId, 
+                OwnerId = ownerId, 
+                HasBuilding = hasBuilding, 
+                HasLandMark = hasLandMark
+            });
         }
 
         public UniTask RequestAddIncapacitationCount(int count)
@@ -182,7 +196,18 @@ namespace BlueMarble.Server
             Debug.Log("[RoomClient] Economy updated");
         }
 
-        private void HandleMoveUserTo(MoveUserToMessage message)
+        private void HandleTerritoryUpdated(UpdateTerritoryMessage message)
+        {
+            OnTerritoryUpdated?.Invoke(message);
+            Debug.Log(
+                $"[RoomClient] Territory updated. " +
+                $"Tile: {message.TileId}, " +
+                $"Owner: {message.OwnerId}, " +
+                $"Building: {message.HasBuilding}, " +
+                $"LandMark: {message.HasLandMark}");
+        }
+
+        private void HandleUserMovedTo(MoveUserToMessage message)
         {
             if (message.TurnId != TurnId) return;
 

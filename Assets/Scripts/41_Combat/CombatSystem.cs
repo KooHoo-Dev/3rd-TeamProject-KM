@@ -1,7 +1,6 @@
 using BlueMarble;
 using Jay;
 using UnityEngine;
-using Epic3;
 
 namespace Combat
 {

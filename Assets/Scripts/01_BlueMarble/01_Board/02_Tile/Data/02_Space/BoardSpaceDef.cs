@@ -4,7 +4,7 @@ namespace BlueMarble
 {
     public enum TileEffectType
     {
-        Property,
+        Territory,
         Salary,
         Prison,
         Treasure,

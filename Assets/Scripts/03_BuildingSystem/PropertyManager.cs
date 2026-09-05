@@ -4,7 +4,7 @@ using Jay;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 
-namespace Epic3
+namespace BlueMarble
 {
     public class PropertyManager : SingletonBase<PropertyManager>
     {
