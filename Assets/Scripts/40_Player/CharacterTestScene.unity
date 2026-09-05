@@ -175,7 +175,7 @@ Transform:
   m_GameObject: {fileID: 779107234}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.53, y: 0.81, z: 0}
+  m_LocalPosition: {x: 0.57, y: 0.45, z: 0}
   m_LocalScale: {x: 0.625, y: 0.625, z: 0.625}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -211,7 +211,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.BattleManager
   isDontDestroyOnLoad: 1
-  basicArrowPrefab: {fileID: 7287951908874623754, guid: 28131a276e8274f4aa973b2162c9057a, type: 3}
+  basicArrowPrefab: {fileID: 4404155856950693656, guid: 8ce06168a46248e43b6df3c361680964, type: 3}
 --- !u!4 &899647210
 Transform:
   m_ObjectHideFlags: 0
@@ -749,7 +749,7 @@ Transform:
   m_GameObject: {fileID: 1651222451}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.88186, y: 0.10263, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -770,6 +770,7 @@ GameObject:
   - component: {fileID: 1955245551}
   - component: {fileID: 1955245553}
   - component: {fileID: 1955245554}
+  - component: {fileID: 1955245555}
   m_Layer: 0
   m_Name: Local Player
   m_TagString: Untagged
@@ -949,6 +950,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afc95223446e47d5b81166751f0fa2c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player.TestInventoryFiller
+--- !u!50 &1955245555
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1955245544}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &2075094225
 GameObject:
   m_ObjectHideFlags: 0

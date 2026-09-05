@@ -70,6 +70,8 @@ namespace Combat
                     targetPoint = spawnPoint + (Vector3.right * msg.Direction * def.Range);
                     GameObject prefab = Resources.Load<GameObject>(def.PrefabPath.Trim());
                     
+                    if (prefab == null) Debug.Log($"[오류] {def.PrefabPath} 프리팹을 찾을 수 없습니다!");
+                    
                     if (strategies.TryGetValue(def.AttackType, out IAttackStrategy strategy))
                     {
                         strategy.Execute(spawnPoint, targetPoint, (int)def.BaseDamage, msg.CasterId, prefab, def);

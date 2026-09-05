@@ -67,6 +67,11 @@ namespace Player
 
                         nextAttackTime = Time.time + basicAttackInterval;
                     }
+                    
+                    if (playerController.IsMoving)
+                    {
+                        nextAttackTime = Mathf.Max(nextAttackTime, Time.time + 0.1f);
+                    }
 
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                 }
@@ -85,9 +90,11 @@ namespace Player
                 SpawnY = spawnPoint.position.y,
                 Direction = 1f
             };
-            
+    
             BattleManager.Instance.ExecuteSkillFromNetwork(msg);
             Debug.Log($"[로컬 전송] {def.Name} 스킬 발사 요청!");
+
+            nextAttackTime = Time.time + basicAttackInterval;
         }
     }
 }
