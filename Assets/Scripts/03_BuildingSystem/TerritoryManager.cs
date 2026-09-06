@@ -37,6 +37,20 @@ namespace Epic3
             }
             return  totalAssets;
         }
+
+        public int CalculateTileAssets(Tile tile)
+        {
+            Tile currentTile = worldBoard.Board.GetTile(tile.transform.position);            
+            
+            int tilePrice = currentTile.SpaceDef.Price;
+            
+            int tollAmount = tilePrice;
+
+            if (currentTile.State.HasBuilding) tollAmount += tilePrice * 2;
+            if (currentTile.State.HasLandMark) tollAmount += tilePrice * 3;
+
+            return tollAmount;
+        }
         
 
         public void PurchaseTile(Tile tile, int tilePrice)
@@ -76,17 +90,7 @@ namespace Epic3
 
         public void PayToll(string myPlayerId, Tile tile)
         {
-            Tile currentTile = worldBoard.Board.GetTile(tile.transform.position);            
-            
-            int tilePrice = currentTile.SpaceDef.Price;
-            
-            if (currentTile.State.IsOccupied == false) return;
-            if (currentTile.State.OwnerId == myPlayerId) return;
-            
-            int tollAmount = tilePrice;
-
-            if (currentTile.State.HasBuilding) tollAmount += tilePrice * 2;
-            if (currentTile.State.HasLandMark) tollAmount += tilePrice * 3;
+            int tollAmount = CalculateTileAssets(tile);
             
             if (Coin < tollAmount)
             {
@@ -110,6 +114,8 @@ namespace Epic3
             
             if (currentTile.State.OwnerId == loserId)
             {
+                // 여기에 EconomyManger의 영토 가격 내기 있어야 할듯?
+                
                 currentTile.State.OwnerId = winnerId;
                 Debug.Log($"{currentTile.AreaName} 타일의 소유권이 {winnerId}에게 넘어갔습니다.");
             }
