@@ -7,7 +7,7 @@ using Sirenix.OdinInspector;
 
 namespace BlueMarble
 {
-    public class TreasureVfxPlayer : MonoBehaviour, ITreasureVfxPlayer
+    public class TreasureVfxPlayer : MonoBehaviour
     {
         [Serializable]
         private struct GradeVfxEntry

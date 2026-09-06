@@ -14,8 +14,8 @@ namespace BlueMarble
         [Title("Components")]
         [SerializeField] private GoldCard card;
         
-        private Dictionary<GoldCardScopeType, IGoldCardScope> scopes = new();
-        private Dictionary<GoldCardPatternType, IGoldCardPattern> patterns = new();
+        private readonly Dictionary<GoldCardScopeType, IGoldCardScope> scopes = new();
+        private readonly Dictionary<GoldCardPatternType, IGoldCardPattern> patterns = new();
         
         private DataManager Data => DataManager.Instance;
         private RoomClient Client => RoomClient.Instance;
@@ -59,6 +59,7 @@ namespace BlueMarble
             
             // 이후, 해당 턴의 플레이어의 클라이언트에서만 카드의 효과를 실행
             // 효과 적용이 끝난 이후 골드 카드 효과를 마무리 짓는다
+            await ApplyCardEffectAsync(playerId, drawn);
         }
 
         private async UniTask<GoldCardDef> WaitUntilCardDrawnAsync(string playerId)

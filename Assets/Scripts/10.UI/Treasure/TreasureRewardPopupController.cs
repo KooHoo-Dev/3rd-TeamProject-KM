@@ -10,7 +10,7 @@ namespace BlueMarble
     /// <summary>
     /// 보물 보상 팝업. 등장 -> 자동 오픈 연출 -> VFX -> 보상 표시 -> 확인 대기 -> 닫힘 순서로 진행한다.
     /// </summary>
-    public class TreasureRewardPopupController : MonoBehaviour, ITreasureRewardPresenter
+    public class TreasureRewardPopupController : MonoBehaviour
     {
         private static readonly int OpenTrigger = Animator.StringToHash("Open");
 

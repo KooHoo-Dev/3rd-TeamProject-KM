@@ -124,7 +124,7 @@ namespace Combat
 
             if (winnerId == attackerId)
             {
-                TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
+                //TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
             }
         }
     }

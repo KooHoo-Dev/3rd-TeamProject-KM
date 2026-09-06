@@ -13,7 +13,7 @@ namespace BlueMarble
     {
         public static TreasureManager Instance { get; } = new TreasureManager();
 
-        private ITreasureRewardPresenter presenter;
+        private TreasureRewardPopupController presenter;
 
         private TreasureManager()
         {
@@ -22,7 +22,7 @@ namespace BlueMarble
         /// <summary>
         /// 보물창고 UI 팝업(presenter)을 등록한다. 씬 진입 시 팝업 프리팹 쪽에서 1회 호출한다.
         /// </summary>
-        public void SetPresenter(ITreasureRewardPresenter presenter)
+        public void SetPresenter(TreasureRewardPopupController presenter)
         {
             this.presenter = presenter;
         }
