@@ -8,84 +8,100 @@ using DG.Tweening;
 namespace BlueMarble
 {
     /// <summary>
-    /// 보물 보상 팝업. 등장 -> 자동 오픈 연출 -> VFX -> 보상 표시 -> (보상 클릭/확인 시 인벤토리 오픈, X는 그냥 닫기) 순서로 진행한다.
+    /// 보물 보상 팝업. 등장 -> 자동 오픈 연출 -> VFX+보상 동시 표시 -> 잠깐 보여준 뒤 자동으로 인벤토리 오픈 -> 닫힘.
+    /// 확인/X 버튼 없이 전부 자동으로 진행된다. 인벤토리는 자체 X 버튼으로 닫는다.
     /// </summary>
     public class TreasureRewardPopupController : MonoBehaviour, ITreasureRewardPresenter
     {
         private static readonly int OpenTrigger = Animator.StringToHash("Open");
 
-        [Header("Popup Root")]
-        [SerializeField] private CanvasGroup canvasGroup;
-
         [Header("Chest")]
         [SerializeField] private Animator chestAnimator;
         [SerializeField] private float chestOpenDuration = 0.6f; // treasure 클립 재생시간(Speed 0.6 기준)
+        [SerializeField] private float chestShakeDuration = 1.2f;
+        [SerializeField] private float chestShakeStrength = 20f;
+        [SerializeField] private int chestBounceCount = 3;
 
         [Header("VFX")]
         [SerializeField] private TreasureVfxPlayer vfxPlayer;
 
         [Header("Reward Display")]
         [SerializeField] private Image rewardIconImage;
-        [SerializeField] private Button rewardIconButton; // rewardIconImage에 Button 컴포넌트 추가해서 연결 (클릭 시 인벤토리로 진입)
         [SerializeField] private TMP_Text rewardNameText;
-
-        [Header("Confirm / Close")]
-        [SerializeField] private Button confirmButton; // 클릭 시 인벤토리로 진입 (보상 아이콘과 동일 동작)
-        [SerializeField] private Button closeButton;   // 클릭 시 인벤토리 안 보고 그냥 닫기 (스킵)
+        [SerializeField] private float rewardDisplayDuration = 1.5f; // 보상 보여준 뒤 인벤토리로 넘어가기까지 대기 시간
 
         [Header("Inventory")]
         [SerializeField] private InventoryUIController inventoryPresenter;
 
+        private bool isShowing;
+
         public async UniTask ShowRewardAsync(EquipmentDef reward)
         {
-            gameObject.SetActive(true);
-            SetConfirmControlsActive(false);
-            canvasGroup.alpha = 0f;
+            if (isShowing)
+            {
+                Debug.Log("[TreasureRewardPopupController] 이미 팝업이 진행 중이라 무시합니다.");
+                return;
+            }
 
-            // 1. 팝업 페이드인
-            await canvasGroup.DOFade(1f, 0.25f).AsyncWaitForCompletion().AsUniTask();
-            
-            
+            isShowing = true;
+            try
+            {
+                await ShowRewardInternalAsync(reward);
+            }
+            finally
+            {
+                isShowing = false;
+            }
+        }
+
+        private async UniTask ShowRewardInternalAsync(EquipmentDef reward)
+        {
+            gameObject.SetActive(true);
+
+            // 1. 상자 흔들림 (오픈 전 기대감 연출) - 정확히 N번 통통 튀는 연출
+            var chestRect = (RectTransform)chestAnimator.transform;
+            Vector2 originalPos = chestRect.anchoredPosition;
+
+            float singleBounceDuration = chestShakeDuration / (chestBounceCount * 2f);
+
+            Sequence bounceSequence = DOTween.Sequence();
+            for (int i = 0; i < chestBounceCount; i++)
+            {
+                bounceSequence.Append(chestRect.DOAnchorPosY(originalPos.y + chestShakeStrength, singleBounceDuration).SetEase(Ease.OutQuad));
+                bounceSequence.Append(chestRect.DOAnchorPosY(originalPos.y, singleBounceDuration).SetEase(Ease.InQuad));
+            }
+
+            await UniTask.Delay(TimeSpan.FromSeconds(chestShakeDuration));
 
             // 2. 상자 열림 연출 (자동)
             chestAnimator.SetTrigger(OpenTrigger);
             await UniTask.Delay(TimeSpan.FromSeconds(chestOpenDuration));
 
-            // 3. 폭죽 VFX
-            await vfxPlayer.PlayAsync(reward.Grade);
-
-            // 4. 보상 정보 표시
+            // 3. 폭죽 VFX + 보상 정보를 동시에 시작 (하나가 다른 하나를 기다리지 않도록)
+            UniTask vfxTask = vfxPlayer.PlayAsync(reward.Grade);
             ApplyRewardInfo(reward);
+            await vfxTask;
 
-            // 5. 보상 아이콘/확인(=인벤토리로 진입) 또는 X(=그냥 닫기) 대기
-            SetConfirmControlsActive(true);
-            bool wantsInventory = await WaitForProceedOrSkip();
+            // 4. 보상을 잠깐 보여준 뒤, 별도 확인 없이 자동으로 인벤토리로 진입
+            await UniTask.Delay(TimeSpan.FromSeconds(rewardDisplayDuration));
+            await inventoryPresenter.ShowAsync();
 
-            // 6. 인벤토리로 진입을 선택한 경우, 인벤토리가 닫힐 때까지 대기
-            if (wantsInventory)
-            {
-                await inventoryPresenter.ShowAsync();
-            }
-
-            // 7. 페이드아웃 + 닫힘
-            await canvasGroup.DOFade(0f, 0.25f).AsyncWaitForCompletion().AsUniTask();
+            // 5. 닫힘
             gameObject.SetActive(false);
-        }
-
-        private void SetConfirmControlsActive(bool active)
-        {
-            confirmButton.gameObject.SetActive(active);
-            closeButton.gameObject.SetActive(active);
-            rewardIconButton.interactable = active;
         }
 
         private void ApplyRewardInfo(EquipmentDef reward)
         {
             rewardNameText.text = $"{reward.Name} 획득!";
 
-            rewardIconImage.gameObject.SetActive(false);
+            rewardIconImage.gameObject.SetActive(true);
+            rewardIconImage.sprite = null;
 
-            if (string.IsNullOrEmpty(reward.IconKey)) return;
+            if (string.IsNullOrEmpty(reward.IconKey))
+            {
+                Debug.Log("[TreasureRewardPopupController] IconKey가 비어있어 아이콘 없이 표시합니다.");
+                return;
+            }
 
             Sprite icon = Resources.Load<Sprite>(reward.IconKey);
             if (icon == null)
@@ -95,30 +111,6 @@ namespace BlueMarble
             }
 
             rewardIconImage.sprite = icon;
-            rewardIconImage.gameObject.SetActive(true);
-        }
-
-        /// <summary>
-        /// 보상 아이콘 또는 확인 버튼 클릭 -> true(인벤토리로 진입).
-        /// X(닫기) 버튼 클릭 -> false(그냥 닫기, 인벤토리 안 봄).
-        /// </summary>
-        private async UniTask<bool> WaitForProceedOrSkip()
-        {
-            var tcs = new UniTaskCompletionSource<bool>();
-            void OnProceed() => tcs.TrySetResult(true);
-            void OnSkip() => tcs.TrySetResult(false);
-
-            confirmButton.onClick.AddListener(OnProceed);
-            rewardIconButton.onClick.AddListener(OnProceed);
-            closeButton.onClick.AddListener(OnSkip);
-
-            bool result = await tcs.Task;
-
-            confirmButton.onClick.RemoveListener(OnProceed);
-            rewardIconButton.onClick.RemoveListener(OnProceed);
-            closeButton.onClick.RemoveListener(OnSkip);
-
-            return result;
         }
     }
 }
