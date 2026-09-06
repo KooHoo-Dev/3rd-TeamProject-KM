@@ -11,7 +11,7 @@ namespace BlueMarble
     /// 보물 보상 팝업. 등장 -> 자동 오픈 연출 -> VFX+보상 동시 표시 -> 잠깐 보여준 뒤 자동으로 인벤토리 오픈 -> 닫힘.
     /// 확인/X 버튼 없이 전부 자동으로 진행된다. 인벤토리는 자체 X 버튼으로 닫는다.
     /// </summary>
-    public class TreasureRewardPopupController : MonoBehaviour, ITreasureRewardPresenter
+    public class TreasureRewardPopupController : MonoBehaviour
     {
         private static readonly int OpenTrigger = Animator.StringToHash("Open");
 

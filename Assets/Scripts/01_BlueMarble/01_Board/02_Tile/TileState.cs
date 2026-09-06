@@ -1,4 +1,4 @@
-﻿namespace Epic3
+﻿namespace BlueMarble
 {
     public class TileState
     {

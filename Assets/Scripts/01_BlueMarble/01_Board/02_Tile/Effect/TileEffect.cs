@@ -1,7 +1,7 @@
 ﻿using BlueMarble.Server;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using Epic3;
+using BlueMarble;
 
 namespace BlueMarble
 {
@@ -10,16 +10,12 @@ namespace BlueMarble
         UniTask Apply(string playerId, Tile tile);
     }
 
-    public class PropertyEffect : ITileEffect // 오늘 해야함
+    public class TerritoryEffect : ITileEffect // DONE
     {
         public UniTask Apply(string playerId, Tile tile)
         {
-            PropertyManager property = PropertyManager.Instance;
-
-            // Debug.Log($"[PropertyEffect] Applying effect to {playerId} on {tile.SpaceDef.Name}");
-            // return property.RequestPurchase(playerId, tile);
-
-            return UniTask.CompletedTask;
+            TerritoryManager territory = TerritoryManager.Instance;
+            return territory.ResolveAsync(playerId, tile);
         }
     }
 
@@ -27,7 +23,8 @@ namespace BlueMarble
     {
         public UniTask Apply(string playerId, Tile _)
         {
-            return EconomyManager.Instance.GainGoldTo(playerId, 10000);
+            int amount = GameSettings.Instance.SalaryAmount;
+            return EconomyManager.Instance.GainGoldTo(playerId, amount);
         }   
     }
 
@@ -35,7 +32,8 @@ namespace BlueMarble
     {
         public UniTask Apply(string playerId, Tile tile)
         {
-            return RoomClient.Instance.RequestAddIncapacitationCount(3);
+            int count = GameSettings.Instance.PrisonActionDisabledTurnCount;
+            return RoomClient.Instance.RequestAddIncapacitationCount(count);
         }  
     }
 
@@ -43,8 +41,6 @@ namespace BlueMarble
     {
         public async UniTask Apply(string playerId, Tile tile)
         {
-            Debug.Log($"[TreasureEffect] Adding 1000 to {playerId}'s treasure");
-
             TreasureManager treasure = TreasureManager.Instance;
             await treasure.GrantAsync(playerId);
         }

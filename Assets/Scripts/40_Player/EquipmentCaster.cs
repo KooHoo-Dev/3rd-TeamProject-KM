@@ -34,7 +34,7 @@ namespace Player
             strategies = new Dictionary<AttackType, IAttackStrategy>
             {
                 { AttackType.Straight, new StraightAttackStrategy() },
-                {AttackType.Parabola, new ParabolaAttackStrategy()},
+                { AttackType.Parabola, new ParabolaAttackStrategy()},
                 { AttackType.Area , new AreaAttackStrategy()}
             };
             

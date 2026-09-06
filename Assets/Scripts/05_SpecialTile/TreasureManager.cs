@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using BlueMarble.Server;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace BlueMarble
@@ -12,7 +13,7 @@ namespace BlueMarble
     {
         public static TreasureManager Instance { get; } = new TreasureManager();
 
-        private ITreasureRewardPresenter presenter;
+        private TreasureRewardPopupController presenter;
 
         private TreasureManager()
         {
@@ -21,7 +22,7 @@ namespace BlueMarble
         /// <summary>
         /// 보물창고 UI 팝업(presenter)을 등록한다. 씬 진입 시 팝업 프리팹 쪽에서 1회 호출한다.
         /// </summary>
-        public void SetPresenter(ITreasureRewardPresenter presenter)
+        public void SetPresenter(TreasureRewardPopupController presenter)
         {
             this.presenter = presenter;
         }
@@ -48,7 +49,7 @@ namespace BlueMarble
                           "인벤토리가 가득 차서 교체 대기 상태입니다.");
             }
 
-            bool isLocalPlayer = playerId == LocalPlayer.Instance.Id; // TODO: 실제 프로퍼티명 확인 필요
+            bool isLocalPlayer = playerId == RoomClient.Instance.Me.Id; // TODO: 실제 프로퍼티명 확인 필요
 
             if (isLocalPlayer && presenter != null)
             {

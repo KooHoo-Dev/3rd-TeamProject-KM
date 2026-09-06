@@ -21,7 +21,7 @@ namespace BlueMarble
         {
             Board board = World.Board;
 
-            if (PlayerRegistry.TryGetPlayer(playerId, out IPlayer player) == false)
+            if (PlayerRegistry.TryGetPlayer(playerId, out Player player) == false)
             {
                 Debug.Log($"[TeleportManager] Cannot find player: {playerId}");
                 return;

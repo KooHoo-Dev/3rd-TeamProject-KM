@@ -1,7 +1,6 @@
 using BlueMarble;
 using Jay;
 using UnityEngine;
-using Epic3;
 
 namespace Combat
 {
@@ -125,7 +124,7 @@ namespace Combat
 
             if (winnerId == attackerId)
             {
-                TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
+                //TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
             }
         }
     }
