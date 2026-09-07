@@ -13,31 +13,69 @@ namespace Combat
         [Header("하드코딩 세팅값")]
         public string localId = "LocalPlayer";
         public string remoteId = "RemotePlayer";
-        public int startHp = 50; 
+        public int startHp = 50;
+
+        [Header("테스트 조작 설정")]
+        [SerializeField, InspectorName("오른쪽 플레이어로 테스트")]
+        private bool playAsRightPlayer = false;
 
         private void Start()
         {
-            if (localPlayer != null)
+            CombatSystem combatSystem = CombatSystem.Instance;
+
+            if (combatSystem.HasCombatAssignment)
             {
-                localPlayer.Init(localId, startHp);
-                
-                // 로컬 플레이어는 조작 권한 켜기
-                localPlayer.GetComponent<PlayerController>().isLocalPlayer = true;
-                localPlayer.GetComponent<EquipmentCaster>().isLocalPlayer = true;
+                SetupPlayers(
+                    combatSystem.AttackerId,
+                    combatSystem.DefenderId,
+                    combatSystem.LocalPlayerId,
+                    combatSystem.StartHp);
+                return;
             }
 
-            if (remotePlayer != null)
-            {
-                remotePlayer.Init(remoteId, startHp);
-                
-                // 상대방 플레이어는 조작 권한 끄기
-                remotePlayer.GetComponent<PlayerController>().isLocalPlayer = false;
-                remotePlayer.GetComponent<EquipmentCaster>().isLocalPlayer = false;
-            }
+            string testLocalPlayerId = playAsRightPlayer ? remoteId : localId;
+            SetupPlayers(localId, remoteId, testLocalPlayerId, startHp);
 
             Debug.Log("[CombatTestSetup] 플레이어 초기화 및 권한 세팅 완료. 전투 시작!");
 
-            CombatSystem.Instance.StartTestCombat(localId, remoteId).Forget();
+            combatSystem.StartTestCombat(localId, remoteId, testLocalPlayerId, startHp).Forget();
+        }
+
+        private void SetupPlayers(
+            string attackerId,
+            string defenderId,
+            string localPlayerId,
+            int hp)
+        {
+            // 씬의 localPlayer 슬롯은 실제 멀티플레이에서 '왼쪽(공격자)' 슬롯이다.
+            SetupPlayer(localPlayer, attackerId, localPlayerId, hp, 1f);
+
+            // 씬의 remotePlayer 슬롯은 실제 멀티플레이에서 '오른쪽(방어자)' 슬롯이다.
+            SetupPlayer(remotePlayer, defenderId, localPlayerId, hp, -1f);
+        }
+
+        private static void SetupPlayer(
+            PlayerEntity player,
+            string ownerId,
+            string localPlayerId,
+            int hp,
+            float facingDirection)
+        {
+            if (player == null) return;
+
+            bool isMine = ownerId == localPlayerId;
+            player.Init(ownerId, hp);
+
+            PlayerController controller = player.GetComponent<PlayerController>();
+            if (controller != null)
+                controller.isLocalPlayer = isMine;
+
+            EquipmentCaster caster = player.GetComponent<EquipmentCaster>();
+            if (caster != null)
+            {
+                caster.SetLocalPlayer(isMine);
+                caster.SetFacingDirection(facingDirection);
+            }
         }
     }
 }

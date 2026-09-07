@@ -9,12 +9,14 @@ namespace Combat
     {
         private int damage;
         private string attackerId;
+        private string castId;
 
         private bool hasHit = false;
-        public void Init(int damageAmount, string attackerId)
+        public void Init(int damageAmount, string attackerId, string castId)
         {
             this.damage = damageAmount;
             this.attackerId = attackerId;
+            this.castId = castId;
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -33,6 +35,8 @@ namespace Combat
 
             HitRequestPacket packet = new HitRequestPacket
             {
+                CombatId = CombatSystem.Instance.CombatId,
+                CastId = castId,
                 AttackerId = attackerId,
                 TargetId = targetHurtBox.Owner.OwnerId,
                 Damage = damage,
@@ -44,11 +48,8 @@ namespace Combat
             GetComponent<Collider2D>().enabled = false;
             
 
-            // 서버를 거치지 않고 바로 CombatSystem에 데미지 적용을 명령 (테스트용)
-            if (CombatSystem.Instance != null)
-            {
-                CombatSystem.Instance.OnReceiveHitResponse(packet.TargetId, packet.Damage);
-            }
+            // 테스트에서는 즉시 적용하고, 실제 대전에서는 네트워크 이벤트로 전달한다.
+            CombatSystem.Instance.RequestHit(packet);
         }
     }
 }

@@ -13,14 +13,14 @@ namespace Combat
             animator = GetComponent<Animator>();
         }
 
-        public void Launch(float direction, int damageAmount, string attackerId)
+        public void Launch(float direction, int damageAmount, string attackerId, string castId)
         {
             transform.right = new Vector2(direction, 0).normalized; 
 
             HitBox hitScript = GetComponentInChildren<HitBox>();
             if (hitScript != null)
             {
-                hitScript.Init(damageAmount, attackerId);
+                hitScript.Init(damageAmount, attackerId, castId);
             }
         }
 
