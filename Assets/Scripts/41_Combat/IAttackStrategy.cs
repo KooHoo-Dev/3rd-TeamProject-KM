@@ -16,8 +16,9 @@ namespace Combat
             if (prefab != null)
             {
                 GameObject instance = Object.Instantiate(prefab, spawnPoint, Quaternion.identity);
-                if (instance.TryGetComponent<ParabolaProjectile>(out ParabolaProjectile projectile))
+                if (instance.TryGetComponent<AnimatedProjectile>(out AnimatedProjectile projectile))
                 {
+                    Debug.Log($"{spawnPoint}");
                     projectile.Launch(targetPoint, damage, attackerName);
                 }
             }
@@ -29,7 +30,15 @@ namespace Combat
     {
         public void Execute(Vector3 spawnPoint, Vector3 targetPoint, int damage, string attackerName, GameObject prefab, EquipmentDef def = null)
         {
-            Debug.Log($"[전략 패턴 - 직선] {def?.Name} 장비 사용 완료 (대미지: {damage})");
+            if (prefab != null)
+            {
+                Debug.Log("[Straight]");
+                GameObject instance = Object.Instantiate(prefab, spawnPoint, Quaternion.identity);
+                if (instance.TryGetComponent<AnimatedProjectile>(out AnimatedProjectile projectile))
+                {
+                    projectile.Launch(targetPoint, damage, attackerName);
+                }
+            }
         }
     }
     
@@ -37,7 +46,15 @@ namespace Combat
     {
         public void Execute(Vector3 spawnPoint, Vector3 targetPoint, int damage, string attackerName, GameObject prefab, EquipmentDef def = null)
         {
-            Debug.Log($"[전략 패턴 - 포물선] {def?.Name} 장비 사용 완료 (대미지: {damage})");
+            if (prefab != null)
+            {
+                Debug.Log("[Parabola]");
+                GameObject instance = Object.Instantiate(prefab, spawnPoint, Quaternion.identity);
+                if (instance.TryGetComponent<AnimatedProjectile>(out AnimatedProjectile projectile))
+                {
+                    projectile.Launch(targetPoint, damage, attackerName);
+                }
+            }
         }
     }
     
@@ -45,7 +62,15 @@ namespace Combat
     {
         public void Execute(Vector3 spawnPoint, Vector3 targetPoint, int damage, string attackerName, GameObject prefab, EquipmentDef def = null)
         {
-            Debug.Log($"[전략 패턴 - 범위] {def?.Name} 장비 사용 완료 (대미지: {damage})");
+            if (prefab != null)
+            {
+                Debug.Log("[Area]");
+                GameObject instance = Object.Instantiate(prefab, spawnPoint, Quaternion.identity);
+                if (instance.TryGetComponent<AnimatedProjectile>(out AnimatedProjectile projectile))
+                {
+                    projectile.Launch(targetPoint, damage, attackerName);
+                }
+            }
         }
     }
 }

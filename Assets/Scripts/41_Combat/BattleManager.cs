@@ -36,6 +36,14 @@ namespace Combat
                 { AttackType.Parabola, new ParabolaAttackStrategy() },
                 { AttackType.Area, new AreaAttackStrategy() }
             };
+            
+            equipmentTable = new EquipmentTable();
+            LoadTableAsync();
+        }
+        
+        private async void LoadTableAsync()
+        {
+            await equipmentTable.LoadAsync();
         }
 
         public void ExecuteSkillFromNetwork(SkillCastMessage msg)
@@ -53,7 +61,7 @@ namespace Combat
 
                 basicAttackStrategy.Execute(spawnPoint, targetPoint, basicDamage, msg.CasterId, basicArrowPrefab);
             }
-            // 일반 장비 스킬인 경우
+            // 장비 스킬인 경우
             else
             {
                 EquipmentDef def = equipmentTable.Get(msg.EquipmentId);
@@ -61,6 +69,8 @@ namespace Combat
                 {
                     targetPoint = spawnPoint + (Vector3.right * msg.Direction * def.Range);
                     GameObject prefab = Resources.Load<GameObject>(def.PrefabPath.Trim());
+                    
+                    if (prefab == null) Debug.Log($"[오류] {def.PrefabPath} 프리팹을 찾을 수 없습니다!");
                     
                     if (strategies.TryGetValue(def.AttackType, out IAttackStrategy strategy))
                     {
