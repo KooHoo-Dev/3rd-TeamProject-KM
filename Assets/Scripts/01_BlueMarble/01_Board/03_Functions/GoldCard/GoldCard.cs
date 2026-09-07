@@ -48,6 +48,15 @@ namespace BlueMarble
             Clear();
         }
 
+        public void OnClicked()
+        {
+            // 해당 턴의 플레이어... 아 모르게따
+            // 클릭 받으면 해당 사항을 서버에 전달
+            // 서버는 그 내용(얘 골카 클릭했대!)을 모든 클라에 전달
+            // 해당 내용을 전달 받은 클라는 카드를 Flip
+            // 이후는 GoldCardManager에서 효과 적용 페이즈로 넘어감
+        }
+
         public UniTask FlipAsync()
         {
             StopVfx(preFlipVfx);

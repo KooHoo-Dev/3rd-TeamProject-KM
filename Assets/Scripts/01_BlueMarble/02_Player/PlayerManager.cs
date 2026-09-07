@@ -10,14 +10,14 @@ namespace BlueMarble
     public class PlayerManager : SingletonBase<PlayerManager>
     {
         [Title("Components")]
-        [SerializeField] private GameObject[] dummies;
+        [SerializeField] private Player[] players;
 
         private RoomClient Client => RoomClient.Instance;
         private TileEffectSyncManager Sync => TileEffectSyncManager.Instance;
         
         public void Initialize(IReadOnlyList<string> ids, string myId)
         {
-            if (ids.Count > dummies.Length)
+            if (ids.Count > players.Length)
             {
                 Debug.LogError("[PlayerManager] Player count is greater than dummy count.");
                 return;
@@ -26,13 +26,10 @@ namespace BlueMarble
             for (int i = 0; i < ids.Count; i++)
             {
                 string id = ids[i];
-                GameObject dummy = dummies[i];
+                Player player = players[i];
                 
-                Player player = dummy.AddComponent<Player>();
                 player.Initialize(id);
-
-                dummy.SetActive(true);
-                dummy.name = id;
+                player.gameObject.SetActive(true);
             }
         }
 

@@ -8,22 +8,31 @@ namespace BlueMarble
 {
     public class Profile : MonoBehaviour
     {
-        [field: Title("Components")]
-        [field: SerializeField] public Image PortraitRenderer { get; private set; }
-        [field: SerializeField] public TMP_Text NicknameText { get; private set; }
-        [field: SerializeField] public TMP_Text GoldText { get; private set; }
+        [Title("Components")]
+        [SerializeField] private Image portraitRenderer;
+        [SerializeField] private TMP_Text nicknameText;
+        [SerializeField] private TMP_Text goldText;
+        [SerializeField] private TMP_Text totalGoldText;
+        [SerializeField] private Image[] equipmentIcons;
+        [SerializeField] private GameObject bubble;
+        [SerializeField] private TMP_Text bubbleText;
 
         public string Id { get; private set; }
 
         public void Initialize(User user)
         {
             Id = user.Id;
-            NicknameText.text = $"{user.Nickname}({user.Id})";
+            nicknameText.text = $"{user.Nickname}({user.Id})";
         }
 
-        public void SetGold(int gold)
+        public void SetGold(int amount)
         {
-            GoldText.text = $"자산: {gold:N0} 골드";
+            goldText.SetText($"자산: {amount:N0} 골드");
+        }
+
+        public void SetTotalGold(int amount)
+        {
+            totalGoldText.SetText($"총 자산: {amount:N0} 골드");
         }
     }
 }
