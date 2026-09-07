@@ -873,7 +873,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &422247637
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1941,17 +1941,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.TreasureRewardPopupController
   chestAnimator: {fileID: 1448607722}
-  chestOpenDuration: 0.6
-  chestShakeDuration: 0.4
+  chestOpenDuration: 1
+  chestShakeDuration: 1.2
   chestShakeStrength: 20
   chestBounceCount: 3
   vfxPlayer: {fileID: 1736968360}
   rewardIconImage: {fileID: 806414569}
-  rewardIconButton: {fileID: 806414570}
   rewardNameText: {fileID: 93679798}
-  confirmButton: {fileID: 1191815329}
-  closeButton: {fileID: 1280024725}
-  inventoryPresenter: {fileID: 422247638}
+  rewardDisplayDuration: 1.5
+  inventoryPresenter: {fileID: 0}
 --- !u!224 &1452635730
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1979,7 +1977,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1452635728}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
   m_Name: 

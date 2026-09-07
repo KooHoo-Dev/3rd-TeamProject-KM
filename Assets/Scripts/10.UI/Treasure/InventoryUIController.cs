@@ -37,7 +37,7 @@ namespace BlueMarble
         {
             for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
             {
-                EquipmentInstance instance = InventoryManager.Instance.GetAt(i);
+                Equipment instance = InventoryManager.Instance.GetAt(i);
 
                 if (instance == null)
                 {
