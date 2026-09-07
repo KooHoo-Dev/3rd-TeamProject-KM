@@ -8,7 +8,7 @@ namespace BlueMarble
     /// 인벤토리 UI(슬롯 5칸)를 InventoryManager와 연결한다.
     /// 교체 대기 상태(IsWaitingReplace)일 때는 슬롯 클릭 시 자동으로 교체 처리한다.
     /// </summary>
-    public class InventoryUIController : MonoBehaviour, IInventoryPresenter
+    public class InventoryUIController : MonoBehaviour
     {
         [Header("Slots")]
         [SerializeField] private Image[] slotIcons = new Image[InventoryManager.MaxSlotCount];
@@ -37,7 +37,7 @@ namespace BlueMarble
         {
             for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
             {
-                EquipmentInstance instance = InventoryManager.Instance.GetAt(i);
+                Equipment instance = InventoryManager.Instance.GetAt(i);
 
                 if (instance == null)
                 {
