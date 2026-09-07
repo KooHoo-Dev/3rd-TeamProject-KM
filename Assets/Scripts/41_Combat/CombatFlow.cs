@@ -1,12 +1,10 @@
 ﻿using BlueMarble;
 using Cysharp.Threading.Tasks;
-using Epic3;
 
 namespace Combat
 {
     public class CombatFlow
     {
-        private TerritoryManager territoryManager => TerritoryManager.Instance;
         private EconomyManager economyManager => EconomyManager.Instance;
         
         private InventoryManager inventoryManager => InventoryManager.Instance;
@@ -15,11 +13,11 @@ namespace Combat
         // 신청 가능하게 한다.
         public bool CanBattleRequest(string attackerId, string defenderId, Tile tile)
         {
-            territoryManager.PayToll(attackerId, tile);
+            TerritoryExtensions.GetTollAmount(tile);
             economyManager.TryGetGold(attackerId, out int gold);
             
             if (tile.State.HasLandMark) return true; 
-            if (gold < territoryManager.CalculateTileAssets(tile)) return false;
+            // if (gold < territoryManager.CalculateTileAssets(tile)) return false;
             
             return true;
         }
@@ -31,11 +29,11 @@ namespace Combat
             if (isAttackerWin)
             {
                 // 랜드마크에서 공격자가 이겼을 때 기본 보상 지급(아직 없음)
-                territoryManager.StolenTerritory(defenderId, winnerId, tile);
+                // territoryManager.StolenTerritory(defenderId, winnerId, tile);
             }
             else
             {
-                territoryManager.PayToll(attackerId, tile);
+                // territoryManager.PayToll(attackerId, tile);
                 // 지금 이 함수는 그냥 모든 인원에게 일어남
                 // 진 사람만 일어나게 하려면?
                 if(myPlayerId == attackerId) inventoryManager.DestroyRandomEquipment();

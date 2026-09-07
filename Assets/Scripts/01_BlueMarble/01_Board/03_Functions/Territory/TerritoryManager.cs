@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BlueMarble.Server;
+using Combat;
 using Cysharp.Threading.Tasks;
 using Jay;
 using UnityEngine;
@@ -113,6 +114,19 @@ namespace BlueMarble
             
             // TODO: 전투 시스템 연결
             // 결투 시스템 어쩌구저쩌구... 암튼 연결해야 함
+            bool isAttackerWin = await CombatSystem.Instance.StartCombat(playerId, tile);
+
+            if (isAttackerWin)
+            {
+                Debug.Log("공격자 승리");
+                // TODO: 인수 금액 지불 및 ChangeOwnerAsync 호출
+            }
+            else
+            {
+                Debug.Log("공격자 패배");
+                // TODO: 패널티 로직 처리
+            }
+
         }
 
         private async UniTask RequestPurchaseAsync(string playerId, Tile tile, int currentGold)
