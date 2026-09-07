@@ -30,11 +30,13 @@ namespace Player
 
         private CancellationTokenSource attackCts;
         private PlayerController playerController;
+        private PlayerAnimator playerAnimator;
         private PlayerEntity myEntity;
 
         private void Awake()
         {
             playerController = GetComponent<PlayerController>();
+            playerAnimator = GetComponent<PlayerAnimator>();
             myEntity = GetComponent<PlayerEntity>();
             SetFacingDirection(facingDirection);
         }
@@ -42,6 +44,10 @@ namespace Player
         public void SetFacingDirection(float direction)
         {
             facingDirection = direction < 0f ? -1f : 1f;
+            if (playerAnimator == null)
+                playerAnimator = GetComponent<PlayerAnimator>();
+
+            playerAnimator?.SetFacingDirection(facingDirection);
 
             // 발사 위치도 캐릭터가 바라보는 쪽으로 맞춘다.
             if (spawnPoint != null)
@@ -97,7 +103,8 @@ namespace Player
                     bool canAttack = isLocalPlayer
                                      && CombatSystem.Instance.IsCombatActive
                                      && !playerController.IsMoving 
-                                     && !playerController.IsCastingSkill;
+                                     && !playerController.IsCastingSkill
+                                     && !playerController.IsActionLocked;
 
                     if (canAttack && Time.time >= nextAttackTime)
                     {

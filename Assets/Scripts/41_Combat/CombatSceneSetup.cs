@@ -16,6 +16,9 @@ namespace Combat
         [SerializeField] private bool runTestWhenOpenedDirectly = true;
         [SerializeField] private int testStartHp = 50;
 
+        [Header("Player Visual")]
+        [SerializeField] private RuntimeAnimatorController playerAnimatorController;
+
         private readonly List<Camera> disabledCameras = new();
         private readonly List<AudioListener> disabledListeners = new();
 
@@ -106,12 +109,34 @@ namespace Combat
             rigidbody.gravityScale = 0f;
             rigidbody.freezeRotation = true;
 
-            GetOrAddComponent<SpriteRenderer>(playerObject);
+            // 씬에 배치된 Visual의 위치와 크기를 그대로 사용한다.
+            // 플레이어 루트에 렌더러를 추가하면 기존 Visual과 겹쳐 보이므로
+            // 외형용 컴포넌트는 반드시 자식 Visual에만 둔다.
+            Transform visualTransform = FindOrCreateChild(playerTransform, "Visual");
+            GameObject visualObject = visualTransform.gameObject;
+            SpriteRenderer visualRenderer = GetOrAddComponent<SpriteRenderer>(visualObject);
+            visualRenderer.enabled = true;
+            visualRenderer.color = Color.white;
+
+            SpriteRenderer rootRenderer = playerObject.GetComponent<SpriteRenderer>();
+            if (rootRenderer != null)
+                rootRenderer.enabled = false;
+
+            Animator rootAnimator = playerObject.GetComponent<Animator>();
+            if (rootAnimator != null)
+                rootAnimator.enabled = false;
+
+            Animator animator = GetOrAddComponent<Animator>(visualObject);
+            animator.enabled = true;
+            if (playerAnimatorController != null)
+                animator.runtimeAnimatorController = playerAnimatorController;
+
             CharacterController2D characterController = GetOrAddComponent<CharacterController2D>(playerObject);
             characterController.collisionLayer = 1 << 3;
             PlayerEntity entity = GetOrAddComponent<PlayerEntity>(playerObject);
             GetOrAddComponent<HurtBox>(playerObject);
             GetOrAddComponent<PlayerController>(playerObject);
+            GetOrAddComponent<PlayerAnimator>(playerObject);
             EquipmentCaster caster = GetOrAddComponent<EquipmentCaster>(playerObject);
 
             Transform spawnPoint = FindOrCreateChild(playerTransform, "Spawn Point");

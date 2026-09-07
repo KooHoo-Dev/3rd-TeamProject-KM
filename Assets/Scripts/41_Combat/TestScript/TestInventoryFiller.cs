@@ -17,7 +17,7 @@ namespace Player
             InventoryManager inv = InventoryManager.Instance;
 
             // ID 1번부터 5번까지 차례대로 인벤토리에 넣습니다.
-            for (int i = 1; i <= 5; i++)
+            for (int i = 6; i <= 10; i++)
             {
                 EquipmentDef itemDef = equipmentTable.Get(i); 
                 

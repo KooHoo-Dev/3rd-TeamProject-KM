@@ -103,6 +103,29 @@ namespace Combat
             EquipmentCaster caster = entity.GetComponent<EquipmentCaster>();
             if (caster == null || caster.spawnPoint == null) return;
 
+            PlayerAnimator playerAnimator = entity.GetComponent<PlayerAnimator>();
+            playerAnimator?.SetFacingDirection(caster.FacingDirection);
+
+            // 서버에서 동일한 공격 메시지를 받은 각 클라이언트가 같은 애니메이션을
+            // 재생하고, 활시위를 놓는 시점에 실제 투사체를 생성한다.
+            if (playerAnimator != null &&
+                playerAnimator.PlayAttack(() => SpawnSkill(msg)))
+            {
+                return;
+            }
+
+            SpawnSkill(msg);
+        }
+
+        private void SpawnSkill(SkillCastMessage msg)
+        {
+            CombatSystem combatSystem = CombatSystem.Instance;
+            if (!combatSystem.IsCombatActive) return;
+            if (!combatSystem.TryGetEntity(msg.CasterId, out CombatEntity entity)) return;
+
+            EquipmentCaster caster = entity.GetComponent<EquipmentCaster>();
+            if (caster == null || caster.spawnPoint == null) return;
+
             Vector3 spawnPoint = caster.spawnPoint.position;
             float direction = caster.FacingDirection;
 

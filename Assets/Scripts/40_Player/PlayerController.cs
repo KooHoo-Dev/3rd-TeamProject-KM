@@ -17,11 +17,14 @@ namespace Player
         private float nextPositionSendTime;
         private float networkTargetX;
         private bool hasNetworkPosition;
+        private float moveInput;
 
         // false이면 움직이지 않음
         public bool isLocalPlayer = true;
         
-        public bool IsMoving => Mathf.Abs(SimpleInput.GetAxisHorizontalRaw()) > 0.01f;
+        public float MoveInput => moveInput;
+        public bool IsMoving => Mathf.Abs(moveInput) > 0.01f;
+        public bool IsActionLocked { get; private set; }
 
         public bool IsCastingSkill { get; private set; } = false;
 
@@ -71,6 +74,18 @@ namespace Player
             nextPositionSendTime = 0f;
             networkTargetX = transform.position.x;
             hasNetworkPosition = false;
+            moveInput = 0f;
+            controller2D?.SetMoveInput(0f);
+        }
+
+        public void SetActionLocked(bool value)
+        {
+            IsActionLocked = value;
+
+            if (!IsActionLocked) return;
+
+            moveInput = 0f;
+            controller2D?.SetMoveInput(0f);
         }
 
         public void SetNetworkPosition(float x)
@@ -83,24 +98,40 @@ namespace Player
 
         private void ApplyNetworkPosition()
         {
-            if (!hasNetworkPosition) return;
+            if (!hasNetworkPosition)
+            {
+                moveInput = 0f;
+                return;
+            }
 
             Vector3 position = transform.position;
+            float deltaX = networkTargetX - position.x;
+            moveInput = Mathf.Abs(deltaX) > 0.01f ? Mathf.Sign(deltaX) : 0f;
             position.x = Mathf.Lerp(
                 position.x,
                 networkTargetX,
                 NetworkPositionLerpSpeed * Time.deltaTime);
             transform.position = position;
         }
+
+        private void OnDisable()
+        {
+            moveInput = 0f;
+            controller2D?.SetMoveInput(0f);
+        }
         
         private void HandleMovement()
         {
-            float inputVector = SimpleInput.GetAxisHorizontalRaw();
-            controller2D.SetMoveInput(inputVector);
+            moveInput = IsActionLocked
+                ? 0f
+                : SimpleInput.GetAxisHorizontalRaw();
+            controller2D.SetMoveInput(moveInput);
         }
         
         private void HandleDodge()
         {
+            if (IsActionLocked) return;
+
             if (SimpleInput.GetKeyDown(Key.Space))
             {
                 float direction = SimpleInput.GetAxisHorizontalRaw();
@@ -123,6 +154,8 @@ namespace Player
         
         private void HandleEquipmentUse()
         {
+            if (IsActionLocked) return;
+
             if (SimpleInput.GetKeyDown(Key.Digit1)) TryUseEquipmentSlot(0).Forget();
             if (SimpleInput.GetKeyDown(Key.Digit2)) TryUseEquipmentSlot(1).Forget();
             if (SimpleInput.GetKeyDown(Key.Digit3)) TryUseEquipmentSlot(2).Forget();

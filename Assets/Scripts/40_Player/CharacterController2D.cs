@@ -71,14 +71,32 @@ namespace Player
             float distance = Mathf.Abs(move);
             Bounds box = GetCastBox();
             
-            RaycastHit2D hit = Physics2D.BoxCast(
+            RaycastHit2D[] hits = Physics2D.BoxCastAll(
                 box.center, box.size, 0.0f, dir, distance, collisionLayer);
 
-            if (hit.collider == null) return move;
+            float allowedDistance = distance;
+            foreach (RaycastHit2D hit in hits)
+            {
+                if (hit.collider == null || hit.collider == col) continue;
 
-            float allowed = Mathf.Max(0, hit.distance - skinWidth);
+                Bounds obstacle = hit.collider.bounds;
 
-            return Mathf.Sign(move) * allowed;
+                // 바닥도 벽과 같은 충돌 레이어를 사용한다. 바닥처럼 세로로
+                // 맞닿기만 한 콜라이더는 수평 이동을 막지 않는다.
+                float verticalOverlap =
+                    Mathf.Min(box.max.y, obstacle.max.y) -
+                    Mathf.Max(box.min.y, obstacle.min.y);
+                if (verticalOverlap <= skinWidth) continue;
+
+                // 이미 접촉한 벽에서 멀어지는 입력은 허용한다.
+                float obstacleDirection = obstacle.center.x - box.center.x;
+                if (obstacleDirection * dir.x <= 0f) continue;
+
+                float hitDistance = Mathf.Max(0f, hit.distance - skinWidth);
+                allowedDistance = Mathf.Min(allowedDistance, hitDistance);
+            }
+
+            return Mathf.Sign(move) * allowedDistance;
         }
 
         private Bounds GetCastBox()
