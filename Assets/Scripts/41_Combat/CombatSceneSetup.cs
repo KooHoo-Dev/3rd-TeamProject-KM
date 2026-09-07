@@ -1,0 +1,227 @@
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using Player;
+using UnityEngine;
+
+namespace Combat
+{
+    /// <summary>
+    /// Combat 씬의 최소 실행 구성을 만든다.
+    /// 아트 작업 시 같은 이름의 오브젝트를 꾸며도 전투 컴포넌트는 그대로 재사용된다.
+    /// </summary>
+    [DisallowMultipleComponent]
+    public class CombatSceneSetup : MonoBehaviour
+    {
+        [Header("Standalone Test")]
+        [SerializeField] private bool runTestWhenOpenedDirectly = true;
+        [SerializeField] private int testStartHp = 50;
+
+        private readonly List<Camera> disabledCameras = new();
+        private readonly List<AudioListener> disabledListeners = new();
+
+        private void Start()
+        {
+            SetupAsync().Forget();
+        }
+
+        private async UniTaskVoid SetupAsync()
+        {
+            CombatSystem combatSystem = CombatSystem.Instance;
+
+            Transform systemsRoot = FindOrCreateRoot("=Combat Systems");
+            Transform playersRoot = FindOrCreateRoot("=Players");
+            Transform environmentRoot = FindOrCreateRoot("=Environment");
+            FindOrCreateRoot("=UI");
+
+            Timer timer = GetOrAddComponent<Timer>(FindOrCreateChild(systemsRoot, "Combat Timer").gameObject);
+            combatSystem.AttachTimer(timer);
+
+            BattleManager battleManager = BattleManager.Instance;
+            if (battleManager.basicArrowPrefab == null)
+                battleManager.basicArrowPrefab = Resources.Load<GameObject>("Equipment/Basic");
+
+            CreateEnvironmentPlaceholders(environmentRoot);
+
+            PlayerEntity leftPlayer = CreatePlayer(
+                FindOrCreateChild(playersRoot, "Left Player"),
+                new Vector3(-4f, -1.5f, 0f));
+            PlayerEntity rightPlayer = CreatePlayer(
+                FindOrCreateChild(playersRoot, "Right Player"),
+                new Vector3(4f, -1.5f, 0f));
+
+            DisableOtherSceneCameras();
+
+            if (combatSystem.HasCombatAssignment)
+            {
+                SetupPlayers(
+                    leftPlayer,
+                    rightPlayer,
+                    combatSystem.AttackerId,
+                    combatSystem.DefenderId,
+                    combatSystem.LocalPlayerId,
+                    combatSystem.StartHp);
+
+                combatSystem.NotifySceneReady();
+                return;
+            }
+
+            if (!runTestWhenOpenedDirectly) return;
+
+            const string localId = "LocalPlayer";
+            const string remoteId = "RemotePlayer";
+            SetupPlayers(leftPlayer, rightPlayer, localId, remoteId, localId, testStartHp);
+            await combatSystem.StartTestCombat(localId, remoteId, localId, testStartHp);
+        }
+
+        private void OnDestroy()
+        {
+            foreach (Camera camera in disabledCameras)
+            {
+                if (camera != null)
+                    camera.enabled = true;
+            }
+
+            foreach (AudioListener listener in disabledListeners)
+            {
+                if (listener != null)
+                    listener.enabled = true;
+            }
+        }
+
+        private PlayerEntity CreatePlayer(Transform playerTransform, Vector3 defaultPosition)
+        {
+            GameObject playerObject = playerTransform.gameObject;
+            bool wasActive = playerObject.activeSelf;
+            playerObject.SetActive(false);
+
+            if (playerTransform.localPosition == Vector3.zero)
+                playerTransform.localPosition = defaultPosition;
+
+            CapsuleCollider2D collider = GetOrAddComponent<CapsuleCollider2D>(playerObject);
+            collider.isTrigger = true;
+            collider.size = new Vector2(1f, 2f);
+
+            Rigidbody2D rigidbody = GetOrAddComponent<Rigidbody2D>(playerObject);
+            rigidbody.bodyType = RigidbodyType2D.Kinematic;
+            rigidbody.gravityScale = 0f;
+            rigidbody.freezeRotation = true;
+
+            GetOrAddComponent<SpriteRenderer>(playerObject);
+            CharacterController2D characterController = GetOrAddComponent<CharacterController2D>(playerObject);
+            characterController.collisionLayer = 1 << 3;
+            PlayerEntity entity = GetOrAddComponent<PlayerEntity>(playerObject);
+            GetOrAddComponent<HurtBox>(playerObject);
+            GetOrAddComponent<PlayerController>(playerObject);
+            EquipmentCaster caster = GetOrAddComponent<EquipmentCaster>(playerObject);
+
+            Transform spawnPoint = FindOrCreateChild(playerTransform, "Spawn Point");
+            if (spawnPoint.localPosition == Vector3.zero)
+                spawnPoint.localPosition = new Vector3(0.75f, 0f, 0f);
+            caster.spawnPoint = spawnPoint;
+
+            playerObject.SetActive(wasActive);
+            return entity;
+        }
+
+        private static void SetupPlayers(
+            PlayerEntity leftPlayer,
+            PlayerEntity rightPlayer,
+            string attackerId,
+            string defenderId,
+            string localPlayerId,
+            int hp)
+        {
+            SetupPlayer(leftPlayer, attackerId, attackerId == localPlayerId, hp, 1f);
+            SetupPlayer(rightPlayer, defenderId, defenderId == localPlayerId, hp, -1f);
+        }
+
+        private static void SetupPlayer(
+            PlayerEntity player,
+            string ownerId,
+            bool isLocal,
+            int hp,
+            float facingDirection)
+        {
+            player.Init(ownerId, hp);
+
+            PlayerController controller = player.GetComponent<PlayerController>();
+            controller.SetLocalPlayer(isLocal);
+
+            EquipmentCaster caster = player.GetComponent<EquipmentCaster>();
+            caster.SetFacingDirection(facingDirection);
+            caster.SetLocalPlayer(isLocal);
+        }
+
+        private void DisableOtherSceneCameras()
+        {
+            Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (Camera camera in cameras)
+            {
+                if (camera.gameObject.scene == gameObject.scene || !camera.enabled) continue;
+                camera.enabled = false;
+                disabledCameras.Add(camera);
+            }
+
+            AudioListener[] listeners = FindObjectsByType<AudioListener>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+            foreach (AudioListener listener in listeners)
+            {
+                if (listener.gameObject.scene == gameObject.scene || !listener.enabled) continue;
+                listener.enabled = false;
+                disabledListeners.Add(listener);
+            }
+        }
+
+        private static void CreateEnvironmentPlaceholders(Transform environmentRoot)
+        {
+            CreateBoundary(environmentRoot, "Ground", new Vector3(0f, -3f, 0f), new Vector2(18f, 1f));
+            CreateBoundary(environmentRoot, "Left Wall", new Vector3(-9f, 0f, 0f), new Vector2(1f, 7f));
+            CreateBoundary(environmentRoot, "Right Wall", new Vector3(9f, 0f, 0f), new Vector2(1f, 7f));
+        }
+
+        private static void CreateBoundary(
+            Transform root,
+            string name,
+            Vector3 defaultPosition,
+            Vector2 defaultSize)
+        {
+            Transform boundary = FindOrCreateChild(root, name);
+            boundary.gameObject.layer = 3;
+            if (boundary.localPosition == Vector3.zero)
+                boundary.localPosition = defaultPosition;
+
+            BoxCollider2D collider = GetOrAddComponent<BoxCollider2D>(boundary.gameObject);
+            collider.size = defaultSize;
+        }
+
+        private Transform FindOrCreateRoot(string name)
+        {
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                if (root.name == name)
+                    return root.transform;
+            }
+
+            GameObject created = new GameObject(name);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(created, gameObject.scene);
+            return created.transform;
+        }
+
+        private static Transform FindOrCreateChild(Transform parent, string name)
+        {
+            Transform child = parent.Find(name);
+            if (child != null) return child;
+
+            GameObject created = new GameObject(name);
+            created.transform.SetParent(parent, false);
+            return created.transform;
+        }
+
+        private static T GetOrAddComponent<T>(GameObject target) where T : Component
+        {
+            T component = target.GetComponent<T>();
+            return component != null ? component : target.AddComponent<T>();
+        }
+    }
+}

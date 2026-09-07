@@ -8,9 +8,15 @@ namespace Player
 {
     public class PlayerController : MonoBehaviour
     {
+        private const float PositionSendInterval = 0.1f;
+        private const float NetworkPositionLerpSpeed = 15f;
+
         private CharacterController2D controller2D;
         private InventoryManager myInventory;
         private EquipmentCaster myCaster;
+        private float nextPositionSendTime;
+        private float networkTargetX;
+        private bool hasNetworkPosition;
 
         // false이면 움직이지 않음
         public bool isLocalPlayer = true;
@@ -35,12 +41,56 @@ namespace Player
         
         private void Update()
         {
-            if (isLocalPlayer == false) return;
+            if (isLocalPlayer == false)
+            {
+                ApplyNetworkPosition();
+                return;
+            }
+
             HandleMovement();
             HandleDodge();
 
             UpdateEquipmentCooldowns();
             HandleEquipmentUse();
+        }
+
+        private void LateUpdate()
+        {
+            if (isLocalPlayer == false || !Combat.CombatSystem.IsInitialized) return;
+
+            Combat.CombatSystem combatSystem = Combat.CombatSystem.Instance;
+            if (!combatSystem.IsCombatActive || Time.unscaledTime < nextPositionSendTime) return;
+
+            nextPositionSendTime = Time.unscaledTime + PositionSendInterval;
+            combatSystem.ReportLocalPosition(transform.position.x);
+        }
+
+        public void SetLocalPlayer(bool value)
+        {
+            isLocalPlayer = value;
+            nextPositionSendTime = 0f;
+            networkTargetX = transform.position.x;
+            hasNetworkPosition = false;
+        }
+
+        public void SetNetworkPosition(float x)
+        {
+            if (isLocalPlayer) return;
+
+            networkTargetX = x;
+            hasNetworkPosition = true;
+        }
+
+        private void ApplyNetworkPosition()
+        {
+            if (!hasNetworkPosition) return;
+
+            Vector3 position = transform.position;
+            position.x = Mathf.Lerp(
+                position.x,
+                networkTargetX,
+                NetworkPositionLerpSpeed * Time.deltaTime);
+            transform.position = position;
         }
         
         private void HandleMovement()

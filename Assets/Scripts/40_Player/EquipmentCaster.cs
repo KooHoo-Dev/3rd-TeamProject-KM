@@ -105,10 +105,7 @@ namespace Player
                         {
                             CasterId = myEntity.OwnerId,
                             IsBasicAttack = true,
-                            EquipmentId = 0,
-                            SpawnX = spawnPoint.position.x,
-                            SpawnY = spawnPoint.position.y,
-                            Direction = facingDirection
+                            EquipmentId = 0
                         };
 
                         BattleManager.Instance.CastLocal(msg);
@@ -134,10 +131,7 @@ namespace Player
             {
                 CasterId = myEntity.OwnerId,
                 IsBasicAttack = false,
-                EquipmentId = def.Id,
-                SpawnX = spawnPoint.position.x,
-                SpawnY = spawnPoint.position.y,
-                Direction = facingDirection
+                EquipmentId = def.Id
             };
     
             BattleManager.Instance.CastLocal(msg);

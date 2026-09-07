@@ -21,6 +21,17 @@ namespace Combat
             }
         }
 
+        public void ApplyHealthSnapshot(int currentHp)
+        {
+            CurrentHp = Mathf.Clamp(currentHp, 0, MaxHp);
+        }
+
+        protected virtual void OnDisable()
+        {
+            if (CombatSystem.IsInitialized)
+                CombatSystem.Instance.UnregisterEntity(this);
+        }
+
         public abstract void TakeDamage(int damage);
     }
 }

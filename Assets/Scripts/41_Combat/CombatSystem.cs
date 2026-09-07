@@ -1,71 +1,65 @@
 using System;
 using System.Collections.Generic;
 using BlueMarble;
+using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using Jay;
-using UnityEngine;
 using Sirenix.OdinInspector;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Combat
 {
-
     public class CombatSystem : SingletonBase<CombatSystem>
     {
+        private const string CombatSceneName = "Combat";
+
         [Header("References")]
         public Timer combatTimer;
-        
+
         [Header("Damage Multiplier")]
         public float multiplierIncreaseStartTime = 10f;
         public float multiplierIncreaseInterval = 5f;
         public float multiplierIncreaseAmount = 1f;
 
-        public float DamageMultiplier { get; private set; } = 1.0f;
-        public bool IsCombatActive { get; private set; } = false;
-
-        private float elapsedTime;
-        private float nextMultiplierIncreaseTime;
+        public float DamageMultiplier { get; private set; } = 1f;
+        public bool IsCombatActive { get; private set; }
 
         public string CombatId { get; private set; }
         public string AttackerId { get; private set; }
         public string DefenderId { get; private set; }
         public string LocalPlayerId { get; private set; }
         public int StartHp { get; private set; } = 50;
+        public float DurationSeconds { get; private set; } = 30f;
         public bool IsTestCombat { get; private set; }
 
         public bool HasCombatAssignment =>
+            !string.IsNullOrEmpty(CombatId) &&
             !string.IsNullOrEmpty(AttackerId) &&
             !string.IsNullOrEmpty(DefenderId) &&
             !string.IsNullOrEmpty(LocalPlayerId);
 
-        // 네트워크 담당 코드는 이 이벤트를 구독해 서버로 전달하면 된다.
-        public event Action<CombatRequestMessage> OnCombatRequested;
-        public event Action<HitRequestPacket> OnHitRequested;
-        public event Action<CombatResultMessage> OnCombatResultRequested;
         public event Action<CombatAssignmentMessage> OnCombatAssigned;
         public event Action<CombatResultMessage> OnCombatEnded;
 
-        private UniTaskCompletionSource<bool> combatResult;
+        private float elapsedTime;
+        private float nextMultiplierIncreaseTime;
+        private string requestId;
+        private bool isFinishing;
+
+        private UniTaskCompletionSource<CombatOutcome> combatResult;
         private readonly HashSet<string> appliedHitIds = new();
-        
-        // HitBox와 HurtBox가 충돌을 확인 하는 명부
-        private Dictionary<Collider2D, HurtBox> HurtBoxDic { get; set; } = new Dictionary<Collider2D, HurtBox>();
-        
-        // 서버에서 ID를 받았을 때 체력을 깎을 본체를 찾는 명부
-        private Dictionary<string, CombatEntity> entityDict =  new Dictionary<string, CombatEntity>();
+        private readonly Dictionary<Collider2D, HurtBox> hurtBoxes = new();
+        private readonly Dictionary<string, CombatEntity> entities = new();
 
         protected override void Awake()
         {
-            // 보드에서 Instance가 먼저 생성된 뒤 전투 씬의 인스턴스가 로드되는 경우,
-            // 전투 씬에 연결된 Timer 참조와 설정을 기존 영속 인스턴스에 넘긴다.
             if (instance != null && instance != this)
             {
-                instance.combatTimer = combatTimer;
+                instance.AttachTimer(combatTimer);
                 instance.multiplierIncreaseStartTime = multiplierIncreaseStartTime;
                 instance.multiplierIncreaseInterval = multiplierIncreaseInterval;
                 instance.multiplierIncreaseAmount = multiplierIncreaseAmount;
-
-                if (instance.IsCombatActive)
-                    instance.StartCombatTimer();
             }
 
             base.Awake();
@@ -74,262 +68,347 @@ namespace Combat
         [Button]
         public void CombatStart()
         {
-            IsCombatActive = true;
+            StartCombatRuntime();
         }
 
         private void Update()
         {
             if (!IsCombatActive) return;
-            
+
             elapsedTime += Time.deltaTime;
 
-            if (elapsedTime >= nextMultiplierIncreaseTime)
-            {
-                DamageMultiplier += multiplierIncreaseAmount;
-                nextMultiplierIncreaseTime = elapsedTime + multiplierIncreaseInterval;
-                Debug.Log($"[CombatSystem] 데미지 배율 증가: x{DamageMultiplier}");
-            }
+            if (elapsedTime < nextMultiplierIncreaseTime) return;
+
+            DamageMultiplier += multiplierIncreaseAmount;
+            nextMultiplierIncreaseTime = elapsedTime + multiplierIncreaseInterval;
+            Debug.Log($"[CombatSystem] 데미지 배율 증가: x{DamageMultiplier}");
         }
-        
-        public async UniTask<bool> StartCombat(string attackerId, Tile tile)
+
+        public async UniTask<CombatOutcome> StartCombat(string attackerId, Tile tile)
         {
             if (tile == null || string.IsNullOrEmpty(tile.State.OwnerId))
             {
                 Debug.LogError("[CombatSystem] 대전 상대 정보가 없습니다.");
-                return false;
+                return CombatOutcome.RejectedByDefender;
             }
 
-            string defenderId = tile.State.OwnerId;
+            RoomClient client = RoomClient.Instance;
 
-            combatResult = new UniTaskCompletionSource<bool>();
-            OnCombatRequested?.Invoke(new CombatRequestMessage
+            requestId = Guid.NewGuid().ToString("N");
+            AttackerId = attackerId;
+            DefenderId = tile.State.OwnerId;
+            LocalPlayerId = client.Me.Id;
+            combatResult = new UniTaskCompletionSource<CombatOutcome>();
+
+            int tileId = BlueMarbleWorld.Instance.Board.GetTileIndex(tile);
+
+            await client.RequestCombat(new CombatRequestMessage
             {
-                AttackerId = attackerId,
-                DefenderId = defenderId
+                RequestId = requestId,
+                TurnId = client.TurnId,
+                TileId = tileId,
+                DefenderId = DefenderId
             });
 
-            Debug.Log($"[CombatSystem] 대전 요청: {attackerId} vs {defenderId}");
-
-            // 서버가 배정을 확정하면 BeginCombatFromNetwork가 호출되고,
-            // 승패가 결정되면 CompleteCombatFromNetwork가 이 대기를 끝낸다.
+            Debug.Log($"[CombatSystem] 대전 요청: {AttackerId} vs {DefenderId}");
             return await combatResult.Task;
         }
 
-        /// <summary>
-        /// 서버가 대전 인원을 확정했을 때 네트워크 계층에서 양쪽 클라이언트 모두 호출한다.
-        /// </summary>
-        public void BeginCombatFromNetwork(CombatAssignmentMessage assignment)
+        public void ReceiveCombatOffer(CombatOfferMessage offer)
+        {
+            ReceiveCombatOfferAsync(offer).Forget();
+        }
+
+        private async UniTaskVoid ReceiveCombatOfferAsync(CombatOfferMessage offer)
+        {
+            if (offer == null || RoomClient.Instance.Me.Id != offer.DefenderId) return;
+
+            FightUI fightUI = FightUI.Instance;
+            bool accepted = fightUI != null && await fightUI.ShowAsync(
+                FightUIMode.Response,
+                offer.AttackerId,
+                offer.DefenderId);
+
+            await RoomClient.Instance.RespondCombat(offer.CombatId, accepted);
+        }
+
+        public void CancelCombatFromNetwork(CombatCancelledMessage message)
+        {
+            if (message == null) return;
+            if (!string.IsNullOrEmpty(requestId) && message.RequestId != requestId) return;
+
+            FightUI.Instance?.Hide();
+            combatResult?.TrySetResult(CombatOutcome.RejectedByDefender);
+            ResetAssignment();
+
+            Debug.Log($"[CombatSystem] 대전 취소: {message.Reason}");
+        }
+
+        public void PrepareCombatFromNetwork(CombatAssignmentMessage assignment)
         {
             if (assignment == null ||
+                string.IsNullOrEmpty(assignment.CombatId) ||
                 string.IsNullOrEmpty(assignment.AttackerId) ||
-                string.IsNullOrEmpty(assignment.DefenderId) ||
-                string.IsNullOrEmpty(assignment.LocalPlayerId))
+                string.IsNullOrEmpty(assignment.DefenderId))
             {
                 Debug.LogError("[CombatSystem] 올바르지 않은 대전 배정 정보입니다.");
                 return;
             }
 
+            string myId = RoomClient.Instance.Me.Id;
+            if (myId != assignment.AttackerId && myId != assignment.DefenderId) return;
+
             CombatId = assignment.CombatId;
+            requestId = assignment.RequestId;
             AttackerId = assignment.AttackerId;
             DefenderId = assignment.DefenderId;
-            LocalPlayerId = assignment.LocalPlayerId;
+            LocalPlayerId = myId;
             StartHp = assignment.StartHp > 0 ? assignment.StartHp : 50;
+            DurationSeconds = assignment.DurationSeconds > 0f ? assignment.DurationSeconds : 30f;
             IsTestCombat = assignment.IsTest;
 
-            combatResult ??= new UniTaskCompletionSource<bool>();
+            if (combatTimer != null)
+                combatTimer.duration = DurationSeconds;
 
-            DamageMultiplier = 1.0f;
-            elapsedTime = 0f;
-            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
-            appliedHitIds.Clear();
-            IsCombatActive = true;
-
-            StartCombatTimer();
+            combatResult ??= new UniTaskCompletionSource<CombatOutcome>();
             OnCombatAssigned?.Invoke(assignment);
 
-            Debug.Log(
-                $"[CombatSystem] 대전 배정 완료: " +
-                $"Left={AttackerId}, Right={DefenderId}, Me={LocalPlayerId}");
+            LoadCombatSceneAsync().Forget();
         }
 
-        /// <summary>
-        /// 서버가 확정한 승자를 양쪽 클라이언트에 적용한다.
-        /// </summary>
+        private async UniTaskVoid LoadCombatSceneAsync()
+        {
+            Scene scene = SceneManager.GetSceneByName(CombatSceneName);
+
+            if (!scene.isLoaded)
+                await SceneManager.LoadSceneAsync(CombatSceneName, LoadSceneMode.Additive);
+        }
+
+        public void NotifySceneReady()
+        {
+            if (IsTestCombat || string.IsNullOrEmpty(CombatId)) return;
+            RoomClient.Instance.AnnounceCombatReady(CombatId).Forget();
+        }
+
+        public void BeginCombatFromNetwork(CombatStartedMessage message)
+        {
+            if (message == null || message.CombatId != CombatId) return;
+            StartCombatRuntime();
+        }
+
         public void CompleteCombatFromNetwork(CombatResultMessage result)
         {
             if (result == null || string.IsNullOrEmpty(result.WinnerId)) return;
-            if (!string.IsNullOrEmpty(CombatId) &&
-                !string.IsNullOrEmpty(result.CombatId) &&
-                result.CombatId != CombatId) return;
+            if (result.CombatId != CombatId) return;
 
-            EndCombat(result.WinnerId);
+            FinishCombatAsync(result).Forget();
         }
-        
-        // 누군가가 체력이 0이 되거나 타이머가 다 되면 호출
-        private void EndCombat(string winnerId)
+
+        private async UniTaskVoid FinishCombatAsync(CombatResultMessage result)
         {
-            if (!IsCombatActive) return;
+            if (isFinishing) return;
+            isFinishing = true;
 
             IsCombatActive = false;
             StopCombatTimer();
 
-            bool isAttackerWin = winnerId == AttackerId;
-            combatResult?.TrySetResult(isAttackerWin);
+            OnCombatEnded?.Invoke(result);
 
-            OnCombatEnded?.Invoke(new CombatResultMessage
-            {
-                CombatId = CombatId,
-                WinnerId = winnerId
-            });
+            Scene scene = SceneManager.GetSceneByName(CombatSceneName);
+            if (scene.isLoaded)
+                await SceneManager.UnloadSceneAsync(scene);
+
+            CombatOutcome outcome = result.WinnerId == AttackerId
+                ? CombatOutcome.AttackerWin
+                : CombatOutcome.DefenderWin;
+
+            UniTaskCompletionSource<CombatOutcome> resultSource = combatResult;
+            ResetAssignment();
+            resultSource?.TrySetResult(outcome);
+
+            Debug.Log($"[CombatSystem] 대전 종료. 승자: {result.WinnerId}");
         }
 
-        private void HandleTimeUp()
+        public void ApplyHealthFromNetwork(CombatHealthUpdatedMessage message)
         {
-            // 명부에서 양측 본체를 찾아 체력 비교
-            entityDict.TryGetValue(AttackerId, out CombatEntity attacker);
-            entityDict.TryGetValue(DefenderId, out CombatEntity defender);
+            if (message == null || message.CombatId != CombatId) return;
+            if (message.PlayerId == LocalPlayerId) return;
 
-            float attackerRatio = attacker != null ? (float)attacker.CurrentHp / attacker.MaxHp : 0f;
-            float defenderRatio = defender != null ? (float)defender.CurrentHp / defender.MaxHp : 0f;
+            if (TryGetEntity(message.PlayerId, out CombatEntity entity))
+                entity.ApplyHealthSnapshot(message.RemainingHp);
+        }
 
-            string winnerId;
+        public void ReportLocalPosition(float x)
+        {
+            if (!IsCombatActive || IsTestCombat) return;
 
-            if (attackerRatio > defenderRatio)
-            {
-                winnerId = AttackerId;
-            }
-            else if (defenderRatio > attackerRatio)
-            {
-                winnerId = DefenderId;
-            }
-            else
-            {
-                Debug.Log("[CombatSystem] 동점으로 인한 점령자 방어 성공!");
-                winnerId = DefenderId; // 동점이면 방어자 승리 유리하게 판정
-            }
+            RoomClient.Instance.ReportCombatPosition(CombatId, x);
+        }
 
-            RequestOrApplyCombatResult(winnerId);
+        public void ApplyPositionFromNetwork(CombatPositionMessage message)
+        {
+            if (message == null || message.CombatId != CombatId) return;
+            if (message.PlayerId == LocalPlayerId) return;
+
+            if (TryGetEntity(message.PlayerId, out CombatEntity entity))
+                entity.GetComponent<Player.PlayerController>()?.SetNetworkPosition(message.X);
+        }
+
+        public bool TryApplyLocalHit(string targetId, int damage, string castId)
+        {
+            if (!IsCombatActive) return false;
+            if (!IsTestCombat && targetId != LocalPlayerId) return false;
+
+            string hitId = $"{castId}:{targetId}";
+            if (!string.IsNullOrEmpty(castId) && !appliedHitIds.Add(hitId))
+                return false;
+
+            if (!TryGetEntity(targetId, out CombatEntity entity)) return false;
+
+            entity.TakeDamage(damage);
+
+            if (!IsTestCombat && entity.CurrentHp > 0)
+                RoomClient.Instance.ReportCombatHealth(CombatId, entity.CurrentHp);
+
+            return true;
         }
 
         public void OnPlayerDied(string deadPlayerId)
         {
             if (!IsCombatActive) return;
-            string winnerId;
 
-            if (deadPlayerId == AttackerId) winnerId = DefenderId;
-            else winnerId = AttackerId;
-            
-            RequestOrApplyCombatResult(winnerId, deadPlayerId);
+            if (!IsTestCombat)
+            {
+                if (deadPlayerId == LocalPlayerId)
+                    RoomClient.Instance.ReportCombatHealth(CombatId, 0);
+                return;
+            }
+
+            string winnerId = deadPlayerId == AttackerId ? DefenderId : AttackerId;
+            EndTestCombat(winnerId);
         }
-        
-        #region HurtBox 물리 충돌 명부 관리
 
         public void AddHurtBox(Collider2D collider, HurtBox hurtBox)
         {
-            HurtBoxDic.TryAdd(collider, hurtBox);
+            if (collider != null)
+                hurtBoxes[collider] = hurtBox;
         }
 
         public void RemoveHurtBox(Collider2D collider)
         {
-            if (HurtBoxDic.ContainsKey(collider) == false) return;
-            HurtBoxDic.Remove(collider);
+            if (collider != null)
+                hurtBoxes.Remove(collider);
         }
 
         public HurtBox GetHurtBoxOrNull(Collider2D collider)
         {
-            HurtBoxDic.TryGetValue(collider, out HurtBox hurtBox);
+            hurtBoxes.TryGetValue(collider, out HurtBox hurtBox);
             return hurtBox;
         }
-        #endregion
-        
-        #region CombatEntity 본체 명부 관리
 
         public void RegisterEntity(CombatEntity entity)
         {
-            entityDict.TryAdd(entity.OwnerId, entity);
+            if (entity != null && !string.IsNullOrEmpty(entity.OwnerId))
+                entities[entity.OwnerId] = entity;
         }
 
         public void UnregisterEntity(CombatEntity entity)
         {
-            if (entityDict.ContainsKey(entity.OwnerId))
-            {
-                entityDict.Remove(entity.OwnerId);
-            }
+            if (entity == null || string.IsNullOrEmpty(entity.OwnerId)) return;
+
+            if (entities.TryGetValue(entity.OwnerId, out CombatEntity registered) && registered == entity)
+                entities.Remove(entity.OwnerId);
         }
 
-        public void OnReceiveHitResponse(string targetId, int damage)
+        public bool TryGetEntity(string playerId, out CombatEntity entity)
         {
-            if (entityDict.TryGetValue(targetId, out CombatEntity targetEntity))
-            {
-                Debug.Log($"[CombatSystem] {targetId}에게 {damage} 피해");
-                targetEntity.TakeDamage(damage);
-            }
+            if (entities.TryGetValue(playerId, out entity) && entity != null)
+                return true;
+
+            entities.Remove(playerId);
+            entity = null;
+            return false;
         }
 
-        public void ApplyHitFromNetwork(HitRequestPacket packet)
+        public void AttachTimer(Timer timer)
         {
-            if (packet == null) return;
-            if (!string.IsNullOrEmpty(CombatId) &&
-                !string.IsNullOrEmpty(packet.CombatId) &&
-                packet.CombatId != CombatId) return;
+            if (timer == null) return;
 
-            string hitId = $"{packet.CastId}:{packet.TargetId}";
-            if (!string.IsNullOrEmpty(packet.CastId) && !appliedHitIds.Add(hitId))
-                return;
-
-            OnReceiveHitResponse(packet.TargetId, packet.Damage);
+            combatTimer = timer;
+            combatTimer.duration = DurationSeconds;
         }
 
-        public void RequestHit(HitRequestPacket packet)
-        {
-            if (packet == null) return;
-
-            if (string.IsNullOrEmpty(packet.CombatId))
-                packet.CombatId = CombatId;
-
-            if (IsTestCombat)
-            {
-                ApplyHitFromNetwork(packet);
-                return;
-            }
-
-            // 모든 클라이언트에서 충돌이 검출되므로 피격자 본인만 서버에 보고한다.
-            if (packet.TargetId != LocalPlayerId) return;
-
-            OnHitRequested?.Invoke(packet);
-        }
-        
-        #endregion
-        
-        #region Test 함수
-        // CombatSystem.cs 내부에 추가
         public async UniTask<bool> StartTestCombat(
             string testAttackerId,
             string testDefenderId,
             string testLocalPlayerId = null,
             int testStartHp = 50)
         {
-            combatResult = new UniTaskCompletionSource<bool>();
-            BeginCombatFromNetwork(new CombatAssignmentMessage
-            {
-                CombatId = "TestCombat",
-                AttackerId = testAttackerId,
-                DefenderId = testDefenderId,
-                LocalPlayerId = string.IsNullOrEmpty(testLocalPlayerId)
-                    ? testAttackerId
-                    : testLocalPlayerId,
-                StartHp = testStartHp,
-                IsTest = true
-            });
-    
-            bool result = await combatResult.Task;
+            combatResult = new UniTaskCompletionSource<CombatOutcome>();
+            CombatId = "TestCombat";
+            AttackerId = testAttackerId;
+            DefenderId = testDefenderId;
+            LocalPlayerId = string.IsNullOrEmpty(testLocalPlayerId)
+                ? testAttackerId
+                : testLocalPlayerId;
+            StartHp = testStartHp;
+            DurationSeconds = combatTimer != null ? combatTimer.duration : 30f;
+            IsTestCombat = true;
 
-            // 전투가 끝났을 때 누가 이겼는지 로그 출력
-            Debug.Log($"[테스트 전투 종료] 공격자 승리 여부: {result}");
+            StartCombatRuntime();
 
-            return result;
+            CombatOutcome result = await combatResult.Task;
+            Debug.Log($"[테스트 전투 종료] 공격자 승리 여부: {result == CombatOutcome.AttackerWin}");
+            return result == CombatOutcome.AttackerWin;
         }
-        #endregion
+
+        private void StartCombatRuntime()
+        {
+            DamageMultiplier = 1f;
+            elapsedTime = 0f;
+            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
+            appliedHitIds.Clear();
+            BattleManager.Instance.ClearCombatState();
+            IsCombatActive = true;
+            StartCombatTimer();
+
+            Debug.Log(
+                $"[CombatSystem] 대전 시작: Left={AttackerId}, Right={DefenderId}, " +
+                $"Me={LocalPlayerId}");
+        }
+
+        private void HandleTimeUp()
+        {
+            if (!IsTestCombat) return;
+
+            TryGetEntity(AttackerId, out CombatEntity attacker);
+            TryGetEntity(DefenderId, out CombatEntity defender);
+
+            float attackerRatio = attacker != null ? (float)attacker.CurrentHp / attacker.MaxHp : 0f;
+            float defenderRatio = defender != null ? (float)defender.CurrentHp / defender.MaxHp : 0f;
+            string winnerId = attackerRatio > defenderRatio ? AttackerId : DefenderId;
+
+            EndTestCombat(winnerId);
+        }
+
+        private void EndTestCombat(string winnerId)
+        {
+            if (!IsCombatActive) return;
+
+            IsCombatActive = false;
+            StopCombatTimer();
+
+            CombatResultMessage result = new CombatResultMessage
+            {
+                CombatId = CombatId,
+                WinnerId = winnerId,
+                LoserId = winnerId == AttackerId ? DefenderId : AttackerId
+            };
+
+            OnCombatEnded?.Invoke(result);
+            combatResult?.TrySetResult(
+                winnerId == AttackerId ? CombatOutcome.AttackerWin : CombatOutcome.DefenderWin);
+        }
 
         private void StartCombatTimer()
         {
@@ -348,26 +427,25 @@ namespace Combat
             combatTimer.OnTimeUp -= HandleTimeUp;
         }
 
-        private void RequestOrApplyCombatResult(string winnerId, string deadPlayerId = null)
+        private void ResetAssignment()
         {
-            if (IsTestCombat)
-            {
-                EndCombat(winnerId);
-                return;
-            }
+            StopCombatTimer();
+            FightUI.Instance?.Hide();
+            BattleManager.Instance.ClearCombatState();
 
-            // 사망 판정은 사망한 플레이어 본인이, 시간 종료 판정은 공격자가 한 번만 보고한다.
-            bool shouldReport = string.IsNullOrEmpty(deadPlayerId)
-                ? LocalPlayerId == AttackerId
-                : LocalPlayerId == deadPlayerId;
-
-            if (!shouldReport) return;
-
-            OnCombatResultRequested?.Invoke(new CombatResultMessage
-            {
-                CombatId = CombatId,
-                WinnerId = winnerId
-            });
+            IsCombatActive = false;
+            IsTestCombat = false;
+            CombatId = null;
+            AttackerId = null;
+            DefenderId = null;
+            LocalPlayerId = null;
+            DurationSeconds = 30f;
+            requestId = null;
+            combatResult = null;
+            isFinishing = false;
+            appliedHitIds.Clear();
+            hurtBoxes.Clear();
+            entities.Clear();
         }
     }
 }

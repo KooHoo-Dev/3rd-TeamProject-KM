@@ -14,6 +14,11 @@
         public const string TURN_FINISHED = "turnFinished";
         public const string SET_EQUIPMENT = "setEquipment";
         public const string REMOVE_EQUIPMENT = "removeEquipment";
+        public const string COMBAT_REQUEST = "combatRequest";
+        public const string COMBAT_RESPONSE = "combatResponse";
+        public const string COMBAT_READY = "combatReady";
+        public const string SKILL_CAST = "skillCast";
+        public const string COMBAT_HEALTH_REPORT = "combatHealthReport";
 
         #endregion
 
@@ -26,6 +31,7 @@
         public const string APPLY_TREASURE = "applyTreasure";
         public const string TREASURE_RESOLVED = "treasureResolved";
         public const string PLAYER_ACTIVITY = "playerActivity";
+        public const string COMBAT_POSITION = "combatPosition";
         public const string REVEAL_GOLD_CARD = "revealGoldCard";
         public const string GOLD_CARD_PRESENTATION_FINISHED = "goldCardPresentationFinished";
 
@@ -41,6 +47,12 @@
         public const string INVENTORY_UPDATED = "inventoryUpdated";
     
         public const string GAME_ENDED = "gameEnded";
+        public const string COMBAT_OFFER = "combatOffer";
+        public const string COMBAT_CANCELLED = "combatCancelled";
+        public const string COMBAT_ASSIGNMENT = "combatAssignment";
+        public const string COMBAT_STARTED = "combatStarted";
+        public const string COMBAT_HEALTH_UPDATED = "combatHealthUpdated";
+        public const string COMBAT_RESULT = "combatResult";
 
         #endregion
     }

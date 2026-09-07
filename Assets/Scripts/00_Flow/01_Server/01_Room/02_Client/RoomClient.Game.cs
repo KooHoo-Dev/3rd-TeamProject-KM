@@ -50,6 +50,7 @@ namespace BlueMarble.Server
 
         private void RegisterGameHandlers()
         {
+            RegisterCombatHandlers();
             RegisterHandler<GameStartedMessage>(ProtocolHeader.GAME_STARTED, HandleGameStarted);
             RegisterHandler<TurnStartedMessage>(ProtocolHeader.TURN_STARTED, HandleTurnStarted);
             RegisterHandler<DiceRolledMessage>(ProtocolHeader.DICE_ROLLED, HandleDiceRolled);

@@ -98,45 +98,49 @@ namespace BlueMarble
         {
             TileState state = tile.State;
 
-            int tollAmount = tile.GetTollAmount();
-            
-            if (Economy.TryGetGold(playerId, out int currentGold) == false) return;
-            
-            // 이 부분은 추후 수정 좀 해야함
+            await Client.AnnouncePlayerActivity(PlayerActivityType.Combat);
+
+            try
+            {
+                FightUI fightUI = FightUI.Instance;
+                bool wantsFight = fightUI != null && await fightUI.ShowAsync(
+                    FightUIMode.Challenge,
+                    playerId,
+                    state.OwnerId);
+
+                if (!wantsFight)
+                {
+                    await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
+                    return;
+                }
+
+                CombatOutcome outcome = await CombatSystem.Instance.StartCombat(playerId, tile);
+
+                if (outcome == CombatOutcome.AttackerWin)
+                {
+                    await ChangeOwnerAsync(tile, playerId);
+                    return;
+                }
+
+                await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
+            }
+            finally
+            {
+                FightUI.Instance?.Hide();
+                await Client.AnnouncePlayerActivity(PlayerActivityType.None);
+            }
+        }
+
+        private async UniTask PayTollAsync(string payerId, string ownerId, int tollAmount)
+        {
+            if (Economy.TryGetGold(payerId, out int currentGold) == false) return;
+
             int paidAmount = Mathf.Min(currentGold, tollAmount);
-            if (paidAmount > 0)
-            {
-                // TODO: 추후 파산 시스템 연결
-                await Economy.LoseGoldTo(playerId, paidAmount);
-                await Economy.GainGoldTo(state.OwnerId, paidAmount);
-            }
+            if (paidAmount <= 0) return;
 
-            if (state.HasLandMark) return;
-            
-            // TODO: 전투 시스템 연결
-            // 1. 전투 UI를 활성화, UI의 결정이 끝날 때 까지 대기
-            //    UI의 결정은 반환값을 bool로 받아오면 될듯?
-            // 2. 만약 true라면 상대방에게 해당 의사를 전달(서버를 통해)
-            //    해당 의사를 전달 받은 상대방에게 승낙/거절 UI를 띄워주고, 해당 결정을 기다림
-            // 3. 만약 승낙했다면, 그대로 전투 페이즈 돌입
-            // 3-1. 만약 거절했다면, 상대방 클라이언트에서 코인 토스(일단 구현은 연출 없이 결과만 반반으로 따져서 진행)
-            //      코인토스에서 앞면이 나왔다면, 거절 성공 / 뒷면이 나왔다면 강제로 전투 요청을 승낙
-            // 4. 전투의 승자가 누구인지 반환받고(이거도 전투 시작 함수에서 반환값으로 받아오면?)
-            // 5. 해당 승자가 자신이라면, 해당 영토의 소유권을 넘겨받는다
-            // 5-1. 해당 승자가 상대방이라면, 자신은 영토의 통행료 만큼을 대상에게 지급한다
-            // 5-1-1. 만약 지불할 금액이 부족하다면 가능한 만큼 지불하고, 파산한다 (게임 오버)
-            bool isAttackerWin = await CombatSystem.Instance.StartCombat(playerId, tile);
-
-            if (isAttackerWin)
-            {
-                Debug.Log("공격자 승리");
-                // TODO: 인수 금액 지불 및 ChangeOwnerAsync 호출
-            }
-            else
-            {
-                Debug.Log("공격자 패배");
-                // TODO: 패널티 로직 처리
-            }
+            // TODO: 추후 파산 시스템 연결
+            await Economy.LoseGoldTo(payerId, paidAmount);
+            await Economy.GainGoldTo(ownerId, paidAmount);
         }
 
         private async UniTask RequestPurchaseAsync(string playerId, Tile tile, int currentGold)

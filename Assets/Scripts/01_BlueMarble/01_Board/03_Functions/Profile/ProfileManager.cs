@@ -103,6 +103,8 @@ namespace BlueMarble
                     profile.ShowBubble("영토 구매 검토중...");
                 else if (activity == PlayerActivityType.Treasure)
                     profile.ShowBubble("보물 찾는중...");
+                else if (activity == PlayerActivityType.Combat)
+                    profile.ShowBubble("결투 준비중...");
 
                 return;
             }

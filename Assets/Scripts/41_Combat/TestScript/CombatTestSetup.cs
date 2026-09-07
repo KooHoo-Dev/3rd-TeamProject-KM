@@ -47,10 +47,7 @@ namespace Combat
             string localPlayerId,
             int hp)
         {
-            // 씬의 localPlayer 슬롯은 실제 멀티플레이에서 '왼쪽(공격자)' 슬롯이다.
             SetupPlayer(localPlayer, attackerId, localPlayerId, hp, 1f);
-
-            // 씬의 remotePlayer 슬롯은 실제 멀티플레이에서 '오른쪽(방어자)' 슬롯이다.
             SetupPlayer(remotePlayer, defenderId, localPlayerId, hp, -1f);
         }
 
@@ -68,7 +65,7 @@ namespace Combat
 
             PlayerController controller = player.GetComponent<PlayerController>();
             if (controller != null)
-                controller.isLocalPlayer = isMine;
+                controller.SetLocalPlayer(isMine);
 
             EquipmentCaster caster = player.GetComponent<EquipmentCaster>();
             if (caster != null)
