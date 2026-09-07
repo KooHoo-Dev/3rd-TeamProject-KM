@@ -26,6 +26,8 @@ namespace BlueMarble
         public void Initialize(string id)
         {
             Id = id;
+            name = $"Player({id})";
+            
             PlayerRegistry.Register(this);
         }
 

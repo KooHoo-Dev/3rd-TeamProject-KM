@@ -27,6 +27,7 @@ namespace BlueMarble
         private UniTaskCompletionSource<TerritoryBill> purchaseWaiter;
 
         public event Action<Tile, int> OnPurchaseRequested;
+        public event Action OnUpdated;
         
         private RoomClient Client => RoomClient.Instance;
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
@@ -112,7 +113,17 @@ namespace BlueMarble
             if (state.HasLandMark) return;
             
             // TODO: 전투 시스템 연결
-            // 결투 시스템 어쩌구저쩌구... 암튼 연결해야 함
+            // 1. 전투 UI를 활성화, UI의 결정이 끝날 때 까지 대기
+            //    UI의 결정은 반환값을 bool로 받아오면 될듯?
+            // 2. 만약 true라면 상대방에게 해당 의사를 전달(서버를 통해)
+            //    해당 의사를 전달 받은 상대방에게 승낙/거절 UI를 띄워주고, 해당 결정을 기다림
+            // 3. 만약 승낙했다면, 그대로 전투 페이즈 돌입
+            // 3-1. 만약 거절했다면, 상대방 클라이언트에서 코인 토스(일단 구현은 연출 없이 결과만 반반으로 따져서 진행)
+            //      코인토스에서 앞면이 나왔다면, 거절 성공 / 뒷면이 나왔다면 강제로 전투 요청을 승낙
+            // 4. 전투의 승자가 누구인지 반환받고(이거도 전투 시작 함수에서 반환값으로 받아오면?)
+            // 5. 해당 승자가 자신이라면, 해당 영토의 소유권을 넘겨받는다
+            // 5-1. 해당 승자가 상대방이라면, 자신은 영토의 통행료 만큼을 대상에게 지급한다
+            // 5-1-1. 만약 지불할 금액이 부족하다면 가능한 만큼 지불하고, 파산한다 (게임 오버)
         }
 
         private async UniTask RequestPurchaseAsync(string playerId, Tile tile, int currentGold)
@@ -192,6 +203,8 @@ namespace BlueMarble
             
             if (msg.TileId == updateWaiter.Key)
                 updateWaiter.Value.TrySetResult();
+            
+            OnUpdated?.Invoke();
         }
     }
 }

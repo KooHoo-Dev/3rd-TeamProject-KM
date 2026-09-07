@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using BlueMarble.Server;
 using Jay;
 using Sirenix.OdinInspector;
@@ -13,18 +14,21 @@ namespace BlueMarble
         
         private RoomClient Client => RoomClient.Instance;
         private EconomyManager Economy => EconomyManager.Instance;
+        private TerritoryManager Territory => TerritoryManager.Instance;
 
         private void Start()
         {
             InitProfiles();
-            RefreshAll();
+            RefreshGoldState();
 
-            Economy.OnUpdated += RefreshAll;
+            Economy.OnUpdated += RefreshGoldState;
+            Territory.OnUpdated += RefreshGoldState;
         }
 
         private void OnDisable()
         {
-            Economy.OnUpdated -= RefreshAll;
+            Economy.OnUpdated -= RefreshGoldState;
+            Territory.OnUpdated -= RefreshGoldState;
         }
 
         private void InitProfiles()
@@ -44,17 +48,38 @@ namespace BlueMarble
             }
         }
 
-        private void RefreshAll()
+        private void RefreshGoldState()
         {
             for (int i = 0; i < profiles.Length; i++)
             {
                 Profile profile = profiles[i];
                 
                 if (profile.gameObject.activeSelf == false) continue;
-                
+
                 if (Economy.TryGetGold(profile.Id, out int gold))
+                {
                     profile.SetGold(gold);
+                    return;
+                }
+
+                int territoryValue = GetTerritoryValue(profile.Id);
+                profile.SetTotalGold(gold + territoryValue);
             }
+        }
+
+        private int GetTerritoryValue(string playerId)
+        {
+            Board board = BlueMarbleWorld.Instance.Board;
+            List<Tile> territories = board.GetOccupiedTiles(playerId);
+
+            if (territories.Count == 0) return 0;
+
+            int total = 0;
+            
+            for (int i = 0; i < territories.Count; i++)
+                total += territories[i].GetTotalValue();
+            
+            return total;
         }
     }
 }
