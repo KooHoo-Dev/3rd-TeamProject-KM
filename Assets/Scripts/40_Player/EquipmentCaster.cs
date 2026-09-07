@@ -20,7 +20,7 @@ namespace Player
         private float nextAttackTime = 0f;
 
         // 테스트를 위해 false이면 사용되지 않음
-        // public bool isLocalPlayer = true;
+        public bool isLocalPlayer = true;
 
         private CancellationTokenSource attackCts;
         private PlayerController playerController;
@@ -34,7 +34,7 @@ namespace Player
 
         private void OnEnable()
         {
-            // if (isLocalPlayer == false) return;
+            if (isLocalPlayer == false) return;
             attackCts = new CancellationTokenSource();
             AutoAttackRoutine(attackCts.Token).Forget();
         }
