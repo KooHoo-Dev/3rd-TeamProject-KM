@@ -4,18 +4,20 @@ using UnityEngine.UI;
 using TMPro;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using BlueMarble.Server;
 
 namespace BlueMarble
 {
     /// <summary>
-    /// 보물 보상 팝업. 등장 -> 자동 오픈 연출 -> VFX+보상 동시 표시 -> 잠깐 보여준 뒤 자동으로 인벤토리 오픈 -> 닫힘.
+    /// 보물 보상 팝업. 등장 -> 자동 오픈 연출 -> VFX+보상 표시 -> 교체가 필요하면 인벤토리 오픈 -> 닫힘.
     /// 확인/X 버튼 없이 전부 자동으로 진행된다. 인벤토리는 자체 X 버튼으로 닫는다.
     /// </summary>
-    public class TreasureRewardPopupController : MonoBehaviour, ITreasureRewardPresenter
+    public class TreasureRewardPopupController : MonoBehaviour
     {
         private static readonly int OpenTrigger = Animator.StringToHash("Open");
 
         [Header("Chest")]
+        [SerializeField] private GameObject chestPanel;
         [SerializeField] private Animator chestAnimator;
         [SerializeField] private float chestOpenDuration = 0.6f; // treasure 클립 재생시간(Speed 0.6 기준)
         [SerializeField] private float chestShakeDuration = 1.2f;
@@ -35,6 +37,24 @@ namespace BlueMarble
 
         private bool isShowing;
 
+        private void Awake()
+        {
+            if (vfxPlayer == null)
+                vfxPlayer = GetComponentInChildren<TreasureVfxPlayer>(true);
+
+            if (inventoryPresenter == null)
+                inventoryPresenter = GetComponentInChildren<InventoryUIController>(true);
+
+            transform.localScale = Vector3.one;
+            TreasureManager.Instance.SetPresenter(this);
+            chestPanel.SetActive(false);
+        }
+
+        private void OnDestroy()
+        {
+            TreasureManager.Instance.ClearPresenter(this);
+        }
+
         public async UniTask ShowRewardAsync(EquipmentDef reward)
         {
             if (isShowing)
@@ -46,17 +66,20 @@ namespace BlueMarble
             isShowing = true;
             try
             {
+                await RoomClient.Instance.AnnouncePlayerActivity(PlayerActivityType.Treasure);
                 await ShowRewardInternalAsync(reward);
             }
             finally
             {
+                chestPanel.SetActive(false);
                 isShowing = false;
+                await RoomClient.Instance.AnnouncePlayerActivity(PlayerActivityType.None);
             }
         }
 
         private async UniTask ShowRewardInternalAsync(EquipmentDef reward)
         {
-            gameObject.SetActive(true);
+            chestPanel.SetActive(true);
 
             // 1. 상자 흔들림 (오픈 전 기대감 연출) - 정확히 N번 통통 튀는 연출
             var chestRect = (RectTransform)chestAnimator.transform;
@@ -78,16 +101,16 @@ namespace BlueMarble
             await UniTask.Delay(TimeSpan.FromSeconds(chestOpenDuration));
 
             // 3. 폭죽 VFX + 보상 정보를 동시에 시작 (하나가 다른 하나를 기다리지 않도록)
-            UniTask vfxTask = vfxPlayer.PlayAsync(reward.Grade);
             ApplyRewardInfo(reward);
-            await vfxTask;
 
-            // 4. 보상을 잠깐 보여준 뒤, 별도 확인 없이 자동으로 인벤토리로 진입
+            if (vfxPlayer != null)
+                await vfxPlayer.PlayAsync(reward.Grade);
+
+            // 4. 보상을 잠깐 보여준 뒤, 교체가 필요할 때만 인벤토리로 진입
             await UniTask.Delay(TimeSpan.FromSeconds(rewardDisplayDuration));
-            await inventoryPresenter.ShowAsync();
 
-            // 5. 닫힘
-            gameObject.SetActive(false);
+            if (InventoryManager.Instance.IsWaitingReplace)
+                await inventoryPresenter.ShowAsync();
         }
 
         private void ApplyRewardInfo(EquipmentDef reward)

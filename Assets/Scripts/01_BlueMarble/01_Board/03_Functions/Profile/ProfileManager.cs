@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BlueMarble.Server;
+using Cysharp.Threading.Tasks;
 using Jay;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -23,12 +24,14 @@ namespace BlueMarble
 
             Economy.OnUpdated += RefreshGoldState;
             Territory.OnUpdated += RefreshGoldState;
+            Client.OnPlayerActivityChanged += HandlePlayerActivityChanged;
         }
 
         private void OnDisable()
         {
             Economy.OnUpdated -= RefreshGoldState;
             Territory.OnUpdated -= RefreshGoldState;
+            Client.OnPlayerActivityChanged -= HandlePlayerActivityChanged;
         }
 
         private void InitProfiles()
@@ -48,28 +51,29 @@ namespace BlueMarble
             }
         }
 
-        private void RefreshGoldState()
+        private async void RefreshGoldState()
         {
             for (int i = 0; i < profiles.Length; i++)
             {
                 Profile profile = profiles[i];
                 
                 if (profile.gameObject.activeSelf == false) continue;
+                if (Economy.TryGetGold(profile.Id, out int gold) == false) continue;
+                
+                profile.SetGold(gold);
 
-                if (Economy.TryGetGold(profile.Id, out int gold))
-                {
-                    profile.SetGold(gold);
-                    return;
-                }
-
-                int territoryValue = GetTerritoryValue(profile.Id);
+                int territoryValue = await GetTerritoryValue(profile.Id);
                 profile.SetTotalGold(gold + territoryValue);
             }
         }
-
-        private int GetTerritoryValue(string playerId)
+        
+        private async UniTask<int> GetTerritoryValue(string playerId)
         {
-            Board board = BlueMarbleWorld.Instance.Board;
+            BlueMarbleWorld world = BlueMarbleWorld.Instance;
+
+            await UniTask.WaitUntil(world, _ => world.IsBoardReady);
+            
+            Board board = world.Board;
             List<Tile> territories = board.GetOccupiedTiles(playerId);
 
             if (territories.Count == 0) return 0;
@@ -80,6 +84,28 @@ namespace BlueMarble
                 total += territories[i].GetTotalValue();
             
             return total;
+        }
+
+        private void HandlePlayerActivityChanged(string playerId, PlayerActivityType activity)
+        {
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                Profile profile = profiles[i];
+
+                if (profile.gameObject.activeSelf == false) continue;
+                if (profile.Id != playerId) continue;
+
+                if (activity == PlayerActivityType.None)
+                    profile.HideBubble();
+                else if (activity == PlayerActivityType.Shop)
+                    profile.ShowBubble("상점 둘러보는중...");
+                else if (activity == PlayerActivityType.TerritoryPurchase)
+                    profile.ShowBubble("영토 구매 검토중...");
+                else if (activity == PlayerActivityType.Treasure)
+                    profile.ShowBubble("보물 찾는중...");
+
+                return;
+            }
         }
     }
 }

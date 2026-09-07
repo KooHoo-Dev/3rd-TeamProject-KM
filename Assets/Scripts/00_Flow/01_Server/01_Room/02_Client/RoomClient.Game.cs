@@ -30,9 +30,12 @@ namespace BlueMarble.Server
         
         public event Action<TileEffectSyncMessage> OnTileEffectSync;
         public event Action<User, int> OnGoldCardDrawn;
+        public event Action<User> OnGoldCardRevealed;
+        public event Action<int> OnGoldCardPresentationFinished;
         
         public event Action<MoveUserToMessage> OnUserMovedTo;
         public event Action<UserMoveFinishedMessage> OnUserMoveFinished;
+        public event Action<string, PlayerActivityType> OnPlayerActivityChanged;
         
         public event Action OnGameEnded;
         
@@ -53,6 +56,10 @@ namespace BlueMarble.Server
             RegisterHandler<TileEffectSyncMessage>(ProtocolHeader.TILE_EFFECT_SYNC, HandleTileEffectSync);
             
             RegisterHandler<GoldCardDrawnMessage>(ProtocolHeader.GOLD_CARD_DRAWN, HandleGoldCardDrawn);
+            RegisterHandler<RevealGoldCardMessage>(ProtocolHeader.REVEAL_GOLD_CARD, HandleGoldCardRevealed);
+            RegisterHandler<GoldCardPresentationFinishedMessage>(
+                ProtocolHeader.GOLD_CARD_PRESENTATION_FINISHED,
+                HandleGoldCardPresentationFinished);
             RegisterHandler<GameEndedMessage>(ProtocolHeader.GAME_ENDED, HandleGameEnded);
 
             RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
@@ -63,6 +70,8 @@ namespace BlueMarble.Server
 
             RegisterHandler<UpdateTerritoryMessage>(ProtocolHeader.UPDATE_TERRITORY, HandleTerritoryUpdated);
             RegisterHandler<ApplyTreasureMessage>(ProtocolHeader.APPLY_TREASURE, HandleApplyTreasure);
+            RegisterHandler<TreasureResolvedMessage>(ProtocolHeader.TREASURE_RESOLVED, HandleTreasureResolved);
+            RegisterHandler<PlayerActivityMessage>(ProtocolHeader.PLAYER_ACTIVITY, HandlePlayerActivity);
         }
         
         #region SEND_TO_SERVER
@@ -100,6 +109,22 @@ namespace BlueMarble.Server
                 TurnId = turnId,
                 CardIds = cardIds
             }).Forget();
+        }
+
+        public UniTask RequestRevealGoldCard(int turnId)
+        {
+            return SendAsync(new RevealGoldCardMessage
+            {
+                TurnId = turnId
+            });
+        }
+
+        public UniTask AnnounceGoldCardPresentationFinished(int turnId)
+        {
+            return SendAsync(new GoldCardPresentationFinishedMessage
+            {
+                TurnId = turnId
+            });
         }
 
         public void RequestUpdateEconomy(params EconomyUpdate[] updates)
@@ -154,13 +179,33 @@ namespace BlueMarble.Server
         }
 
         public UniTask RequestApplyTreasure(
-            string targetId, GoldCardTreasureEffectType effectType, int equipmentId)
+            string requestId,
+            string targetId,
+            GoldCardTreasureEffectType effectType,
+            int equipmentId)
         {
             return SendAsync(new ApplyTreasureMessage
             {
+                RequestId = requestId,
                 TargetId = targetId,
                 EffectType = effectType,
                 EquipmentId = equipmentId
+            });
+        }
+
+        public UniTask AnnounceTreasureResolved(string requestId)
+        {
+            return SendAsync(new TreasureResolvedMessage
+            {
+                RequestId = requestId
+            });
+        }
+
+        public UniTask AnnouncePlayerActivity(PlayerActivityType activity)
+        {
+            return SendAsync(new PlayerActivityMessage
+            {
+                Activity = activity
             });
         }
         
@@ -226,6 +271,21 @@ namespace BlueMarble.Server
                       $"Turn Id: {message.TurnId}");
         }
 
+        private void HandleGoldCardRevealed(RevealGoldCardMessage message)
+        {
+            if (message.TurnId != TurnId) return;
+
+            User user = GetUser(message.PlayerId);
+            OnGoldCardRevealed?.Invoke(user);
+        }
+
+        private void HandleGoldCardPresentationFinished(GoldCardPresentationFinishedMessage message)
+        {
+            if (message.TurnId != TurnId) return;
+
+            OnGoldCardPresentationFinished?.Invoke(message.TurnId);
+        }
+
         private void HandleGameEnded(GameEndedMessage message)
         {
             CurrentTurnUser = null;
@@ -264,19 +324,37 @@ namespace BlueMarble.Server
         {
             if (message.TargetId != Me.Id) return;
 
-            InventoryManager inventory = InventoryManager.Instance;
+            ResolveTreasureAsync(message).Forget();
+        }
 
-            if (message.EffectType == GoldCardTreasureEffectType.Gain)
+        private async UniTaskVoid ResolveTreasureAsync(ApplyTreasureMessage message)
+        {
+            try
             {
-                EquipmentDef equipment = DataManager.Instance.GetEquipmentDef(message.EquipmentId);
-                inventory.TryAddEquipment(equipment);
+                InventoryManager inventory = InventoryManager.Instance;
 
-                Debug.Log($"[RoomClient] Gain treasure. Equipment: {equipment.Name}");
-                return;
+                if (message.EffectType == GoldCardTreasureEffectType.Gain)
+                {
+                    EquipmentDef equipment = DataManager.Instance.GetEquipmentDef(message.EquipmentId);
+                    inventory.TryAddEquipment(equipment);
+
+                    Debug.Log($"[RoomClient] Gain treasure. Equipment: {equipment.Name}");
+                    await TreasureManager.Instance.PresentAsync(equipment);
+                    return;
+                }
+
+                inventory.DestroyRandomEquipment();
+                Debug.Log("[RoomClient] Lose treasure");
             }
+            finally
+            {
+                await AnnounceTreasureResolved(message.RequestId);
+            }
+        }
 
-            inventory.DestroyRandomEquipment();
-            Debug.Log("[RoomClient] Lose treasure");
+        private void HandleTreasureResolved(TreasureResolvedMessage message)
+        {
+            TreasureManager.Instance.CompleteRequest(message.RequestId);
         }
 
         private void HandleUserMovedTo(MoveUserToMessage message)
@@ -299,6 +377,11 @@ namespace BlueMarble.Server
                 $"[RoomClient] User move finished. " +
                 $"Turn: {message.TurnId}, " +
                 $"Move: {message.MoveId}");
+        }
+
+        private void HandlePlayerActivity(PlayerActivityMessage message)
+        {
+            OnPlayerActivityChanged?.Invoke(message.PlayerId, message.Activity);
         }
 
         #endregion

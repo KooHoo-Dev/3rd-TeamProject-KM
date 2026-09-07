@@ -143,11 +143,21 @@ namespace BlueMarble
         {
             TileState state = tile.State;
             purchaseWaiter = new UniTaskCompletionSource<TerritoryBill>();
-            
-            OnPurchaseRequested?.Invoke(tile, currentGold);
 
-            TerritoryBill bill = await purchaseWaiter.Task;
-            purchaseWaiter = null;
+            await Client.AnnouncePlayerActivity(PlayerActivityType.TerritoryPurchase);
+
+            TerritoryBill bill;
+
+            try
+            {
+                OnPurchaseRequested?.Invoke(tile, currentGold);
+                bill = await purchaseWaiter.Task;
+            }
+            finally
+            {
+                purchaseWaiter = null;
+                await Client.AnnouncePlayerActivity(PlayerActivityType.None);
+            }
 
             // 점령되지 않은 땅의 경우, IsBuyTile이 false이면 아무것도 구매하지 않겠다는 뜻
             if (state.IsOccupied == false && bill.IsBuyTile == false) return;

@@ -22,7 +22,14 @@ namespace BlueMarble
         public void Initialize(User user)
         {
             Id = user.Id;
+
+            PlayerAppearance appearance = PlayerAppearanceMap.Instance
+                .GetAppearance(user.PlayerNumber);
+
+            portraitRenderer.sprite = appearance.Portrait;
             nicknameText.text = $"{user.Nickname}({user.Id})";
+
+            HideBubble();
         }
 
         public void SetGold(int amount)
@@ -33,6 +40,17 @@ namespace BlueMarble
         public void SetTotalGold(int amount)
         {
             totalGoldText.SetText($"총 자산: {amount:N0} 골드");
+        }
+
+        public void ShowBubble(string message)
+        {
+            bubbleText.SetText(message);
+            bubble.SetActive(true);
+        }
+
+        public void HideBubble()
+        {
+            bubble.SetActive(false);
         }
     }
 }

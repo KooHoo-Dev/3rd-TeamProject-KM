@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 using Study.Utilities;
+using TMPro;
 using UnityEngine.InputSystem;
 
 namespace BlueMarble
@@ -11,6 +12,7 @@ namespace BlueMarble
     {
         [Header("Components")]
         [SerializeField] private SpriteRenderer iconRenderer;
+        [SerializeField] private TMP_Text descriptionText;
         
         [Header("Flip VFX")]
         [SerializeField] private ParticleSystem preFlipVfx;         // 뒤집기 시작 시 재생 
@@ -20,10 +22,11 @@ namespace BlueMarble
         [Header("Flip Settings")]
         [SerializeField] private float flipDuration = 0.25f;
 
-        private bool flipped = false;
+        private bool clickable = false;
         private Tween flipTween;
 
         public GoldCardDef Def { get; private set; }
+        public event Action Clicked;
 
         private void OnDisable()
         {
@@ -32,10 +35,11 @@ namespace BlueMarble
 
         public void Initialize(GoldCardDef def)
         {
-            Clear();
-
             Def = def;
-            // iconImage.sprite = def.Icon;
+            iconRenderer.sprite = def.Icon == null ? iconRenderer.sprite : def.Icon;
+            descriptionText.text = def.Description;
+
+            ResetVisual();
         }
         
         /// <summary>
@@ -44,29 +48,34 @@ namespace BlueMarble
         /// </summary>
         public void ResetVisual()
         {
-            PlayVfx(preFlipVfx);
             Clear();
+            PlayVfx(preFlipVfx);
+        }
+
+        public void SetClickable(bool value)
+        {
+            clickable = value;
         }
 
         public void OnClicked()
         {
-            // 해당 턴의 플레이어... 아 모르게따
-            // 클릭 받으면 해당 사항을 서버에 전달
-            // 서버는 그 내용(얘 골카 클릭했대!)을 모든 클라에 전달
-            // 해당 내용을 전달 받은 클라는 카드를 Flip
-            // 이후는 GoldCardManager에서 효과 적용 페이즈로 넘어감
+            if (clickable == false) return;
+
+            clickable = false;
+            Clicked?.Invoke();
         }
 
-        public UniTask FlipAsync()
+        public async UniTask FlipAsync()
         {
             StopVfx(preFlipVfx);
             PlayVfx(durationFlipVfx);
+
+            flipTween = transform.DORotate(new Vector3(0, 180f, 0), flipDuration);
+
+            await flipTween.ToUniTask();
+
+            StopVfx(durationFlipVfx);
             PlayVfx(resultFlipVfx);
-            
-            flipped = !flipped;
-            flipTween = transform.DORotate(new Vector3(0, flipped ? 180f : 0f, 0), flipDuration);
-            
-            return flipTween.ToUniTask();
         }
 
         private void PlayVfx(ParticleSystem vfx)
@@ -85,7 +94,8 @@ namespace BlueMarble
         private void Clear()
         {
             flipTween?.Kill();
-            flipped = false;
+
+            clickable = false;
             transform.rotation = Quaternion.identity;
             
             StopVfx(preFlipVfx);

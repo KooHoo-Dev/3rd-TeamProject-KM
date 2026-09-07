@@ -26,10 +26,35 @@ namespace BlueMarble
             for (int i = 0; i < ids.Count; i++)
             {
                 string id = ids[i];
+                User user = Client.GetUser(id);
                 Player player = players[i];
                 
-                player.Initialize(id);
+                player.Initialize(id, user.PlayerNumber);
                 player.gameObject.SetActive(true);
+            }
+        }
+
+        public void SetCurrentTurn(string currentPlayerId)
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                Player player = players[i];
+
+                if (player.gameObject.activeSelf == false) continue;
+
+                player.SetTurnActive(player.Id == currentPlayerId);
+            }
+        }
+
+        public void ResetTurnVisuals()
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                Player player = players[i];
+
+                if (player.gameObject.activeSelf == false) continue;
+
+                player.ResetTurnVisual();
             }
         }
 
