@@ -60,7 +60,7 @@ namespace Player
             float dt = Time.deltaTime;
             for (int i = 0; i < InventoryManager.MaxSlotCount; i++)
             {
-                EquipmentInstance eq = myInventory.GetAt(i);
+                Equipment eq = myInventory.GetAt(i);
                 if (eq != null)
                 {
                     eq.Cooldown(dt);
@@ -79,7 +79,7 @@ namespace Player
 
         private async UniTaskVoid TryUseEquipmentSlot(int slotIndex)
         {
-            EquipmentInstance eq = myInventory.GetAt(slotIndex);
+            Equipment eq = myInventory.GetAt(slotIndex);
 
             if (eq == null) return;
             

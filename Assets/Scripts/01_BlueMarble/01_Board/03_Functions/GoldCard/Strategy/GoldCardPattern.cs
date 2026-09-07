@@ -51,31 +51,48 @@ namespace BlueMarble
 
     public class GainTreasurePattern : IGoldCardPattern
     {
-        public UniTask Apply(string[] targetIds, int _, int dropTableId, int tileId)
+        public UniTask Apply(string[] targetIds, int _, int __, int tileId)
         {
+            Server.RoomClient client = Server.RoomClient.Instance;
+            List<UniTask> tasks = new();
+
             for (int i = 0; i < targetIds.Length; i++)
             {
                 string targetId = targetIds[i];
-                
-                // Economy를 만들고 여기에 해당 부분 집어넣어야 함
-                Debug.Log($"[GoldCardPattern] Gain treasure to {targetId}");
+                EquipmentDef equipment = DropService.DrawEquipment(DropType.GoldenKey);
+
+                tasks.Add(client.RequestApplyTreasure(
+                    targetId,
+                    Server.GoldCardTreasureEffectType.Gain,
+                    equipment.Id));
+
+                Debug.Log($"[GoldCardPattern] Gain {equipment.Name} to {targetId}");
             }
-            return UniTask.CompletedTask;
+
+            return UniTask.WhenAll(tasks);
         }
     }
 
     public class LoseTreasurePattern : IGoldCardPattern
     {
-        public UniTask Apply(string[] targetIds, int _, int dropTableId, int tileId)
+        public UniTask Apply(string[] targetIds, int _, int __, int tileId)
         {
+            Server.RoomClient client = Server.RoomClient.Instance;
+            List<UniTask> tasks = new();
+
             for (int i = 0; i < targetIds.Length; i++)
             {
                 string targetId = targetIds[i];
-                
-                // Economy를 만들고 여기에 해당 부분 집어넣어야 함
+
+                tasks.Add(client.RequestApplyTreasure(
+                    targetId,
+                    Server.GoldCardTreasureEffectType.Lose,
+                    -1));
+
                 Debug.Log($"[GoldCardPattern] Lose treasure to {targetId}");
             }
-            return UniTask.CompletedTask;
+
+            return UniTask.WhenAll(tasks);
         }
     }
 

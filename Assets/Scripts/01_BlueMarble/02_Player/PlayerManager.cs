@@ -28,24 +28,17 @@ namespace BlueMarble
                 string id = ids[i];
                 GameObject dummy = dummies[i];
                 
-                if (id == myId)
-                {
-                    LocalPlayer player = dummy.AddComponent<LocalPlayer>();
-                    player.Initialize(id);
-                }
-                else
-                {
-                    RemotePlayer player = dummy.AddComponent<RemotePlayer>();
-                    player.Initialize(id);
-                }
+                Player player = dummy.AddComponent<Player>();
+                player.Initialize(id);
 
                 dummy.SetActive(true);
+                dummy.name = id;
             }
         }
 
         public async UniTask MoveBy(string playerId, int steps, int turnId)
         {
-            if (TryGetPlayer(playerId, out IPlayer player) == false) return;
+            if (TryGetPlayer(playerId, out Player player) == false) return;
             
             bool isOwner = Client.Me.Id == playerId;
 
@@ -67,7 +60,7 @@ namespace BlueMarble
 
         public async UniTask MoveTo(string playerId, int tileIdx, int turnId, long moveId)
         {
-            if (TryGetPlayer(playerId, out IPlayer player) == false) return;
+            if (TryGetPlayer(playerId, out Player player) == false) return;
             
             bool isMe = Client.Me.Id == playerId;
             Board board = BlueMarbleWorld.Instance.Board;
@@ -94,7 +87,7 @@ namespace BlueMarble
             }
         }
 
-        private bool TryGetPlayer(string playerId, out IPlayer result)
+        private bool TryGetPlayer(string playerId, out Player result)
         {
             if (PlayerRegistry.TryGetPlayer(playerId, out result)) return true;
             

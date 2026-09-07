@@ -416,7 +416,7 @@ namespace BlueMarble
                 Image iconImage = inventorySlots[i].iconImage;
                 if (iconImage == null) continue;
 
-                EquipmentInstance instance = inventory.GetAt(i);
+                Equipment instance = inventory.GetAt(i);
 
                 if (instance == null)
                 {
@@ -537,7 +537,7 @@ namespace BlueMarble
         {
             if (isPurchasing || inventory == null || !inventory.IsWaitingReplace) return; // 교체 대기 중이 아니면 무시
 
-            EquipmentInstance current = inventory.GetAt(slotIndex); // 지금 그 칸에 있는 장비 (없으면 null)
+            Equipment current = inventory.GetAt(slotIndex); // 지금 그 칸에 있는 장비 (없으면 null)
             EquipmentDef pendingDef = inventory.ReplaceDef;         // 새로 구매해서 대기 중인 장비 정보
 
             if (current == null)

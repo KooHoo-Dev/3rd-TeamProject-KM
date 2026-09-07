@@ -35,7 +35,7 @@ namespace BuleMarble
                 return;
             }
 
-            if (FindObjectOfType<EventSystem>() == null)
+            if (FindFirstObjectByType<EventSystem>() == null)
             {
                 Debug.LogWarning("[TreasureUIBuilder] 씬에 EventSystem이 없습니다. " +
                                   "버튼 클릭이 동작하려면 EventSystem을 추가해야 합니다.");

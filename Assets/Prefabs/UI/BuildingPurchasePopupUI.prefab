@@ -1494,7 +1494,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5908995952890449275}
-  - component: {fileID: 5085622310272864412}
   - component: {fileID: 3786586981772153203}
   m_Layer: 0
   m_Name: BuildingPurchasePopupUI
@@ -1519,26 +1518,6 @@ Transform:
   - {fileID: 3708046737819226504}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5085622310272864412
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7238900664866194230}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5e332c5e3863a754bacf0277340b328d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.BuildingPurchasePopupTester
-  popupRoot: {fileID: 7686157029705805001}
-  priceText: {fileID: 1983539099511378965}
-  buildingToggle: {fileID: 6900762924114595340}
-  landmarkToggle: {fileID: 5600422511003531251}
-  purchaseButton: {fileID: 7018074266661337258}
-  closeButton: {fileID: 6860844479282350375}
-  showPopupKey: 112
-  testTilePrice: 1105000
 --- !u!114 &3786586981772153203
 MonoBehaviour:
   m_ObjectHideFlags: 0

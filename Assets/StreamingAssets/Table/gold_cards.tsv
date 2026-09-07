@@ -10,4 +10,3 @@ Id	Description	IconKey	Pattern	Scope	GoldAmount	DropTableId	TileId
 8	감옥으로 순간이동한다		GoTo	Self	-1	-1	9
 9	무작위 인원을 감옥으로 보낸다		GoTo	Random	-1	-1	9
 10	발할라로 순간이동한다		GoTo	Self	-1	-1	35
-11	라타토스크의 전언으로 보낸다		GoTo	ExceptSelf	-1	-1	25

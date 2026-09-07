@@ -6,7 +6,7 @@
         {
             return type switch
             {
-                TileEffectType.Property => new PropertyEffect(),
+                TileEffectType.Territory => new TerritoryEffect(),
                 TileEffectType.Salary => new SalaryEffect(),
                 TileEffectType.Prison => new PrisonEffect(),
                 TileEffectType.Treasure => new TreasureEffect(),
