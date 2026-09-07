@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BlueMarble.Server;
+using Combat;
 using Cysharp.Threading.Tasks;
 using Jay;
 using UnityEngine;
@@ -124,6 +125,18 @@ namespace BlueMarble
             // 5. 해당 승자가 자신이라면, 해당 영토의 소유권을 넘겨받는다
             // 5-1. 해당 승자가 상대방이라면, 자신은 영토의 통행료 만큼을 대상에게 지급한다
             // 5-1-1. 만약 지불할 금액이 부족하다면 가능한 만큼 지불하고, 파산한다 (게임 오버)
+            bool isAttackerWin = await CombatSystem.Instance.StartCombat(playerId, tile);
+
+            if (isAttackerWin)
+            {
+                Debug.Log("공격자 승리");
+                // TODO: 인수 금액 지불 및 ChangeOwnerAsync 호출
+            }
+            else
+            {
+                Debug.Log("공격자 패배");
+                // TODO: 패널티 로직 처리
+            }
         }
 
         private async UniTask RequestPurchaseAsync(string playerId, Tile tile, int currentGold)
