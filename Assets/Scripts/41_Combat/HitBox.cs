@@ -43,7 +43,12 @@ namespace Combat
 
             GetComponent<Collider2D>().enabled = false;
             
-            // if(TestCombat.Instance != null) TestCombat.Instance.SendHitRequest(packet);
+
+            // 서버를 거치지 않고 바로 CombatSystem에 데미지 적용을 명령 (테스트용)
+            if (CombatSystem.Instance != null)
+            {
+                CombatSystem.Instance.OnReceiveHitResponse(packet.TargetId, packet.Damage);
+            }
         }
     }
 }

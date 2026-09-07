@@ -176,5 +176,41 @@ namespace Combat
         }
         
         #endregion
+        
+        #region Test 함수
+        // CombatSystem.cs 내부에 추가
+        public async UniTask<bool> StartTestCombat(string testAttackerId, string testDefenderId)
+        {
+            this.attackerId = testAttackerId;
+            this.defenderId = testDefenderId;
+
+            DamageMultiplier = 1.0f;
+            elapsedTime = 0f;
+            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
+
+            combatResult = new UniTaskCompletionSource<bool>();
+            IsCombatActive = true;
+    
+            if (combatTimer != null)
+            {
+                combatTimer.OnTimeUp += HandleTimeUp;
+                combatTimer.StartTimer();
+            }
+    
+            bool result = await combatResult.Task;
+    
+            IsCombatActive = false;
+            if (combatTimer != null)
+            {
+                combatTimer.StopTimer();
+                combatTimer.OnTimeUp -= HandleTimeUp;
+            }
+
+            // 전투가 끝났을 때 누가 이겼는지 로그 출력
+            Debug.Log($"[테스트 전투 종료] 공격자 승리 여부: {result}");
+
+            return result;
+        }
+        #endregion
     }
 }
