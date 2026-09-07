@@ -17,9 +17,15 @@ namespace Player
         public int baseDamage = 1;
         public string attackerName = "Player";
 
-        private float nextAttackTime = 0f;
+        [Header("Facing")]
+        [SerializeField, Tooltip("오른쪽: 1, 왼쪽: -1")]
+        private float facingDirection = 1f;
 
-        // 테스트를 위해 false이면 사용되지 않음
+        public float FacingDirection => facingDirection;
+
+        private float nextAttackTime = 0f;
+        
+        // false 이면 움직이지 않음
         public bool isLocalPlayer = true;
 
         private CancellationTokenSource attackCts;
@@ -30,16 +36,52 @@ namespace Player
         {
             playerController = GetComponent<PlayerController>();
             myEntity = GetComponent<PlayerEntity>();
+            SetFacingDirection(facingDirection);
+        }
+
+        public void SetFacingDirection(float direction)
+        {
+            facingDirection = direction < 0f ? -1f : 1f;
+
+            // 발사 위치도 캐릭터가 바라보는 쪽으로 맞춘다.
+            if (spawnPoint != null)
+            {
+                Vector3 localPosition = spawnPoint.localPosition;
+                localPosition.x = Mathf.Abs(localPosition.x) * facingDirection;
+                spawnPoint.localPosition = localPosition;
+            }
         }
 
         private void OnEnable()
         {
-            if (isLocalPlayer == false) return;
-            attackCts = new CancellationTokenSource();
-            AutoAttackRoutine(attackCts.Token).Forget();
+            SetLocalPlayer(isLocalPlayer);
         }
 
         private void OnDisable()
+        {
+            StopAutoAttack();
+        }
+
+        public void SetLocalPlayer(bool value)
+        {
+            isLocalPlayer = value;
+
+            if (isActiveAndEnabled == false) return;
+
+            if (isLocalPlayer)
+            {
+                if (attackCts != null) return;
+
+                attackCts = new CancellationTokenSource();
+                AutoAttackRoutine(attackCts.Token).Forget();
+            }
+            else
+            {
+                StopAutoAttack();
+            }
+        }
+
+        private void StopAutoAttack()
         {
             attackCts?.Cancel();
             attackCts?.Dispose();
@@ -52,7 +94,8 @@ namespace Player
             {
                 while (true)
                 {
-                    bool canAttack = CombatSystem.Instance.IsCombatActive 
+                    bool canAttack = isLocalPlayer
+                                     && CombatSystem.Instance.IsCombatActive
                                      && !playerController.IsMoving 
                                      && !playerController.IsCastingSkill;
 
@@ -65,10 +108,10 @@ namespace Player
                             EquipmentId = 0,
                             SpawnX = spawnPoint.position.x,
                             SpawnY = spawnPoint.position.y,
-                            Direction = 1f // 오른쪽을 보고 있다면 1, 왼쪽이면 -1
+                            Direction = facingDirection
                         };
 
-                        BattleManager.Instance.ExecuteSkillFromNetwork(msg);
+                        BattleManager.Instance.CastLocal(msg);
                         // Debug.Log($"[네트워크 전송] 기본 공격 발사 요청!");
 
                         nextAttackTime = Time.time + basicAttackInterval;
@@ -94,10 +137,10 @@ namespace Player
                 EquipmentId = def.Id,
                 SpawnX = spawnPoint.position.x,
                 SpawnY = spawnPoint.position.y,
-                Direction = 1f
+                Direction = facingDirection
             };
     
-            BattleManager.Instance.ExecuteSkillFromNetwork(msg);
+            BattleManager.Instance.CastLocal(msg);
             Debug.Log($"[로컬 전송] {def.Name} 스킬 발사 요청!");
 
             nextAttackTime = Time.time + basicAttackInterval;

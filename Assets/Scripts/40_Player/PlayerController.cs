@@ -12,7 +12,7 @@ namespace Player
         private InventoryManager myInventory;
         private EquipmentCaster myCaster;
 
-        // 테스트를 위해 false이면 움직이지 않음
+        // false이면 움직이지 않음
         public bool isLocalPlayer = true;
         
         public bool IsMoving => Mathf.Abs(SimpleInput.GetAxisHorizontalRaw()) > 0.01f;
