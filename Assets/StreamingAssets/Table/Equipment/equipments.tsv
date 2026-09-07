@@ -2,7 +2,7 @@
 1	eq_common_01	단검	Common	Straight	10	5.0	15.0	0	2.0	3	100	Equipment/Straight	Icon/dagger
 2	eq_common_02	나무 활	Common	Straight	8	8.0	20.0	0	2.5	3	100	Equipment/Straight	Icon/bow
 3	eq_common_03	돌 수류탄	Common	Parabola	12	6.0	10.0	0	3.0	3	120	Equipment/Parabola	Icon/stone
-4	eq_common_04	가시 함정	Common	Area	9	0	0	2.0	4.0	3	110	Equipment/Area	
+4	eq_common_04	가시 함정	Common	Area	9	0	0	2.0	4.0	3	110	Equipment/Area	Icon/trap
 5	eq_common_05	쇠뇌	Common	Straight	11	7.0	18.0	0	2.2	3	130	Equipment/Straight	Icon/crossbow
 6	eq_rare_01	얼음창	Rare	Straight	20	8.0	22.0	0	3.0	4	300	Equipment/Straight	Icon/icelance
 7	eq_rare_02	화염 폭탄	Rare	Parabola	24	9.0	12.0	0	3.5	4	320	Equipment/Parabola	Icon/fire

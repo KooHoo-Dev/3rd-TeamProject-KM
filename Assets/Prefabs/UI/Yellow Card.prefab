@@ -325,6 +325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.GoldenKey
   iconRenderer: {fileID: 6564378113973986359}
+  descriptionText: {fileID: 0}
   preFlipVfx: {fileID: 2964656541428147628}
   durationFlipVfx: {fileID: 1690402763898599313}
   resultFlipVfx: {fileID: 7067633696589656186}
