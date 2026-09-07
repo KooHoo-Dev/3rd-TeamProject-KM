@@ -5176,7 +5176,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.0633112, y: 0.9979938, z: -0, w: 0}
   m_LocalPosition: {x: -6.6100006, y: -1.91, z: 0}
-  m_LocalScale: {x: 5.1649404, y: 5.1649404, z: 5.1649404}
+  m_LocalScale: {x: 2.9736626, y: 2.9736626, z: 2.9736626}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 383663645}
@@ -5832,7 +5832,7 @@ ParticleSystem:
         m_RotationOrder: 4
     randomizeRotationDirection: 0
     gravitySource: 0
-    maxNumParticles: 14
+    maxNumParticles: 10
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
     rotation3D: 1
@@ -14944,7 +14944,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 992246a5b50ab924cb4df8877542a80d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 420aae60f306ef1499d9460c98f8d8f2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -14963,7 +14963,7 @@ Transform:
   m_GameObject: {fileID: 1060860335}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.76, y: -1.27, z: 0}
+  m_LocalPosition: {x: 0.76, y: 0.56, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19891,7 +19891,7 @@ Transform:
   m_GameObject: {fileID: 1582259678}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.03619424, w: 0.9993448}
-  m_LocalPosition: {x: 0.64, y: 1, z: 0}
+  m_LocalPosition: {x: 0.52, y: 2.62, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19910,9 +19910,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: ps_firebuilding
       objectReference: {fileID: 0}
-    - target: {fileID: 1349282244529996, guid: 552df90932d0a1146a0476201f4dc5fe, type: 3}
+    - target: {fileID: 1008751148556774, guid: 552df90932d0a1146a0476201f4dc5fe, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1349282244529996, guid: 552df90932d0a1146a0476201f4dc5fe, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4020809925629520, guid: 552df90932d0a1146a0476201f4dc5fe, type: 3}
       propertyPath: m_LocalPosition.x
@@ -20164,7 +20168,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.002286461, y: 0.99999744, z: -0, w: 0}
   m_LocalPosition: {x: -6.38, y: -1.2, z: 0}
-  m_LocalScale: {x: 5.102842, y: 5.1028423, z: 5.1028423}
+  m_LocalScale: {x: 2.9830194, y: 2.9830196, z: 2.9830196}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1735081533}
@@ -20820,7 +20824,7 @@ ParticleSystem:
         m_RotationOrder: 4
     randomizeRotationDirection: 0
     gravitySource: 0
-    maxNumParticles: 20
+    maxNumParticles: 15
     customEmitterVelocity: {x: 0, y: 0, z: 0}
     size3D: 0
     rotation3D: 1
