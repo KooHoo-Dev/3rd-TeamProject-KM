@@ -66,6 +66,8 @@ namespace BlueMarble
                 $"Turn {Client.TurnId}, " +
                 $"Player {user.Nickname}({user.Id})");
 
+            Players.SetCurrentTurn(user.Id);
+
             if (canAct == false)
             {
                 Client.AnnounceTurnFinished(Client.TurnId);
@@ -94,6 +96,7 @@ namespace BlueMarble
         
         private void HandleGameEnded()
         {
+            Players.ResetTurnVisuals();
             Turn.SetInputEnabled(false);
             Debug.Log($"[GameManager] Game Ended.");
         }

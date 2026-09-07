@@ -49,17 +49,13 @@ namespace Combat
         public void ExecuteSkillFromNetwork(SkillCastMessage msg)
         {
             Vector3 spawnPoint = new Vector3(msg.SpawnX, msg.SpawnY, 0f);
-            Vector3 targetPoint = Vector3.zero;
 
             // 기본 공격인 경우
             if (msg.IsBasicAttack)
             {
-                float basicRange = 5f; // 기본 공격 사거리
-                targetPoint = spawnPoint + (Vector3.right * msg.Direction * basicRange);
-                
-                int basicDamage = 10; 
+                int finalDamage = Mathf.RoundToInt(5 * CombatSystem.Instance.DamageMultiplier);
 
-                basicAttackStrategy.Execute(spawnPoint, targetPoint, basicDamage, msg.CasterId, basicArrowPrefab);
+                basicAttackStrategy.Execute(spawnPoint, msg.Direction, finalDamage, msg.CasterId, basicArrowPrefab);
             }
             // 장비 스킬인 경우
             else
@@ -67,14 +63,14 @@ namespace Combat
                 EquipmentDef def = equipmentTable.Get(msg.EquipmentId);
                 if (def != null)
                 {
-                    targetPoint = spawnPoint + (Vector3.right * msg.Direction * def.Range);
                     GameObject prefab = Resources.Load<GameObject>(def.PrefabPath.Trim());
                     
                     if (prefab == null) Debug.Log($"[오류] {def.PrefabPath} 프리팹을 찾을 수 없습니다!");
                     
                     if (strategies.TryGetValue(def.AttackType, out IAttackStrategy strategy))
                     {
-                        strategy.Execute(spawnPoint, targetPoint, (int)def.BaseDamage, msg.CasterId, prefab, def);
+                        int finalDamage = Mathf.RoundToInt(def.BaseDamage * CombatSystem.Instance.DamageMultiplier);
+                        strategy.Execute(spawnPoint, msg.Direction, finalDamage, msg.CasterId, prefab, def);
                     }
                 }
             }

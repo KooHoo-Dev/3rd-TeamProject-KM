@@ -10,6 +10,11 @@ namespace BlueMarble
     public class Player : MonoBehaviour
     {
         [field: ShowInInspector, ReadOnly] public string Id { get; private set; }
+        [field: ShowInInspector, ReadOnly] public int PlayerNumber { get; private set; }
+
+        [Title("Components")]
+        [SerializeField] private SpriteRenderer bodyRenderer;
+        [SerializeField] private GameObject turnMark;
 
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
@@ -23,10 +28,38 @@ namespace BlueMarble
         
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
         
-        public void Initialize(string id)
+        public void Initialize(string id, int playerNumber)
         {
             Id = id;
+            PlayerNumber = playerNumber;
+
+            PlayerAppearance appearance = PlayerAppearanceMap.Instance
+                .GetAppearance(playerNumber);
+
+            bodyRenderer.color = appearance.Color;
+            ResetTurnVisual();
+            name = $"Player {playerNumber} ({id})";
+            
             PlayerRegistry.Register(this);
+        }
+
+        public void SetTurnActive(bool isActive)
+        {
+            turnMark.SetActive(isActive);
+            SetBodyAlpha(isActive ? 1f : 0.5f);
+        }
+
+        public void ResetTurnVisual()
+        {
+            turnMark.SetActive(false);
+            SetBodyAlpha(1f);
+        }
+
+        private void SetBodyAlpha(float alpha)
+        {
+            Color color = bodyRenderer.color;
+            color.a = alpha;
+            bodyRenderer.color = color;
         }
 
         public void OnDisable()

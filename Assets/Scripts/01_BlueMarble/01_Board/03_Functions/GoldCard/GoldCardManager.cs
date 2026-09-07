@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using Jay;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Utility;
 
 namespace BlueMarble
 {
@@ -16,6 +17,12 @@ namespace BlueMarble
         
         private readonly Dictionary<GoldCardScopeType, IGoldCardScope> scopes = new();
         private readonly Dictionary<GoldCardPatternType, IGoldCardPattern> patterns = new();
+
+        private UniTaskCompletionSource<GoldCardDef> drawWaiter;
+        private UniTaskCompletionSource presentationWaiter;
+
+        private string activePlayerId;
+        private int activeTurnId = -1;
         
         private DataManager Data => DataManager.Instance;
         private RoomClient Client => RoomClient.Instance;
@@ -26,6 +33,22 @@ namespace BlueMarble
         {
             PopulateByEnum(scopes, GoldCardScopeFactory.Create);
             PopulateByEnum(patterns, GoldCardPatternFactory.Create);
+
+            Client.OnGoldCardDrawn += HandleGoldCardDrawn;
+            Client.OnGoldCardRevealed += HandleGoldCardRevealed;
+            Client.OnGoldCardPresentationFinished += HandleGoldCardPresentationFinished;
+
+            card.Clicked += HandleCardClicked;
+            card.gameObject.SetActive(false);
+        }
+
+        protected override void OnDispose()
+        {
+            Client.OnGoldCardDrawn -= HandleGoldCardDrawn;
+            Client.OnGoldCardRevealed -= HandleGoldCardRevealed;
+            Client.OnGoldCardPresentationFinished -= HandleGoldCardPresentationFinished;
+
+            card.Clicked -= HandleCardClicked;
         }
         
         private static void PopulateByEnum<TEnum, TValue>(
@@ -47,57 +70,97 @@ namespace BlueMarble
         {
             await Data.EnsureDataLoaded();
 
-            // 카드를 뽑아서 카드에 해당 내용 전달
             GoldCardDef drawn = await WaitUntilCardDrawnAsync(playerId);
-            card.Initialize(drawn);
-
-            // 카드를 뽑은 플레이어(현재 턴 플레이어)가 뽑았다는 메시지를 서버에 전달하고
-            // 해당 사항을 전달 받은 서버가 모든 플레이어에게 뽑았음을 알리기 전까지 연출 상태 대기
-            // 뽑았음을 전달 받으면 card.Flip을 이용하여 카드 연출을 실행함
-            // 모든 플레이어의 연출이 끝날 때 까지 대기
             await WaitUntilCardAnimationFinishedAsync();
-            
-            // 이후, 해당 턴의 플레이어의 클라이언트에서만 카드의 효과를 실행
-            // 효과 적용이 끝난 이후 골드 카드 효과를 마무리 짓는다
+
             await ApplyCardEffectAsync(playerId, drawn);
         }
 
         private async UniTask<GoldCardDef> WaitUntilCardDrawnAsync(string playerId)
         {
-            UniTaskCompletionSource<GoldCardDef> completionSource = new();
-            Client.OnGoldCardDrawn += HandleGoldCardDrawn;
+            drawWaiter = new UniTaskCompletionSource<GoldCardDef>();
 
             GoldCardDef drawn;
-            
+
             try
             {
                 int[] cardIds = Data.GoldCards.GetIds().ToArray();
                 Client.RequestDrawGoldCard(Client.TurnId, cardIds);
-                
-                drawn = await completionSource.Task;
+
+                drawn = await drawWaiter.Task;
             }
             finally
             {
-                Client.OnGoldCardDrawn -= HandleGoldCardDrawn;
+                drawWaiter = null;
             }
 
             Debug.Log($"[GoldCardManager] {playerId} drew Gold Card " +
                 $"{drawn.Id}: {drawn.Description}");
-            
+
             return drawn;
-            
-            void HandleGoldCardDrawn(User user, int cardId)
+        }
+
+        private UniTask WaitUntilCardAnimationFinishedAsync()
+        {
+            return presentationWaiter.Task;
+        }
+
+        private void HandleGoldCardDrawn(User player, int cardId)
+        {
+            GoldCardDef drawn = Data.GetGoldCardDef(cardId);
+
+            activePlayerId = player.Id;
+            activeTurnId = Client.TurnId;
+            presentationWaiter = new UniTaskCompletionSource();
+
+            card.gameObject.SetActive(true);
+            card.Initialize(drawn);
+            card.SetClickable(player.Id == Client.Me.Id);
+
+            if (player.Id == Client.Me.Id)
+                drawWaiter?.TrySetResult(drawn);
+        }
+
+        private void HandleCardClicked()
+        {
+            if (activePlayerId != Client.Me.Id) return;
+
+            Client.RequestRevealGoldCard(activeTurnId).Forget();
+        }
+
+        private void HandleGoldCardRevealed(User player)
+        {
+            if (player.Id != activePlayerId) return;
+
+            card.SetClickable(false);
+            PlayPresentationAsync(activeTurnId).Forget();
+        }
+
+        private async UniTaskVoid PlayPresentationAsync(int turnId)
+        {
+            try
             {
-                if (user.Id != playerId) return;
-                
-                GoldCardDef def = Data.GetGoldCardDef(cardId);
-                completionSource.TrySetResult(def);
+                await card.FlipAsync();
+                await CustomUniTask.DelaySeconds(2f);
+            }
+            finally
+            {
+                card.gameObject.SetActive(false);
+                await Client.AnnounceGoldCardPresentationFinished(turnId);
             }
         }
 
-        private async UniTask WaitUntilCardAnimationFinishedAsync()
+        private void HandleGoldCardPresentationFinished(int turnId)
         {
-            await UniTask.CompletedTask;
+            if (turnId != activeTurnId) return;
+
+            activePlayerId = null;
+            activeTurnId = -1;
+
+            UniTaskCompletionSource waiter = presentationWaiter;
+            presentationWaiter = null;
+
+            waiter?.TrySetResult();
         }
 
         private UniTask ApplyCardEffectAsync(string playerId, GoldCardDef drawn)

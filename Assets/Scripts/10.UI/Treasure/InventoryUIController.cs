@@ -8,7 +8,7 @@ namespace BlueMarble
     /// 인벤토리 UI(슬롯 5칸)를 InventoryManager와 연결한다.
     /// 교체 대기 상태(IsWaitingReplace)일 때는 슬롯 클릭 시 자동으로 교체 처리한다.
     /// </summary>
-    public class InventoryUIController : MonoBehaviour, IInventoryPresenter
+    public class InventoryUIController : MonoBehaviour
     {
         [Header("Slots")]
         [SerializeField] private Image[] slotIcons = new Image[InventoryManager.MaxSlotCount];
@@ -17,16 +17,29 @@ namespace BlueMarble
         [Header("Close")]
         [SerializeField] private Button closeButton;
 
+        private UniTaskCompletionSource decisionWaiter;
+
         public async UniTask ShowAsync()
         {
             gameObject.SetActive(true);
+
+            decisionWaiter = new UniTaskCompletionSource();
             RegisterSlotClickListeners();
+            closeButton.onClick.AddListener(OnCloseClicked);
             RefreshSlots();
 
-            await WaitForCloseClick();
+            try
+            {
+                await decisionWaiter.Task;
+            }
+            finally
+            {
+                UnregisterSlotClickListeners();
+                closeButton.onClick.RemoveListener(OnCloseClicked);
 
-            UnregisterSlotClickListeners();
-            gameObject.SetActive(false);
+                decisionWaiter = null;
+                gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -84,17 +97,19 @@ namespace BlueMarble
 
             InventoryManager.Instance.ReplaceAt(slotIndex);
             Debug.Log($"[InventoryUIController] {slotIndex}번 슬롯 교체 완료");
-            RefreshSlots();
+
+            decisionWaiter?.TrySetResult();
         }
 
-        private async UniTask WaitForCloseClick()
+        private void OnCloseClicked()
         {
-            var tcs = new UniTaskCompletionSource();
-            void OnClicked() => tcs.TrySetResult();
+            if (InventoryManager.Instance.IsWaitingReplace)
+            {
+                InventoryManager.Instance.CancelReplace();
+                Debug.Log("[InventoryUIController] 신규 보상 획득을 포기했습니다.");
+            }
 
-            closeButton.onClick.AddListener(OnClicked);
-            await tcs.Task;
-            closeButton.onClick.RemoveListener(OnClicked);
+            decisionWaiter?.TrySetResult();
         }
     }
 }

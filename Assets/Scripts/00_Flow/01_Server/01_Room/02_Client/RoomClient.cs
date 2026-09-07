@@ -137,7 +137,7 @@ namespace BlueMarble.Server
         
         #endregion
         
-        private User GetUser(string id) => id == Me.Id ? Me : others[id];
+        public User GetUser(string id) => id == Me.Id ? Me : others[id];
         
         private void ClearRoom()
         {

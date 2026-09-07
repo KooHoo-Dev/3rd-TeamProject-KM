@@ -1,4 +1,6 @@
 ﻿using BlueMarble.Server;
+using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -13,6 +15,7 @@ namespace BlueMarble
     {
         public static TreasureManager Instance { get; } = new TreasureManager();
 
+        private readonly Dictionary<string, UniTaskCompletionSource> waiters = new();
         private TreasureRewardPopupController presenter;
 
         private TreasureManager()
@@ -27,33 +30,103 @@ namespace BlueMarble
             this.presenter = presenter;
         }
 
+        public void ClearPresenter(TreasureRewardPopupController presenter)
+        {
+            if (this.presenter == presenter)
+                this.presenter = null;
+        }
+
         /// <summary>
         /// 보물창고 드롭 테이블에서 장비 하나를 뽑아 플레이어 인벤토리에 지급한다.
         /// 인벤토리가 가득 찬 경우 InventoryManager가 자동으로 교체 대기 상태로 전환한다.
-        /// 보상 팝업은 로컬 플레이어 본인의 턴일 때만 띄운다 (다른 플레이어 화면에는 안 뜸).
+        /// 서버가 대상 플레이어에게 지급을 중계하고, 대상의 연출/교체 결정이 끝날 때까지 기다린다.
         /// </summary>
         /// <param name="playerId">지급 대상 플레이어</param>
         public async UniTask GrantAsync(string playerId)
         {
             EquipmentDef def = DropService.DrawEquipment(DropType.Treasure);
 
-            bool added = InventoryManager.Instance.TryAddEquipment(def);
+            await RequestEffectAndWaitAsync(
+                playerId,
+                GoldCardTreasureEffectType.Gain,
+                def.Id);
 
-            if (added)
+            Debug.Log($"[TreasureManager] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득");
+        }
+
+        public UniTask GrantFromGoldCardAsync(string[] targetIds)
+        {
+            UniTask[] tasks = new UniTask[targetIds.Length];
+
+            for (int i = 0; i < targetIds.Length; i++)
             {
-                Debug.Log($"[TreasureManager] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득");
+                string targetId = targetIds[i];
+                EquipmentDef equipment = DropService.DrawEquipment(DropType.GoldenKey);
+
+                tasks[i] = RequestEffectAndWaitAsync(
+                    targetId,
+                    GoldCardTreasureEffectType.Gain,
+                    equipment.Id);
+
+                Debug.Log($"[TreasureManager] Gold Card: Gain {equipment.Name} to {targetId}");
             }
-            else
+
+            return UniTask.WhenAll(tasks);
+        }
+
+        public UniTask LoseFromGoldCardAsync(string[] targetIds)
+        {
+            UniTask[] tasks = new UniTask[targetIds.Length];
+
+            for (int i = 0; i < targetIds.Length; i++)
             {
-                Debug.Log($"[TreasureManager] {playerId}: 보물창고에서 {def.Name}({def.Grade}) 획득, " +
-                          "인벤토리가 가득 차서 교체 대기 상태입니다.");
+                tasks[i] = RequestEffectAndWaitAsync(
+                    targetIds[i],
+                    GoldCardTreasureEffectType.Lose,
+                    -1);
             }
 
-            bool isLocalPlayer = playerId == RoomClient.Instance.Me.Id; // TODO: 실제 프로퍼티명 확인 필요
+            return UniTask.WhenAll(tasks);
+        }
 
-            if (isLocalPlayer && presenter != null)
+        public UniTask PresentAsync(EquipmentDef reward)
+        {
+            if (presenter != null)
+                return presenter.ShowRewardAsync(reward);
+
+            Debug.LogError("[TreasureManager] 보상 UI가 등록되지 않았습니다.");
+            return UniTask.CompletedTask;
+        }
+
+        public void CompleteRequest(string requestId)
+        {
+            if (waiters.TryGetValue(requestId, out UniTaskCompletionSource waiter))
+                waiter.TrySetResult();
+        }
+
+        private async UniTask RequestEffectAndWaitAsync(
+            string targetId,
+            GoldCardTreasureEffectType effectType,
+            int equipmentId)
+        {
+            string requestId = Guid.NewGuid().ToString("N");
+            var waiter = new UniTaskCompletionSource();
+
+            waiters.Add(requestId, waiter);
+
+            try
             {
-                await presenter.ShowRewardAsync(def);
+                await RoomClient.Instance.RequestApplyTreasure(
+                    requestId,
+                    targetId,
+                    effectType,
+                    equipmentId);
+
+                await waiter.Task;
+            }
+            finally
+            {
+                waiters.Remove(requestId);
             }
         }
     }

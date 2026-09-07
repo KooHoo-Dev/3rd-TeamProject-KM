@@ -31,6 +31,14 @@
         Lose
     }
 
+    public enum PlayerActivityType
+    {
+        None = 0,
+        Shop = 1,
+        TerritoryPurchase = 2,
+        Treasure = 3
+    }
+
     #region CLIENT_TO_SERVER
 
     public class SetBoardReadyMessage
@@ -192,9 +200,41 @@
     {
         public string Type { get; set; } = ProtocolHeader.APPLY_TREASURE;
 
+        public string RequestId { get; set; }
         public string TargetId { get; set; }
         public GoldCardTreasureEffectType EffectType { get; set; }
         public int EquipmentId { get; set; }
+    }
+
+    public class TreasureResolvedMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.TREASURE_RESOLVED;
+
+        public string RequestId { get; set; }
+        public string TargetId { get; set; }
+    }
+
+    public class PlayerActivityMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.PLAYER_ACTIVITY;
+
+        public string PlayerId { get; set; }
+        public PlayerActivityType Activity { get; set; }
+    }
+
+    public class RevealGoldCardMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.REVEAL_GOLD_CARD;
+
+        public int TurnId { get; set; }
+        public string PlayerId { get; set; }
+    }
+
+    public class GoldCardPresentationFinishedMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.GOLD_CARD_PRESENTATION_FINISHED;
+
+        public int TurnId { get; set; }
     }
     
     #endregion

@@ -12,6 +12,9 @@ namespace Player
         private InventoryManager myInventory;
         private EquipmentCaster myCaster;
 
+        // 테스트를 위해 false이면 움직이지 않음
+        public bool isLocalPlayer = true;
+        
         public bool IsMoving => Mathf.Abs(SimpleInput.GetAxisHorizontalRaw()) > 0.01f;
 
         public bool IsCastingSkill { get; private set; } = false;
@@ -20,8 +23,7 @@ namespace Player
         {
             controller2D = GetComponent<CharacterController2D>();
             myCaster = GetComponent<EquipmentCaster>();
-
-            // 테스트 용
+            
             myInventory = InventoryManager.Instance;
         }
     
@@ -33,6 +35,7 @@ namespace Player
         
         private void Update()
         {
+            if (isLocalPlayer == false) return;
             HandleMovement();
             HandleDodge();
 

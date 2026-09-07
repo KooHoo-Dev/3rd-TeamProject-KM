@@ -1,7 +1,8 @@
+using System.Collections.Generic;
 using BlueMarble;
+using Cysharp.Threading.Tasks;
 using Jay;
 using UnityEngine;
-using Epic3;
 using Sirenix.OdinInspector;
 
 namespace Combat
@@ -24,114 +25,192 @@ namespace Combat
 
         private string attackerId;
         private string defenderId;
-        private Tile battleTile;
 
-        private float attackerHp, attackerMaxHp;
-        private float defenderHp, defenderMaxHp;
-
-        private CombatFlow combatFlow;
-
-        protected override void OnDispose()
-        {
-            base.OnDispose();
-            if (combatTimer != null) combatTimer.OnTimeUp -= HandleTimeUp;
-        }
+        private UniTaskCompletionSource<bool> combatResult;
+        
+        // HitBox와 HurtBox가 충돌을 확인 하는 명부
+        private Dictionary<Collider2D, HurtBox> HurtBoxDic { get; set; } = new Dictionary<Collider2D, HurtBox>();
+        
+        // 서버에서 ID를 받았을 때 체력을 깎을 본체를 찾는 명부
+        private Dictionary<string, CombatEntity> entityDict =  new Dictionary<string, CombatEntity>();
 
         [Button]
-        public void TestCombat()
+        public void CombatStart()
         {
-            IsCombatActive = true;
-        }
-        
-        public void StartCombat(string attacker, string defender, Tile battleTile, float maxHp)
-        {
-            attackerId = attacker;
-            defenderId = defender;
-            this.battleTile = battleTile;
-            
-            attackerMaxHp = attackerHp = maxHp;
-            defenderMaxHp = defenderHp = maxHp;
-
-            elapsedTime = 0f;
-            DamageMultiplier = 1.0f;
-            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
-
-            combatTimer.OnTimeUp += HandleTimeUp;
-            combatTimer.StartTimer();
             IsCombatActive = true;
         }
 
         private void Update()
         {
             if (!IsCombatActive) return;
-
+            
             elapsedTime += Time.deltaTime;
 
             if (elapsedTime >= nextMultiplierIncreaseTime)
             {
                 DamageMultiplier += multiplierIncreaseAmount;
-                nextMultiplierIncreaseTime += multiplierIncreaseInterval;
-                Debug.Log($"[CombatSystem] 데미지 배율 증가: x{DamageMultiplier:F2}");
+                nextMultiplierIncreaseTime = elapsedTime + multiplierIncreaseInterval;
+                Debug.Log($"[CombatSystem] 데미지 배율 증가: x{DamageMultiplier}");
             }
         }
         
-        public void ApplyDamage(string targetId, int amount)
+        public async UniTask<bool> StartCombat(string attackerId, Tile tile)
         {
-            if (!IsCombatActive) return;
+            this.attackerId = attackerId; 
+            defenderId = tile.State.OwnerId;
 
-            if (targetId == attackerId) attackerHp -= amount;
-            else if (targetId == defenderId) defenderHp -= amount; 
+            DamageMultiplier = 1.0f;
+            elapsedTime = 0f;
+            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
 
-            CheckInstantWin();
+            combatResult = new UniTaskCompletionSource<bool>();
+            IsCombatActive = true;
+            
+            // 타이머 시작
+            if (combatTimer != null)
+            {
+                combatTimer.OnTimeUp += HandleTimeUp;
+                combatTimer.StartTimer();
+            }
+            
+            bool result = await combatResult.Task;
+            
+            IsCombatActive = false;
+            if (combatTimer != null)
+            {
+                combatTimer.StopTimer();
+                combatTimer.OnTimeUp -= HandleTimeUp;
+            }
+
+            return result;
         }
-
-        private void CheckInstantWin()
+        
+        // 누군가가 체력이 0이 되거나 타이머가 다 되면 호출
+        private void EndCombat(string winnerId)
         {
-            if (attackerHp <= 0) EndCombat(defenderId, attackerId);
-            else if (defenderHp <= 0) EndCombat(attackerId, defenderId);
+            bool isAttackerWin = (winnerId == attackerId);
+            combatResult?.TrySetResult(isAttackerWin);
         }
 
         private void HandleTimeUp()
         {
-            float attackerRatio = attackerHp / attackerMaxHp;
-            float defenderRatio = defenderHp / defenderMaxHp;
+            // 명부에서 양측 본체를 찾아 체력 비교
+            entityDict.TryGetValue(attackerId, out CombatEntity attacker);
+            entityDict.TryGetValue(defenderId, out CombatEntity defender);
 
-            string winner, loser;
+            float attackerRatio = attacker != null ? (float)attacker.CurrentHp / attacker.MaxHp : 0f;
+            float defenderRatio = defender != null ? (float)defender.CurrentHp / defender.MaxHp : 0f;
+
+            string winnerId;
 
             if (attackerRatio > defenderRatio)
             {
-                winner = attackerId;
-                loser = defenderId;
+                winnerId = attackerId;
             }
             else if (defenderRatio > attackerRatio)
             {
-                winner = defenderId;
-                loser = attackerId;
+                winnerId = defenderId;
             }
             else
             {
                 Debug.Log("[CombatSystem] 동점으로 인한 점령자 방어 성공!");
-                winner = defenderId;
-                loser = attackerId;
+                winnerId = defenderId; // 동점이면 방어자 승리 유리하게 판정
             }
 
-            EndCombat(winner, loser);
+            EndCombat(winnerId);
         }
 
-        private void EndCombat(string winnerId, string loserId)
+        public void OnPlayerDied(string deadPlayerId)
         {
             if (!IsCombatActive) return;
+            string winnerId;
 
-            IsCombatActive = false;
-            combatTimer.StopTimer();
-            combatTimer.OnTimeUp -= HandleTimeUp;
+            if (deadPlayerId == attackerId) winnerId = defenderId;
+            else winnerId = attackerId;
+            
+            EndCombat(winnerId);
+        }
+        
+        #region HurtBox 물리 충돌 명부 관리
 
-            Debug.Log($"[CombatSystem] {winnerId}의 승리!");
+        public void AddHurtBox(Collider2D collider, HurtBox hurtBox)
+        {
+            HurtBoxDic.TryAdd(collider, hurtBox);
+        }
 
-            if (winnerId == attackerId)
+        public void RemoveHurtBox(Collider2D collider)
+        {
+            if (HurtBoxDic.ContainsKey(collider) == false) return;
+            HurtBoxDic.Remove(collider);
+        }
+
+        public HurtBox GetHurtBoxOrNull(Collider2D collider)
+        {
+            HurtBoxDic.TryGetValue(collider, out HurtBox hurtBox);
+            return hurtBox;
+        }
+        #endregion
+        
+        #region CombatEntity 본체 명부 관리
+
+        public void RegisterEntity(CombatEntity entity)
+        {
+            entityDict.TryAdd(entity.OwnerId, entity);
+        }
+
+        public void UnregisterEntity(CombatEntity entity)
+        {
+            if (entityDict.ContainsKey(entity.OwnerId))
             {
-                TerritoryManager.Instance.StolenTerritory(loserId, winnerId, battleTile);
+                entityDict.Remove(entity.OwnerId);
             }
         }
+
+        public void OnReceiveHitResponse(string targetId, int damage)
+        {
+            if (entityDict.TryGetValue(targetId, out CombatEntity targetEntity))
+            {
+                Debug.Log($"[CombatSystem] {targetId}에게 {damage} 피해");
+                targetEntity.TakeDamage(damage);
+            }
+        }
+        
+        #endregion
+        
+        #region Test 함수
+        // CombatSystem.cs 내부에 추가
+        public async UniTask<bool> StartTestCombat(string testAttackerId, string testDefenderId)
+        {
+            this.attackerId = testAttackerId;
+            this.defenderId = testDefenderId;
+
+            DamageMultiplier = 1.0f;
+            elapsedTime = 0f;
+            nextMultiplierIncreaseTime = multiplierIncreaseStartTime;
+
+            combatResult = new UniTaskCompletionSource<bool>();
+            IsCombatActive = true;
+    
+            if (combatTimer != null)
+            {
+                combatTimer.OnTimeUp += HandleTimeUp;
+                combatTimer.StartTimer();
+            }
+    
+            bool result = await combatResult.Task;
+    
+            IsCombatActive = false;
+            if (combatTimer != null)
+            {
+                combatTimer.StopTimer();
+                combatTimer.OnTimeUp -= HandleTimeUp;
+            }
+
+            // 전투가 끝났을 때 누가 이겼는지 로그 출력
+            Debug.Log($"[테스트 전투 종료] 공격자 승리 여부: {result}");
+
+            return result;
+        }
+        #endregion
     }
 }

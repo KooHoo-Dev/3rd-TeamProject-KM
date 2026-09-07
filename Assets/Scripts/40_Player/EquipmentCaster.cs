@@ -19,16 +19,22 @@ namespace Player
 
         private float nextAttackTime = 0f;
 
+        // 테스트를 위해 false이면 사용되지 않음
+        public bool isLocalPlayer = true;
+
         private CancellationTokenSource attackCts;
         private PlayerController playerController;
+        private PlayerEntity myEntity;
 
         private void Awake()
         {
             playerController = GetComponent<PlayerController>();
+            myEntity = GetComponent<PlayerEntity>();
         }
 
         private void OnEnable()
         {
+            if (isLocalPlayer == false) return;
             attackCts = new CancellationTokenSource();
             AutoAttackRoutine(attackCts.Token).Forget();
         }
@@ -54,7 +60,7 @@ namespace Player
                     {
                         SkillCastMessage msg = new SkillCastMessage 
                         {
-                            CasterId = attackerName,
+                            CasterId = myEntity.OwnerId,
                             IsBasicAttack = true,
                             EquipmentId = 0,
                             SpawnX = spawnPoint.position.x,
@@ -63,7 +69,7 @@ namespace Player
                         };
 
                         BattleManager.Instance.ExecuteSkillFromNetwork(msg);
-                        Debug.Log($"[네트워크 전송] 기본 공격 발사 요청!");
+                        // Debug.Log($"[네트워크 전송] 기본 공격 발사 요청!");
 
                         nextAttackTime = Time.time + basicAttackInterval;
                     }
@@ -83,7 +89,7 @@ namespace Player
         {
             SkillCastMessage msg = new SkillCastMessage
             {
-                CasterId = attackerName,
+                CasterId = myEntity.OwnerId,
                 IsBasicAttack = false,
                 EquipmentId = def.Id,
                 SpawnX = spawnPoint.position.x,
