@@ -46,6 +46,7 @@ namespace Combat
         private float nextMultiplierIncreaseTime;
         private string requestId;
         private bool isFinishing;
+        private CombatSceneSetup combatSceneSetup;
 
         private UniTaskCompletionSource<CombatOutcome> combatResult;
         private readonly HashSet<string> appliedHitIds = new();
@@ -213,6 +214,18 @@ namespace Combat
             IsCombatActive = false;
             StopCombatTimer();
 
+            if (TryGetEntity(result.LoserId, out CombatEntity loserEntity))
+            {
+                loserEntity.ApplyHealthSnapshot(0);
+                loserEntity.GetComponent<Player.PlayerAnimator>()?.PlayDeath(null);
+            }
+
+            if (TryGetEntity(result.WinnerId, out CombatEntity winnerEntity))
+                winnerEntity.GetComponent<Player.PlayerController>()?.SetActionLocked(true);
+
+            combatSceneSetup?.ShowWinner(GetPlayerDisplayName(result.WinnerId));
+            await UniTask.Delay(3000, ignoreTimeScale: true);
+
             OnCombatEnded?.Invoke(result);
 
             Scene scene = SceneManager.GetSceneByName(CombatSceneName);
@@ -339,6 +352,11 @@ namespace Combat
             combatTimer.duration = DurationSeconds;
         }
 
+        public void AttachSceneSetup(CombatSceneSetup sceneSetup)
+        {
+            combatSceneSetup = sceneSetup;
+        }
+
         public async UniTask<bool> StartTestCombat(
             string testAttackerId,
             string testDefenderId,
@@ -443,10 +461,32 @@ namespace Combat
             DurationSeconds = 30f;
             requestId = null;
             combatResult = null;
+            combatSceneSetup = null;
             isFinishing = false;
             appliedHitIds.Clear();
             hurtBoxes.Clear();
             entities.Clear();
+        }
+
+        private static string GetPlayerDisplayName(string playerId)
+        {
+            if (!RoomClient.IsInitialized || RoomClient.Instance.Me == null)
+                return playerId;
+
+            RoomClient client = RoomClient.Instance;
+
+            if (client.Me.Id == playerId)
+                return string.IsNullOrWhiteSpace(client.Me.Nickname)
+                    ? playerId
+                    : client.Me.Nickname;
+
+            if (client.Others.TryGetValue(playerId, out User user) &&
+                !string.IsNullOrWhiteSpace(user.Nickname))
+            {
+                return user.Nickname;
+            }
+
+            return playerId;
         }
     }
 }
