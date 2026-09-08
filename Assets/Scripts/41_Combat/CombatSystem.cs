@@ -195,6 +195,19 @@ namespace Combat
             if (message == null || message.CombatId != CombatId) return;
             StartCombatRuntime();
         }
+        
+        // public void  BeginCombatFromNetwork(CombatStartedMessage message)
+        // {
+        //    if (message == null || message.CombatId != CombatId) return;
+        //    PlayIntroThenStartAsync().Forget();  
+        // }
+        
+        // private async UniTaskVoid PlayIntroThenStartAsync()
+        // {
+        //     await BattleIntroManager.Instance.PlayAsync();   
+        //     StartCombatRuntime();
+        // }
+        
 
         public void CompleteCombatFromNetwork(CombatResultMessage result)
         {
