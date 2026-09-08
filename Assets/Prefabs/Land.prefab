@@ -100,6 +100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 611289623630602631}
+  - component: {fileID: 7602429044726233159}
   m_Layer: 0
   m_Name: Land
   m_TagString: Untagged
@@ -120,10 +121,23 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2446767776213141940}
   - {fileID: 4855181290639302477}
+  - {fileID: 2446767776213141940}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &7602429044726233159
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3673023986924522794}
+  m_Enabled: 1
+  m_SortingLayerID: -2131550063
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &9006914874030155443
 GameObject:
   m_ObjectHideFlags: 0

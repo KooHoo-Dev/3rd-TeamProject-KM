@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System;
+using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -31,21 +33,21 @@ namespace BlueMarble
 
     public class LoseGoldPattern : IGoldCardPattern
     {
-        public UniTask Apply(string[] targetIds, int goldAmount, int _, int tileId)
+        public async UniTask Apply(string[] targetIds, int goldAmount, int _, int tileId)
         {
             EconomyManager economy = EconomyManager.Instance;
-            
-            List<UniTask> tasks = new();
-            
+
+            string localPlayerId = RoomClient.Instance.Me.Id;
+            Array.Sort(targetIds, (left, right) =>
+                (left == localPlayerId).CompareTo(right == localPlayerId));
+
             for (int i = 0; i < targetIds.Length; i++)
             {
                 string targetId = targetIds[i];
-                tasks.Add(economy.LoseGoldTo(targetId, goldAmount));
+                await economy.PayMandatoryAsync(targetId, goldAmount);
                 
                 Debug.Log($"[GoldCardPattern] Lose {goldAmount} gold to {targetId}");
             }
-
-            return UniTask.WhenAll(tasks);
         }
     }
 

@@ -820,6 +820,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.TerritoryManager
   isDontDestroyOnLoad: 0
+  landPrefab: {fileID: 3673023986924522794, guid: 1bbeb73bf33be2d45a0383c8f20b52b1, type: 3}
+  buildingPrefab: {fileID: 1066654893532887495, guid: 5dde24593b91c0442a771b99291092bb, type: 3}
+  landMarkPrefab: {fileID: 9115422695662948767, guid: 948ee4a9c0bd3f04ea8b531a08bcadb4, type: 3}
 --- !u!4 &649113669
 Transform:
   m_ObjectHideFlags: 0

@@ -42,7 +42,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2487091987346707192, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_Name
-      value: Tile_Property_North Variant
+      value: Tile_Property_North
       objectReference: {fileID: 0}
     - target: {fileID: 2487091987346707192, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_IsActive
@@ -111,6 +111,14 @@ PrefabInstance:
     - target: {fileID: 4473292752411144092, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4748832350558357502, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4748832350558357502, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -7,6 +7,7 @@ using NUnit.Framework.Api;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 namespace BlueMarble.Server
 {
@@ -63,41 +64,52 @@ namespace BlueMarble.Server
         {
             IsBusy = true;
 
-            connection = new RoomConnection();
+            RoomConnection activeConnection = new RoomConnection();
+            connection = activeConnection;
             
             string uriStr = $"{url}?code={UnityWebRequest.EscapeURL(RoomCode)}";
 
             try
             {
-                await connection.ConnectAsync(new Uri(uriStr), destroyCancellationToken);
+                await activeConnection.ConnectAsync(new Uri(uriStr), destroyCancellationToken);
                 
                 Debug.Log($"[RoomClient] Connected to \"{uriStr}\"");
 
                 await SendAsync(new HelloMessage { Nickname = Nickname });
-                await connection.ReceiveLoopAsync(HandleReceived, destroyCancellationToken);
+                await activeConnection.ReceiveLoopAsync(HandleReceived, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex) { Debug.LogError($"[RoomClient] {ex}"); }
             finally
             {
+                activeConnection.Dispose();
+
+                if (connection == activeConnection)
+                    connection = null;
+
                 ClearRoom();
                 IsBusy = false;
+                ReturnToRoomEntryAsync().Forget();
             }
         }
 
         public async UniTask LeaveAsync()
         {
-            if (connection == null) return;
+            RoomConnection activeConnection = connection;
+            if (activeConnection == null) return;
 
-            await connection.CloseAsync(destroyCancellationToken);
+            await activeConnection.CloseAsync(destroyCancellationToken);
             await UniTask.WaitUntil(this, self => self.IsBusy == false);
-
-            connection.Dispose();
-            connection = null;
-            
-            ClearRoom();
             
             Debug.Log("[RoomClient] Disconnected");
+        }
+
+        private async UniTaskVoid ReturnToRoomEntryAsync()
+        {
+            const string sceneName = "Room Enter";
+            if (SceneManager.GetActiveScene().name == sceneName) return;
+
+            await SceneManager.LoadSceneAsync(sceneName);
         }
 
         #endregion
@@ -141,6 +153,9 @@ namespace BlueMarble.Server
         
         private void ClearRoom()
         {
+            TreasureManager.Instance.Reset();
+            InventoryManager.Instance.Reset();
+
             Nickname = null;
             RoomCode = null;
 

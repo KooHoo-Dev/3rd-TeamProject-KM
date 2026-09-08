@@ -568,6 +568,15 @@ namespace BlueMarble
             if (isPurchasing)
                 return;
 
+            if (EconomyManager.Instance.TryGetGold(currentPlayerId, out int currentGold) == false ||
+                currentGold < pendingDef.Price)
+            {
+                inventory.CancelReplace();
+                slotReplacePopup.Hide();
+                OnReplaceResolved();
+                return;
+            }
+
             isPurchasing = true;
             inventory.ReplaceAt(slotIndex);
             slotReplacePopup.Hide();

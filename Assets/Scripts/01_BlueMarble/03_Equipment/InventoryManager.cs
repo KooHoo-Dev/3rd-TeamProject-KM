@@ -141,6 +141,15 @@ namespace BlueMarble
         {
             ReplaceDef = null;
         }
+
+        public void Reset()
+        {
+            for (int i = 0; i < slots.Length; i++)
+                slots[i] = null;
+
+            ReplaceDef = null;
+            nextInstanceId = 1;
+        }
         
             
         /// <summary>

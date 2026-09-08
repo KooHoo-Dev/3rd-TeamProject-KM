@@ -1,7 +1,9 @@
 ﻿using BlueMarble.Server;
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace BlueMarble
@@ -13,7 +15,8 @@ namespace BlueMarble
         [SerializeField] private TMP_Text nicknameText;
         [SerializeField] private TMP_Text goldText;
         [SerializeField] private TMP_Text totalGoldText;
-        [SerializeField] private Image[] equipmentIcons;
+        [FormerlySerializedAs("equipmentIcons")]
+        [SerializeField] private Image[] equipmentSlots;
         [SerializeField] private GameObject bubble;
         [SerializeField] private TMP_Text bubbleText;
 
@@ -40,6 +43,32 @@ namespace BlueMarble
         public void SetTotalGold(int amount)
         {
             totalGoldText.SetText($"총 자산: {amount:N0} 골드");
+        }
+
+        public void SetEquipmentIcons(IReadOnlyList<EquipmentSlotState> equipments)
+        {
+            for (int i = 0; i < equipmentSlots.Length; i++)
+            {
+                Image icon = equipmentSlots[i].transform.Find("Icon").GetComponent<Image>();
+                icon.sprite = null;
+                equipmentSlots[i].gameObject.SetActive(false);
+            }
+
+            for (int i = 0; i < equipments.Count; i++)
+            {
+                EquipmentSlotState equipment = equipments[i];
+                if (equipment.SlotIndex < 0 || equipment.SlotIndex >= equipmentSlots.Length) continue;
+
+                EquipmentDef def = DataManager.Instance.GetEquipmentDef(equipment.EquipmentId);
+                Sprite iconSprite = string.IsNullOrEmpty(def.IconKey)
+                    ? null
+                    : Resources.Load<Sprite>(def.IconKey);
+
+                Image slot = equipmentSlots[equipment.SlotIndex];
+                Image icon = slot.transform.Find("Icon").GetComponent<Image>();
+                icon.sprite = iconSprite;
+                slot.gameObject.SetActive(iconSprite != null);
+            }
         }
 
         public void ShowBubble(string message)

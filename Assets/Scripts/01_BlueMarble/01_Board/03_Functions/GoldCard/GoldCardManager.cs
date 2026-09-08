@@ -37,6 +37,7 @@ namespace BlueMarble
             Client.OnGoldCardDrawn += HandleGoldCardDrawn;
             Client.OnGoldCardRevealed += HandleGoldCardRevealed;
             Client.OnGoldCardPresentationFinished += HandleGoldCardPresentationFinished;
+            Client.OnLeft += HandlePlayerLeft;
 
             card.Clicked += HandleCardClicked;
             card.gameObject.SetActive(false);
@@ -47,6 +48,7 @@ namespace BlueMarble
             Client.OnGoldCardDrawn -= HandleGoldCardDrawn;
             Client.OnGoldCardRevealed -= HandleGoldCardRevealed;
             Client.OnGoldCardPresentationFinished -= HandleGoldCardPresentationFinished;
+            Client.OnLeft -= HandlePlayerLeft;
 
             card.Clicked -= HandleCardClicked;
         }
@@ -154,6 +156,7 @@ namespace BlueMarble
         {
             if (turnId != activeTurnId) return;
 
+            card.gameObject.SetActive(false);
             activePlayerId = null;
             activeTurnId = -1;
 
@@ -161,6 +164,13 @@ namespace BlueMarble
             presentationWaiter = null;
 
             waiter?.TrySetResult();
+        }
+
+        private void HandlePlayerLeft(User user)
+        {
+            if (user.Id != activePlayerId) return;
+
+            HandleGoldCardPresentationFinished(activeTurnId);
         }
 
         private UniTask ApplyCardEffectAsync(string playerId, GoldCardDef drawn)

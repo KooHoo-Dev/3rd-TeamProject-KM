@@ -66,7 +66,7 @@ namespace Combat
             if (winnerPanel == null) return;
 
             winnerPanel.alpha = 1f;
-            winnerPanel.interactable = false;
+            winnerPanel.interactable = true;
             winnerPanel.blocksRaycasts = true;
         }
 

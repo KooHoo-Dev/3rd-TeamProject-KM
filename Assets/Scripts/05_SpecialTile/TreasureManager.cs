@@ -104,6 +104,17 @@ namespace BlueMarble
                 waiter.TrySetResult();
         }
 
+        public void Reset()
+        {
+            List<UniTaskCompletionSource> pendingWaiters = new(waiters.Values);
+
+            waiters.Clear();
+            presenter = null;
+
+            for (int i = 0; i < pendingWaiters.Count; i++)
+                pendingWaiters[i].TrySetResult();
+        }
+
         private async UniTask RequestEffectAndWaitAsync(
             string targetId,
             GoldCardTreasureEffectType effectType,

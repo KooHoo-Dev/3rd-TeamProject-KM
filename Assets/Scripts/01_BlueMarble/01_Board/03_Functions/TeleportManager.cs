@@ -27,19 +27,28 @@ namespace BlueMarble
                 return;
             }
             
-            while (true)
+            try
             {
-                await UniTask.Yield();
-                
-                if (SimpleInput.GetMouseButtonDown(0) == false) continue;
-                
-                Vector2 mousePos = SimpleInput.GetMousePosition();
-                Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
-                worldPos.z = 0;
+                while (true)
+                {
+                    await UniTask.Yield(
+                        PlayerLoopTiming.Update,
+                        cancellationToken: destroyCancellationToken);
 
-                if (board.TryGetTile(worldPos, out Tile tile) == false) continue;
-                if (board.GetTile(player.Position) == tile) continue;
-                if (await MoveToAsync(playerId, tile)) break;
+                    if (PlayerRegistry.IsRegistered(playerId) == false) return;
+                    if (SimpleInput.GetMouseButtonDown(0) == false) continue;
+
+                    Vector2 mousePos = SimpleInput.GetMousePosition();
+                    Vector3 worldPos = mainCamera.ScreenToWorldPoint(mousePos);
+                    worldPos.z = 0;
+
+                    if (board.TryGetTile(worldPos, out Tile tile) == false) continue;
+                    if (board.GetTile(player.Position) == tile) continue;
+                    if (await MoveToAsync(playerId, tile)) break;
+                }
+            }
+            catch (OperationCanceledException)
+            {
             }
         }
         
@@ -66,23 +75,42 @@ namespace BlueMarble
             UniTaskCompletionSource<bool> completionSource = new();
 
             Client.OnUserMoveFinished += HandleMoveFinished;
+            Client.OnUserMoveCancelled += HandleMoveCancelled;
+            Client.OnLeft += HandlePlayerLeft;
 
             try
             {
                 await Client.RequestMovePlayerTo(playerId, tileIdx, Client.TurnId, requestId);
-                await completionSource.Task;
+                return await completionSource.Task.AttachExternalCancellation(
+                    destroyCancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
             }
             finally
             {
                 Client.OnUserMoveFinished -= HandleMoveFinished;
+                Client.OnUserMoveCancelled -= HandleMoveCancelled;
+                Client.OnLeft -= HandlePlayerLeft;
             }
-
-            return true;
                 
             void HandleMoveFinished(UserMoveFinishedMessage msg)
             {
                 if (msg.RequestId != requestId) return;
                 completionSource.TrySetResult(true);
+            }
+
+            void HandleMoveCancelled(UserMoveCancelledMessage msg)
+            {
+                if (msg.RequestId != requestId) return;
+                completionSource.TrySetResult(false);
+            }
+
+            void HandlePlayerLeft(User user)
+            {
+                if (user.Id != playerId) return;
+                completionSource.TrySetResult(false);
             }
         }
     }

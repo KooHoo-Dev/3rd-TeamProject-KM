@@ -55,6 +55,11 @@
             return totalValue;
         }
 
+        public static int GetBankruptcySaleValue(this Tile tile)
+        {
+            return ToGold(tile.GetTotalValue() * 0.8f);
+        }
+
         public static int GetTollAmount(this Tile tile)
         {
             return ToGold(tile.GetTotalValue() * GetTollRate(tile.State));

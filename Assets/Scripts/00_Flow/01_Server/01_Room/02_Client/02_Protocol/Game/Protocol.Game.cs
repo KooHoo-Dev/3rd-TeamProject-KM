@@ -73,6 +73,12 @@
         public EconomyUpdate[] Updates { get; set; }
     }
 
+    public class DeclareBankruptcyMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.DECLARE_BANKRUPTCY;
+        public string PlayerId { get; set; }
+    }
+
     public class AddIncapacitationCountMessage
     {
         public string Type { get; set; } = ProtocolHeader.ADD_INCAPACITATION_COUNT;
@@ -134,6 +140,7 @@
     public class GameEndedMessage
     {
         public string Type { get; set; } = ProtocolHeader.GAME_ENDED;
+        public string WinnerId { get; set; }
     }
 
     public class EconomyUpdatedMessage
@@ -174,6 +181,17 @@
         public long MoveId { get; set; }
         
         public string RequestId { get; set; }
+    }
+
+    public class UserMoveCancelledMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.USER_MOVE_CANCELLED;
+
+        public int TurnId { get; set; }
+        public long MoveId { get; set; }
+
+        public string RequestId { get; set; }
+        public string UserId { get; set; }
     }
 
     public class TileEffectSyncMessage

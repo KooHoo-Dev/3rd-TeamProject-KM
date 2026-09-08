@@ -67,13 +67,27 @@ namespace BlueMarble.Server
         private void HandleLeave(LeaveMessage message)
         {
             inventories.Remove(message.Id);
+            if (playerIds != null)
+                playerIds = Array.FindAll(playerIds, id => id != message.Id);
 
             // Remove(key, out value) => TryRemove랑 같음 (의미적으로)
             // Dictionary에서 key에 해당하는 요소를 삭제하는데 성공했는지를 반환해줌
             if (others.Remove(message.Id, out User user) == false)
                 return;
+
+            if (string.IsNullOrEmpty(message.NewHostId) == false)
+            {
+                if (message.NewHostId == Me.Id)
+                    Me.IsHost = true;
+                else if (others.TryGetValue(message.NewHostId, out User newHost))
+                    newHost.IsHost = true;
+            }
             
             OnLeft?.Invoke(user);
+
+            if (CurrentTurnUser?.Id == message.Id)
+                CurrentTurnUser = null;
+
             Debug.Log($"[RoomClient] {user.Nickname}({user.Id}) left.");
         }
 

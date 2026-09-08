@@ -24,6 +24,7 @@ namespace Combat
 
         public float DamageMultiplier { get; private set; } = 1f;
         public bool IsCombatActive { get; private set; }
+        public bool IsSceneLoading { get; private set; }
 
         public string CombatId { get; private set; }
         public string AttackerId { get; private set; }
@@ -157,8 +158,6 @@ namespace Combat
             }
 
             string myId = RoomClient.Instance.Me.Id;
-            if (myId != assignment.AttackerId && myId != assignment.DefenderId) return;
-
             CombatId = assignment.CombatId;
             requestId = assignment.RequestId;
             AttackerId = assignment.AttackerId;
@@ -179,10 +178,25 @@ namespace Combat
 
         private async UniTaskVoid LoadCombatSceneAsync()
         {
-            Scene scene = SceneManager.GetSceneByName(CombatSceneName);
+            IsSceneLoading = true;
 
-            if (!scene.isLoaded)
-                await SceneManager.LoadSceneAsync(CombatSceneName, LoadSceneMode.Additive);
+            try
+            {
+                Scene scene = SceneManager.GetSceneByName(CombatSceneName);
+
+                if (!scene.isLoaded)
+                    await SceneManager.LoadSceneAsync(CombatSceneName, LoadSceneMode.Additive);
+
+                if (HasCombatAssignment) return;
+
+                scene = SceneManager.GetSceneByName(CombatSceneName);
+                if (scene.isLoaded)
+                    await SceneManager.UnloadSceneAsync(scene);
+            }
+            finally
+            {
+                IsSceneLoading = false;
+            }
         }
 
         public void NotifySceneReady()
@@ -223,7 +237,7 @@ namespace Combat
             if (TryGetEntity(result.WinnerId, out CombatEntity winnerEntity))
                 winnerEntity.GetComponent<Player.PlayerController>()?.SetActionLocked(true);
 
-            combatUI?.ShowWinner(GetPlayerDisplayName(result.WinnerId));
+            combatUI?.ShowWinner($"{GetPlayerDisplayName(result.WinnerId)}({result.WinnerId})");
             await UniTask.Delay(3000, ignoreTimeScale: true);
 
             OnCombatEnded?.Invoke(result);

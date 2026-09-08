@@ -89,6 +89,37 @@ namespace BlueMarble
         public UniTask GainGoldTo(string playerId, int amount) => UpdateGoldToAsync(playerId, amount);
         public UniTask LoseGoldTo(string playerId, int amount) => UpdateGoldToAsync(playerId, -amount);
 
+        public async UniTask<bool> PayMandatoryAsync(
+            string payerId,
+            int amount,
+            string recipientId = null)
+        {
+            if (amount <= 0) return true;
+            if (TryGetGold(payerId, out int currentGold) == false) return false;
+
+            if (currentGold < amount)
+            {
+                await TerritoryManager.Instance.LiquidateForDebtAsync(payerId, amount);
+
+                if (TryGetGold(payerId, out currentGold) == false)
+                    return false;
+            }
+
+            int paidAmount = Mathf.Min(currentGold, amount);
+            if (paidAmount > 0)
+            {
+                await LoseGoldTo(payerId, paidAmount);
+
+                if (string.IsNullOrEmpty(recipientId) == false)
+                    await GainGoldTo(recipientId, paidAmount);
+            }
+
+            if (paidAmount >= amount) return true;
+
+            await Client.RequestDeclareBankruptcy(payerId);
+            return false;
+        }
+
         #endregion
 
 

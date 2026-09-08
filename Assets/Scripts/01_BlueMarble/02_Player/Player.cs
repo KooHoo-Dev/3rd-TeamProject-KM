@@ -1,5 +1,6 @@
 ﻿using BlueMarble;
 using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 using DG.Tweening;
 using Jay;
@@ -67,9 +68,12 @@ namespace BlueMarble
             PlayerRegistry.Unregister(this);
         }
         
-        public async UniTask<Tile> MoveNext()
+        public async UniTask<Tile> MoveNext(CancellationToken cancellationToken)
         {
-            await UniTask.WaitUntil(this, self => self.World.IsBoardReady);
+            await UniTask.WaitUntil(
+                this,
+                self => self.World.IsBoardReady,
+                cancellationToken: cancellationToken);
 
             Board board = World.Board;
             
@@ -85,7 +89,9 @@ namespace BlueMarble
             await transform
                 .DOJump(goal.transform.position, jumpPower, 1, jumpDuration)
                 .SetEase(Ease.OutCubic)
-                .ToUniTask(TweenCancelBehaviour.Complete);
+                .ToUniTask(
+                    TweenCancelBehaviour.CompleteAndCancelAwait,
+                    cancellationToken: cancellationToken);
 
             return goal;
         }

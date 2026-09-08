@@ -35,9 +35,10 @@ namespace BlueMarble.Server
         
         public event Action<MoveUserToMessage> OnUserMovedTo;
         public event Action<UserMoveFinishedMessage> OnUserMoveFinished;
+        public event Action<UserMoveCancelledMessage> OnUserMoveCancelled;
         public event Action<string, PlayerActivityType> OnPlayerActivityChanged;
         
-        public event Action OnGameEnded;
+        public event Action<GameEndedMessage> OnGameEnded;
         
         public IReadOnlyList<string> PlayerIds => playerIds;
 
@@ -68,6 +69,7 @@ namespace BlueMarble.Server
 
             RegisterHandler<MoveUserToMessage>(ProtocolHeader.MOVE_USER_TO, HandleUserMovedTo);
             RegisterHandler<UserMoveFinishedMessage>(ProtocolHeader.USER_MOVE_FINISHED, HandleUserMoveFinished);
+            RegisterHandler<UserMoveCancelledMessage>(ProtocolHeader.USER_MOVE_CANCELLED, HandleUserMoveCancelled);
 
             RegisterHandler<UpdateTerritoryMessage>(ProtocolHeader.UPDATE_TERRITORY, HandleTerritoryUpdated);
             RegisterHandler<ApplyTreasureMessage>(ProtocolHeader.APPLY_TREASURE, HandleApplyTreasure);
@@ -131,6 +133,14 @@ namespace BlueMarble.Server
         public void RequestUpdateEconomy(params EconomyUpdate[] updates)
         {
             SendAsync(new UpdateEconomyMessage { Updates = updates }).Forget();
+        }
+
+        public UniTask RequestDeclareBankruptcy(string playerId)
+        {
+            return SendAsync(new DeclareBankruptcyMessage
+            {
+                PlayerId = playerId
+            });
         }
 
         public UniTask RequestUpdateTerritory(string ownerId, int tileId, bool hasBuilding, bool hasLandMark)
@@ -291,7 +301,7 @@ namespace BlueMarble.Server
         {
             CurrentTurnUser = null;
             
-            OnGameEnded?.Invoke();
+            OnGameEnded?.Invoke(message);
             Debug.Log("[RoomClient] Game ended");
         }
 
@@ -378,6 +388,16 @@ namespace BlueMarble.Server
                 $"[RoomClient] User move finished. " +
                 $"Turn: {message.TurnId}, " +
                 $"Move: {message.MoveId}");
+        }
+
+        private void HandleUserMoveCancelled(UserMoveCancelledMessage message)
+        {
+            OnUserMoveCancelled?.Invoke(message);
+            Debug.Log(
+                $"[RoomClient] User move cancelled. " +
+                $"Turn: {message.TurnId}, " +
+                $"Move: {message.MoveId}, " +
+                $"User: {message.UserId}");
         }
 
         private void HandlePlayerActivity(PlayerActivityMessage message)

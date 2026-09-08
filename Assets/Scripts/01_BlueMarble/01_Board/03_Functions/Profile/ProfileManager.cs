@@ -24,14 +24,20 @@ namespace BlueMarble
 
             Economy.OnUpdated += RefreshGoldState;
             Territory.OnUpdated += RefreshGoldState;
+            Client.OnInventoryUpdated += HandleInventoryUpdated;
             Client.OnPlayerActivityChanged += HandlePlayerActivityChanged;
+            Client.OnLeft += HandlePlayerLeft;
+
+            RefreshEquipmentStates();
         }
 
         private void OnDisable()
         {
             Economy.OnUpdated -= RefreshGoldState;
             Territory.OnUpdated -= RefreshGoldState;
+            Client.OnInventoryUpdated -= HandleInventoryUpdated;
             Client.OnPlayerActivityChanged -= HandlePlayerActivityChanged;
+            Client.OnLeft -= HandlePlayerLeft;
         }
 
         private void InitProfiles()
@@ -86,6 +92,32 @@ namespace BlueMarble
             return total;
         }
 
+        private void RefreshEquipmentStates()
+        {
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                Profile profile = profiles[i];
+                if (profile.gameObject.activeSelf == false) continue;
+
+                profile.SetEquipmentIcons(Client.GetEquipmentStates(profile.Id));
+            }
+        }
+
+        private void HandleInventoryUpdated(
+            string playerId,
+            IReadOnlyList<EquipmentSlotState> equipments)
+        {
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                Profile profile = profiles[i];
+                if (profile.gameObject.activeSelf == false) continue;
+                if (profile.Id != playerId) continue;
+
+                profile.SetEquipmentIcons(equipments);
+                return;
+            }
+        }
+
         private void HandlePlayerActivityChanged(string playerId, PlayerActivityType activity)
         {
             for (int i = 0; i < profiles.Length; i++)
@@ -106,6 +138,19 @@ namespace BlueMarble
                 else if (activity == PlayerActivityType.Combat)
                     profile.ShowBubble("결투 준비중...");
 
+                return;
+            }
+        }
+
+        private void HandlePlayerLeft(User user)
+        {
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                Profile profile = profiles[i];
+                if (profile.gameObject.activeSelf == false) continue;
+                if (profile.Id != user.Id) continue;
+
+                profile.gameObject.SetActive(false);
                 return;
             }
         }

@@ -51,7 +51,7 @@ namespace BlueMarble
             RoomClient client = RoomClient.Instance;
             IReadOnlyList<string> playerIds = client.PlayerIds;
 
-            int randCount = Random.Range(1, playerIds.Count + 1);
+            int randCount = Random.Range(1, playerIds.Count);
             return playerIds.GetDistinctRandoms(randCount);
         }
     }

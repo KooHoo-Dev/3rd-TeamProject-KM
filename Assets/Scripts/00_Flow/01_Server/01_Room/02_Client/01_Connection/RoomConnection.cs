@@ -63,7 +63,22 @@ namespace BlueMarble.Server
                     return;
                 }
                 
-                if (result.MessageType == WebSocketMessageType.Close) return;
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    if (socket.State == WebSocketState.CloseReceived)
+                    {
+                        try
+                        {
+                            await socket.CloseOutputAsync(
+                                WebSocketCloseStatus.NormalClosure,
+                                "bye",
+                                token).AsUniTask();
+                        }
+                        catch (WebSocketException) { }
+                    }
+
+                    return;
+                }
                 
                 stringBuilder.Append(Encoding.UTF8.GetString(buffer, 0, result.Count));
 

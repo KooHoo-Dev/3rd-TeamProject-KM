@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System;
+using System.Threading;
 using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using Jay;
@@ -9,8 +11,16 @@ namespace BlueMarble
 {
     public class PlayerManager : SingletonBase<PlayerManager>
     {
+        private class ActiveMove
+        {
+            public string PlayerId;
+            public CancellationTokenSource Cancellation;
+        }
+
         [Title("Components")]
         [SerializeField] private Player[] players;
+
+        private readonly Dictionary<long, ActiveMove> activeMoves = new();
 
         private RoomClient Client => RoomClient.Instance;
         private TileEffectSyncManager Sync => TileEffectSyncManager.Instance;
@@ -58,55 +68,161 @@ namespace BlueMarble
             }
         }
 
-        public async UniTask MoveBy(string playerId, int steps, int turnId)
+        public void Remove(string playerId)
         {
-            if (TryGetPlayer(playerId, out Player player) == false) return;
-            
-            bool isOwner = Client.Me.Id == playerId;
+            CancelMoves(playerId);
 
-            for (int i = 0; i < steps; i++)
+            for (int i = 0; i < players.Length; i++)
             {
-                Tile reached = await player.MoveNext();
-                
-                bool isActiveEffect = 
-                    i == steps - 1 ||                // 도착 타일이거나
-                    reached.SpaceDef.IsActiveOnPass; // 통과 시에도 효과를 발동해야하거나
+                Player player = players[i];
+                if (player.gameObject.activeSelf == false) continue;
+                if (player.Id != playerId) continue;
 
-                if (isActiveEffect == false) continue;
-
-                await Sync.ExecuteAsync(
-                    playerId, reached, turnId, 
-                    moveId: 0, stepIndex: i, isOwner);
+                player.gameObject.SetActive(false);
+                return;
             }
         }
 
-        public async UniTask MoveTo(string playerId, int tileIdx, int turnId, long moveId)
+        public async UniTask<bool> MoveBy(string playerId, int steps, int turnId)
         {
-            if (TryGetPlayer(playerId, out Player player) == false) return;
-            
-            bool isMe = Client.Me.Id == playerId;
-            Board board = BlueMarbleWorld.Instance.Board;
+            if (TryGetPlayer(playerId, out Player player) == false) return false;
 
-            int stepIdx = 0;
+            const long moveId = 0;
+            ActiveMove move = BeginMove(moveId, playerId);
 
-            while (true)
+            try
             {
-                Tile reached = await player.MoveNext();
+                bool isOwner = Client.Me.Id == playerId;
 
-                bool isLanding = board.GetTileIndex(reached) == tileIdx;
-                bool isActiveEffect = isLanding || reached.SpaceDef.IsActiveOnPass;
-
-                if (isActiveEffect)
+                for (int i = 0; i < steps; i++)
                 {
+                    move.Cancellation.Token.ThrowIfCancellationRequested();
+                    if (player.gameObject.activeSelf == false) return false;
+
+                    Tile reached = await player.MoveNext(move.Cancellation.Token);
+                    move.Cancellation.Token.ThrowIfCancellationRequested();
+
+                    bool isActiveEffect =
+                        i == steps - 1 ||                // 도착 타일이거나
+                        reached.SpaceDef.IsActiveOnPass; // 통과 시에도 효과를 발동해야하거나
+
+                    if (isActiveEffect == false) continue;
+
                     await Sync.ExecuteAsync(
                         playerId, reached, turnId,
-                        moveId, stepIdx, isMe);
+                        moveId, stepIndex: i, isOwner,
+                        move.Cancellation.Token);
                 }
 
-                if (isLanding) return;
-                
-                stepIdx++;
+                return true;
             }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+            finally
+            {
+                EndMove(moveId, move);
+            }
+        }
+
+        public async UniTask<bool> MoveTo(string playerId, int tileIdx, int turnId, long moveId)
+        {
+            if (TryGetPlayer(playerId, out Player player) == false) return false;
+
+            ActiveMove move = BeginMove(moveId, playerId);
+
+            try
+            {
+                bool isMe = Client.Me.Id == playerId;
+                Board board = BlueMarbleWorld.Instance.Board;
+                int stepIdx = 0;
+
+                while (true)
+                {
+                    move.Cancellation.Token.ThrowIfCancellationRequested();
+                    if (player.gameObject.activeSelf == false) return false;
+
+                    Tile reached = await player.MoveNext(move.Cancellation.Token);
+                    move.Cancellation.Token.ThrowIfCancellationRequested();
+
+                    bool isLanding = board.GetTileIndex(reached) == tileIdx;
+                    bool isActiveEffect = isLanding || reached.SpaceDef.IsActiveOnPass;
+
+                    if (isActiveEffect)
+                    {
+                        await Sync.ExecuteAsync(
+                            playerId, reached, turnId,
+                            moveId, stepIdx, isMe,
+                            move.Cancellation.Token);
+                    }
+
+                    if (isLanding) return true;
+
+                    stepIdx++;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+            finally
+            {
+                EndMove(moveId, move);
+            }
+        }
+
+        public void CancelMove(long moveId)
+        {
+            if (activeMoves.Remove(moveId, out ActiveMove move))
+                move.Cancellation.Cancel();
+        }
+
+        public void CancelMoves(string playerId)
+        {
+            List<long> moveIds = new();
+
+            foreach ((long moveId, ActiveMove move) in activeMoves)
+            {
+                if (move.PlayerId == playerId)
+                    moveIds.Add(moveId);
+            }
+
+            for (int i = 0; i < moveIds.Count; i++)
+                CancelMove(moveIds[i]);
+        }
+
+        public void CancelAllMoves()
+        {
+            List<long> moveIds = new(activeMoves.Keys);
+
+            for (int i = 0; i < moveIds.Count; i++)
+                CancelMove(moveIds[i]);
+        }
+
+        private ActiveMove BeginMove(long moveId, string playerId)
+        {
+            CancelMove(moveId);
+
+            ActiveMove move = new ActiveMove
+            {
+                PlayerId = playerId,
+                Cancellation = new CancellationTokenSource()
+            };
+
+            activeMoves.Add(moveId, move);
+            return move;
+        }
+
+        private void EndMove(long moveId, ActiveMove move)
+        {
+            if (activeMoves.TryGetValue(moveId, out ActiveMove current) &&
+                ReferenceEquals(current, move))
+            {
+                activeMoves.Remove(moveId);
+            }
+
+            move.Cancellation.Dispose();
         }
 
         private bool TryGetPlayer(string playerId, out Player result)

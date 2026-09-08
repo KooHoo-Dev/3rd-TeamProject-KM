@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3333294595671630256}
+  - component: {fileID: 9035564540859923363}
   m_Layer: 0
   m_Name: LandMark
   m_TagString: Untagged
@@ -33,6 +34,19 @@ Transform:
   - {fileID: 6851718360806471651}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!210 &9035564540859923363
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9115422695662948767}
+  m_Enabled: 1
+  m_SortingLayerID: -2131550063
+  m_SortingLayer: 1
+  m_SortingOrder: 0
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1001 &2829296450290318904
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -47,7 +61,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8671012225352714715, guid: 5dde24593b91c0442a771b99291092bb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.325
       objectReference: {fileID: 0}
     - target: {fileID: 8671012225352714715, guid: 5dde24593b91c0442a771b99291092bb, type: 3}
       propertyPath: m_LocalPosition.y
@@ -105,7 +119,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 611289623630602631, guid: 1bbeb73bf33be2d45a0383c8f20b52b1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.65
+      value: -0.325
       objectReference: {fileID: 0}
     - target: {fileID: 611289623630602631, guid: 1bbeb73bf33be2d45a0383c8f20b52b1, type: 3}
       propertyPath: m_LocalPosition.y

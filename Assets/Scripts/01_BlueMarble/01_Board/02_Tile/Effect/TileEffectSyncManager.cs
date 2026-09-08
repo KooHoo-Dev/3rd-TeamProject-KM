@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using Jay;
@@ -20,10 +21,21 @@ namespace BlueMarble
         private void OnDisable()
         {
             Client.OnTileEffectSync -= HandleSync;
+            CancelAll();
+        }
+
+        public void CancelAll()
+        {
+            foreach (UniTaskCompletionSource source in waiters.Values)
+                source.TrySetResult();
+
+            waiters.Clear();
+            completed.Clear();
         }
 
         public async UniTask ExecuteAsync(string playerId, Tile tile, 
-            int turnId, long moveId, int stepIndex, bool isOwner)
+            int turnId, long moveId, int stepIndex, bool isOwner,
+            CancellationToken cancellationToken)
         {
             TileEffectSyncMessage readyMessage = new TileEffectSyncMessage
             {
@@ -33,7 +45,8 @@ namespace BlueMarble
                 Phase = TileEffectSyncPhase.Ready
             };
 
-            await AnnounceAndWaitAsync(readyMessage);
+            await AnnounceAndWaitAsync(readyMessage, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             TileEffectSyncMessage resolvedMessage = new TileEffectSyncMessage
             {
@@ -46,31 +59,49 @@ namespace BlueMarble
             if (isOwner)
             {
                 await tile.ExecuteEffect(playerId);
-                await AnnounceAndWaitAsync(resolvedMessage);
+                cancellationToken.ThrowIfCancellationRequested();
+                await AnnounceAndWaitAsync(resolvedMessage, cancellationToken);
             }
-            else await WaitAsync(resolvedMessage);
+            else await WaitAsync(resolvedMessage, cancellationToken);
         }
 
-        private UniTask WaitAsync(TileEffectSyncMessage msg)
+        private async UniTask WaitAsync(
+            TileEffectSyncMessage msg,
+            CancellationToken cancellationToken)
         {
             string key = CreateKey(msg);
 
             // 서버 응답이 빨랐을 경우
             if (completed.Remove(key))
-                return UniTask.CompletedTask;
+                return;
 
             if (waiters.TryGetValue(key, out UniTaskCompletionSource source) == false)
             {
                 source = new UniTaskCompletionSource();
                 waiters.Add(key, source);
             }
-            
-            return source.Task;
+
+            try
+            {
+                await source.Task.AttachExternalCancellation(cancellationToken);
+            }
+            finally
+            {
+                if (cancellationToken.IsCancellationRequested &&
+                    waiters.TryGetValue(key, out UniTaskCompletionSource current) &&
+                    ReferenceEquals(current, source))
+                {
+                    waiters.Remove(key);
+                    completed.Remove(key);
+                }
+            }
         }
 
-        private async UniTask AnnounceAndWaitAsync(TileEffectSyncMessage msg)
+        private async UniTask AnnounceAndWaitAsync(
+            TileEffectSyncMessage msg,
+            CancellationToken cancellationToken)
         {
-            UniTask waitTask = WaitAsync(msg);
+            UniTask waitTask = WaitAsync(msg, cancellationToken);
 
             await Client.AnnounceTileEffectSync(msg);
             await waitTask;

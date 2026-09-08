@@ -24,6 +24,11 @@ namespace BlueMarble
 {
     public class TerritoryManager : SingletonBase<TerritoryManager>
     {
+        [Header("Territory Visuals")]
+        [SerializeField] private GameObject landPrefab;
+        [SerializeField] private GameObject buildingPrefab;
+        [SerializeField] private GameObject landMarkPrefab;
+
         private KeyValuePair<int, UniTaskCompletionSource> updateWaiter;
         private UniTaskCompletionSource<TerritoryBill> purchaseWaiter;
 
@@ -98,6 +103,10 @@ namespace BlueMarble
         {
             TileState state = tile.State;
 
+            bool paidInFull = await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
+            if (paidInFull == false) return;
+            if (state.HasLandMark) return;
+
             await Client.AnnouncePlayerActivity(PlayerActivityType.Combat);
 
             try
@@ -108,21 +117,20 @@ namespace BlueMarble
                     playerId,
                     state.OwnerId);
 
-                if (!wantsFight)
-                {
-                    await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
-                    return;
-                }
+                if (!wantsFight) return;
 
                 CombatOutcome outcome = await CombatSystem.Instance.StartCombat(playerId, tile);
 
                 if (outcome == CombatOutcome.AttackerWin)
                 {
-                    await ChangeOwnerAsync(tile, playerId);
+                    if (tile.State.OwnerId != playerId)
+                        await ChangeOwnerAsync(tile, playerId);
+
                     return;
                 }
 
-                await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
+                if (outcome == CombatOutcome.DefenderWin)
+                    await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
             }
             finally
             {
@@ -131,16 +139,9 @@ namespace BlueMarble
             }
         }
 
-        private async UniTask PayTollAsync(string payerId, string ownerId, int tollAmount)
+        private UniTask<bool> PayTollAsync(string payerId, string ownerId, int tollAmount)
         {
-            if (Economy.TryGetGold(payerId, out int currentGold) == false) return;
-
-            int paidAmount = Mathf.Min(currentGold, tollAmount);
-            if (paidAmount <= 0) return;
-
-            // TODO: 추후 파산 시스템 연결
-            await Economy.LoseGoldTo(payerId, paidAmount);
-            await Economy.GainGoldTo(ownerId, paidAmount);
+            return Economy.PayMandatoryAsync(payerId, tollAmount, ownerId);
         }
 
         private async UniTask RequestPurchaseAsync(string playerId, Tile tile, int currentGold)
@@ -167,6 +168,8 @@ namespace BlueMarble
             if (state.IsOccupied == false && bill.IsBuyTile == false) return;
 
             int totalPrice = tile.GetPurchasePrice(bill);
+            if (Economy.TryGetGold(playerId, out currentGold) == false) return;
+            if (currentGold < totalPrice) return;
             
             // 서버에게 금액 차감 요청 전달 후, 처리까지 대기
             await Economy.LoseGoldTo(playerId, totalPrice);
@@ -187,6 +190,33 @@ namespace BlueMarble
                 new TerritoryBill(true, tile.State.HasBuilding, tile.State.HasLandMark));
         }
 
+        public async UniTask LiquidateForDebtAsync(string playerId, int requiredGold)
+        {
+            if (Economy.TryGetGold(playerId, out int currentGold) == false) return;
+            if (currentGold >= requiredGold) return;
+
+            List<Tile> territories = World.Board.GetOccupiedTiles(playerId);
+            territories.Sort((left, right) =>
+            {
+                int priceComparison = left.GetTotalValue().CompareTo(right.GetTotalValue());
+                return priceComparison != 0
+                    ? priceComparison
+                    : World.Board.GetTileIndex(left).CompareTo(World.Board.GetTileIndex(right));
+            });
+
+            for (int i = 0; i < territories.Count; i++)
+            {
+                Tile tile = territories[i];
+                int saleValue = tile.GetBankruptcySaleValue();
+
+                await SetTerritoryStateAsync(string.Empty, tile, false, false);
+                await Economy.GainGoldTo(playerId, saleValue);
+
+                if (Economy.TryGetGold(playerId, out currentGold) && currentGold >= requiredGold)
+                    return;
+            }
+        }
+
         public void SubmitPurchase(bool isBuyTile, bool isBuyBuilding, bool isBuyLandMark)
         {
             if (purchaseWaiter == null) return;
@@ -199,11 +229,20 @@ namespace BlueMarble
         
         private async UniTask UpdateTerritoryAsync(string ownerId, Tile tile, TerritoryBill bill)
         {
-            int tileId = World.Board.GetTileIndex(tile);
-            
             bool hasBuilding = tile.State.HasBuilding || bill.IsBuyBuilding;
             bool hasLandMark = tile.State.HasLandMark || bill.IsBuyLandMark;
-            
+
+            await SetTerritoryStateAsync(ownerId, tile, hasBuilding, hasLandMark);
+        }
+
+        private async UniTask SetTerritoryStateAsync(
+            string ownerId,
+            Tile tile,
+            bool hasBuilding,
+            bool hasLandMark)
+        {
+            int tileId = World.Board.GetTileIndex(tile);
+
             UniTaskCompletionSource waiter = new();
             updateWaiter = new KeyValuePair<int, UniTaskCompletionSource>(tileId, waiter);
 
@@ -225,11 +264,28 @@ namespace BlueMarble
             tile.State.OwnerId = msg.OwnerId;
             tile.State.HasBuilding = msg.HasBuilding;
             tile.State.HasLandMark = msg.HasLandMark;
-            
-            // TODO: 건물 생성 혹은 소유주 변경 연출 등등 처리
+
+            GameObject visualPrefab = null;
+            Color visualColor = Color.white;
+
+            if (tile.State.IsOccupied)
+            {
+                visualPrefab = tile.State.HasLandMark
+                    ? landMarkPrefab
+                    : tile.State.HasBuilding
+                        ? buildingPrefab
+                        : landPrefab;
+
+                User owner = Client.GetUser(tile.State.OwnerId);
+                visualColor = PlayerAppearanceMap.Instance
+                    .GetAppearance(owner.PlayerNumber)
+                    .Color;
+            }
+
+            tile.SetTerritoryVisual(visualPrefab, visualColor);
             
             if (msg.TileId == updateWaiter.Key)
-                updateWaiter.Value.TrySetResult();
+                updateWaiter.Value?.TrySetResult();
             
             OnUpdated?.Invoke();
         }

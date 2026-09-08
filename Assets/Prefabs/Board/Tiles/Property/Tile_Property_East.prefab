@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2487091987346707192, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_Name
-      value: Tile_Property_East Variant
+      value: Tile_Property_East
       objectReference: {fileID: 0}
     - target: {fileID: 2546747629717646438, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_LocalScale.x
@@ -59,6 +59,10 @@ PrefabInstance:
     - target: {fileID: 4473292752411144092, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4748832350558357502, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 9061045317371079633, guid: 4e5ad91aa8db0f74da911faa5a4e9f2e, type: 3}
       propertyPath: m_LocalScale.x

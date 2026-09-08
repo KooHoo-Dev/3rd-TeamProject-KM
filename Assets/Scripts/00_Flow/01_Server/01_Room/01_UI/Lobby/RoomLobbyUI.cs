@@ -82,7 +82,6 @@ namespace BlueMarble.Server
             mask.SetActive(true);
             
             await Client.LeaveAsync();
-            _ = SceneManager.LoadSceneAsync("Room Enter");
         }
 
         private void OnStartButtonClicked()

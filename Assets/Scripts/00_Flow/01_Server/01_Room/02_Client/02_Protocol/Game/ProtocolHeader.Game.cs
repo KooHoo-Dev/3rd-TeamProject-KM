@@ -8,6 +8,7 @@
     
         public const string ROLL_DICE = "rollDice";
         public const string UPDATE_ECONOMY = "updateEconomy";
+        public const string DECLARE_BANKRUPTCY = "declareBankruptcy";
 
         public const string DRAW_GOLD_CARD = "drawGoldCard";
         public const string ADD_INCAPACITATION_COUNT = "addIncapacitationCount";
@@ -45,6 +46,7 @@
     
         public const string GOLD_CARD_DRAWN = "goldCardDrawn";
         public const string INVENTORY_UPDATED = "inventoryUpdated";
+        public const string USER_MOVE_CANCELLED = "userMoveCancelled";
     
         public const string GAME_ENDED = "gameEnded";
         public const string COMBAT_OFFER = "combatOffer";
