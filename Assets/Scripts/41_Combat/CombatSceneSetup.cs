@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Player;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Combat
 {
@@ -19,6 +21,11 @@ namespace Combat
         [Header("Player Visual")]
         [SerializeField] private RuntimeAnimatorController playerAnimatorController;
 
+        [Header("Result UI")]
+        [SerializeField] private CanvasGroup winnerPanel;
+        [SerializeField] private TMP_Text winnerNameText;
+        [SerializeField] private Image winnerBackground;
+
         private readonly List<Camera> disabledCameras = new();
         private readonly List<AudioListener> disabledListeners = new();
 
@@ -34,7 +41,9 @@ namespace Combat
             Transform systemsRoot = FindOrCreateRoot("=Combat Systems");
             Transform playersRoot = FindOrCreateRoot("=Players");
             Transform environmentRoot = FindOrCreateRoot("=Environment");
-            FindOrCreateRoot("=UI");
+            Transform uiRoot = FindOrCreateRoot("=UI");
+            SetupResultUI(uiRoot);
+            combatSystem.AttachSceneSetup(this);
 
             Timer timer = GetOrAddComponent<Timer>(FindOrCreateChild(systemsRoot, "Combat Timer").gameObject);
             combatSystem.AttachTimer(timer);
@@ -218,6 +227,47 @@ namespace Combat
 
             BoxCollider2D collider = GetOrAddComponent<BoxCollider2D>(boundary.gameObject);
             collider.size = defaultSize;
+        }
+
+        public void ShowWinner(string winnerName)
+        {
+            if (winnerNameText != null)
+                winnerNameText.SetText($"{winnerName} 승리!!");
+
+            if (winnerPanel == null) return;
+
+            winnerPanel.alpha = 1f;
+            winnerPanel.interactable = false;
+            winnerPanel.blocksRaycasts = true;
+        }
+
+        private void SetupResultUI(Transform uiRoot)
+        {
+            Transform winnerTransform = FindOrCreateChild(uiRoot, "Winner");
+
+            if (winnerPanel == null)
+                winnerPanel = GetOrAddComponent<CanvasGroup>(winnerTransform.gameObject);
+
+            if (winnerNameText == null)
+                winnerNameText = winnerTransform.Find("Desc")?.GetComponent<TMP_Text>();
+
+            if (winnerBackground == null)
+                winnerBackground = winnerTransform.GetComponent<Image>();
+
+            if (winnerBackground != null)
+            {
+                Color backgroundColor = winnerBackground.color;
+                backgroundColor.a = 0.65f;
+                winnerBackground.color = backgroundColor;
+            }
+
+            Transform rewardTransform = winnerTransform.Find("Reward");
+            if (rewardTransform != null)
+                rewardTransform.gameObject.SetActive(false);
+
+            winnerPanel.alpha = 0f;
+            winnerPanel.interactable = false;
+            winnerPanel.blocksRaycasts = false;
         }
 
         private Transform FindOrCreateRoot(string name)
