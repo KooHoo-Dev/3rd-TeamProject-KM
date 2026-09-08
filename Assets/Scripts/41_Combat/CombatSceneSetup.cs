@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using BlueMarble;
+using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using Player;
 using UnityEngine;
@@ -160,8 +162,20 @@ namespace Combat
             string localPlayerId,
             int hp)
         {
-            SetupPlayer(leftPlayer, attackerId, attackerId == localPlayerId, hp, 1f);
-            SetupPlayer(rightPlayer, defenderId, defenderId == localPlayerId, hp, -1f);
+            SetupPlayer(
+                leftPlayer,
+                attackerId,
+                attackerId == localPlayerId,
+                hp,
+                1f,
+                GetPlayerNumber(attackerId, 0));
+            SetupPlayer(
+                rightPlayer,
+                defenderId,
+                defenderId == localPlayerId,
+                hp,
+                -1f,
+                GetPlayerNumber(defenderId, 1));
         }
 
         private static void SetupPlayer(
@@ -169,9 +183,11 @@ namespace Combat
             string ownerId,
             bool isLocal,
             int hp,
-            float facingDirection)
+            float facingDirection,
+            int playerNumber)
         {
             player.Init(ownerId, hp);
+            ApplyAppearance(player, playerNumber);
 
             PlayerController controller = player.GetComponent<PlayerController>();
             controller.SetLocalPlayer(isLocal);
@@ -179,6 +195,40 @@ namespace Combat
             EquipmentCaster caster = player.GetComponent<EquipmentCaster>();
             caster.SetFacingDirection(facingDirection);
             caster.SetLocalPlayer(isLocal);
+        }
+
+        private static int GetPlayerNumber(string playerId, int fallback)
+        {
+            if (!RoomClient.IsInitialized || RoomClient.Instance.Me == null)
+                return fallback;
+
+            RoomClient client = RoomClient.Instance;
+            if (client.Me.Id == playerId)
+                return client.Me.PlayerNumber;
+
+            return client.Others.TryGetValue(playerId, out User user)
+                ? user.PlayerNumber
+                : fallback;
+        }
+
+        private static void ApplyAppearance(PlayerEntity player, int playerNumber)
+        {
+            PlayerAppearanceMap appearanceMap = PlayerAppearanceMap.Instance;
+            if (appearanceMap == null)
+            {
+                Debug.LogError("[CombatSceneSetup] PlayerAppearanceMap을 불러올 수 없습니다.");
+                return;
+            }
+
+            SpriteRenderer visualRenderer = player.GetComponentInChildren<SpriteRenderer>(true);
+            if (visualRenderer == null)
+            {
+                Debug.LogError($"[CombatSceneSetup] {player.OwnerId}의 Visual SpriteRenderer가 없습니다.");
+                return;
+            }
+
+            PlayerAppearance appearance = appearanceMap.GetAppearance(playerNumber);
+            visualRenderer.color = appearance.Color;
         }
 
         private void DisableOtherSceneCameras()
