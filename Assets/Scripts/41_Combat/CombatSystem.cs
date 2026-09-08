@@ -190,25 +190,13 @@ namespace Combat
             RoomClient.Instance.AnnounceCombatReady(CombatId).Forget();
         }
 
-        public void BeginCombatFromNetwork(CombatStartedMessage message)
+        public async UniTaskVoid BeginCombatFromNetwork(CombatStartedMessage message)
         {
             if (message == null || message.CombatId != CombatId) return;
+            await BattleIntroManager.Instance.PlayAsync();   
             StartCombatRuntime();
         }
         
-        // public void  BeginCombatFromNetwork(CombatStartedMessage message)
-        // {
-        //    if (message == null || message.CombatId != CombatId) return;
-        //    PlayIntroThenStartAsync().Forget();  
-        // }
-        
-        // private async UniTaskVoid PlayIntroThenStartAsync()
-        // {
-        //     await BattleIntroManager.Instance.PlayAsync();   
-        //     StartCombatRuntime();
-        // }
-        
-
         public void CompleteCombatFromNetwork(CombatResultMessage result)
         {
             if (result == null || string.IsNullOrEmpty(result.WinnerId)) return;

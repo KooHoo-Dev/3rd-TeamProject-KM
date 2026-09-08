@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using Sirenix.OdinInspector;
 using UnityEngine;
+using Utility;
 
 namespace Combat
 {
@@ -29,6 +31,7 @@ namespace Combat
 
         // 외부(BattleIntroManager)에서 호출하는 진입점.
         // 연출이 완전히 끝날 때까지 await로 대기 가능
+        [Button]
         public async UniTask PlayAsync()
         {
             PrepareCamera();
@@ -89,6 +92,8 @@ namespace Combat
                 audioSource.PlayOneShot(finalExplosionSFX);
 
             await CameraShakeAsync(shakeDuration, shakeMagnitude);
+
+            await CustomUniTask.DelaySeconds(2.5f);
         }
 
         private async UniTask PunchScaleAsync(Transform targetTransform, Vector3 originalScale)

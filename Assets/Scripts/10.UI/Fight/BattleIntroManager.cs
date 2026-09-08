@@ -7,7 +7,7 @@ namespace Combat
     public class BattleIntroManager : SingletonBase<BattleIntroManager>
     {
         // Combat 씬의 BattleVSIntroFixedScale이 Awake/OnEnable에서 자기 자신을 등록
-        private BattleVSIntroFixedScale currentIntro;
+        [SerializeField] private BattleVSIntroFixedScale currentIntro;
 
         public void Register(BattleVSIntroFixedScale intro)
         {
