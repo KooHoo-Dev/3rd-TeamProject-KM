@@ -7,6 +7,7 @@ using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Utility;
 
 namespace BlueMarble
 {
@@ -15,6 +16,11 @@ namespace BlueMarble
         [field: Title("References")]
         [field: SerializeField] public PlayerManager Players { get; private set; }
         [field: SerializeField] public TurnManager Turn { get; private set; }
+
+        [Title("Winner")]
+        [SerializeField] private GameObject winnerPanel;
+        [SerializeField] private TMP_Text winnerText;
+        [SerializeField] private TMP_Text winnerGoldText;
 
         private RoomClient Client => RoomClient.Instance;
         
@@ -155,10 +161,12 @@ namespace BlueMarble
                 string winnerNickname = winner.Nickname;
                 string winnerId = winner.Id;
                 int totalAssets = GetTotalAssets(winnerId);
+                
+                winnerPanel.SetActive(true);
+                winnerText.SetText($"{winnerNickname}({winnerId}) 승리!!");
+                winnerGoldText.SetText($"총 자산: {totalAssets:N0} 골드");
 
-                Debug.Log($"[GameManager] {winnerNickname}({winnerId}) 승리!! 총 자산: {totalAssets:N0} 골드");
-
-                // 승리 결과 UI: 이 위치에 await ... 한 줄만 추가
+                await CustomUniTask.DelaySeconds(5f);
             }
 
             await Client.LeaveAsync();
