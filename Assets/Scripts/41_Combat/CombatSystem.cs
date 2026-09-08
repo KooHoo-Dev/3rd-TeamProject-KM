@@ -46,7 +46,7 @@ namespace Combat
         private float nextMultiplierIncreaseTime;
         private string requestId;
         private bool isFinishing;
-        private CombatSceneSetup combatSceneSetup;
+        private CombatUI combatUI;
 
         private UniTaskCompletionSource<CombatOutcome> combatResult;
         private readonly HashSet<string> appliedHitIds = new();
@@ -223,7 +223,7 @@ namespace Combat
             if (TryGetEntity(result.WinnerId, out CombatEntity winnerEntity))
                 winnerEntity.GetComponent<Player.PlayerController>()?.SetActionLocked(true);
 
-            combatSceneSetup?.ShowWinner(GetPlayerDisplayName(result.WinnerId));
+            combatUI?.ShowWinner(GetPlayerDisplayName(result.WinnerId));
             await UniTask.Delay(3000, ignoreTimeScale: true);
 
             OnCombatEnded?.Invoke(result);
@@ -352,9 +352,9 @@ namespace Combat
             combatTimer.duration = DurationSeconds;
         }
 
-        public void AttachSceneSetup(CombatSceneSetup sceneSetup)
+        public void AttachCombatUI(CombatUI ui)
         {
-            combatSceneSetup = sceneSetup;
+            combatUI = ui;
         }
 
         public async UniTask<bool> StartTestCombat(
@@ -461,7 +461,7 @@ namespace Combat
             DurationSeconds = 30f;
             requestId = null;
             combatResult = null;
-            combatSceneSetup = null;
+            combatUI = null;
             isFinishing = false;
             appliedHitIds.Clear();
             hurtBoxes.Clear();
