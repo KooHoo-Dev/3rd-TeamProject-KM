@@ -192,6 +192,10 @@ namespace Combat
             PlayerController controller = player.GetComponent<PlayerController>();
             controller.SetLocalPlayer(isLocal);
 
+            Transform cursor = player.transform.Find("Cursor");
+            if (cursor != null)
+                cursor.gameObject.SetActive(isLocal);
+
             EquipmentCaster caster = player.GetComponent<EquipmentCaster>();
             caster.SetFacingDirection(facingDirection);
             caster.SetLocalPlayer(isLocal);
@@ -220,7 +224,9 @@ namespace Combat
                 return;
             }
 
-            SpriteRenderer visualRenderer = player.GetComponentInChildren<SpriteRenderer>(true);
+            SpriteRenderer visualRenderer = player.transform
+                .Find("Visual")?
+                .GetComponent<SpriteRenderer>();
             if (visualRenderer == null)
             {
                 Debug.LogError($"[CombatSceneSetup] {player.OwnerId}의 Visual SpriteRenderer가 없습니다.");
