@@ -129,7 +129,8 @@ namespace Combat
             bool accepted = fightUI != null && await fightUI.ShowAsync(
                 FightUIMode.Response,
                 offer.AttackerId,
-                offer.DefenderId);
+                offer.DefenderId,
+                offer.RejectionChance);
 
             await RoomClient.Instance.RespondCombat(offer.CombatId, accepted);
         }
