@@ -221,5 +221,11 @@ namespace BlueMarble
 
         }
 
+        public void ResetCooldownAll()
+        {
+            foreach (Equipment instance in GetAll())
+                instance.ResetCooldown();
+        }
+
     }
 }

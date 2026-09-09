@@ -39,6 +39,11 @@ namespace BlueMarble
             if (RemainingCooldown < 0f) RemainingCooldown = 0f;
         }
 
+        public void ResetCooldown()
+        {
+            RemainingCooldown = 0f;
+        }
+
         /// <summary>
         /// 장비 사용 시도. 쿨타임이거나 내구도가 0이면 파괴 후 실패하고 성공하면 쿨타임 리셋
         /// </summary>
