@@ -4801,8 +4801,8 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 498489253
+  m_SortingLayer: 2
   m_SortingOrder: 11
   m_MaskInteraction: 0
   m_RenderMode: 0
@@ -9637,9 +9637,9 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: 498489253
+  m_SortingLayer: 2
+  m_SortingOrder: 12
   m_MaskInteraction: 0
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -14509,8 +14509,8 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 498489253
+  m_SortingLayer: 2
   m_SortingOrder: 13
   m_MaskInteraction: 0
   m_RenderMode: 0
@@ -19345,8 +19345,8 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 498489253
+  m_SortingLayer: 2
   m_SortingOrder: 14
   m_MaskInteraction: 0
   m_RenderMode: 0
@@ -24103,8 +24103,8 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 498489253
+  m_SortingLayer: 2
   m_SortingOrder: 11
   m_MaskInteraction: 0
   m_RenderMode: 1
@@ -24229,6 +24229,18 @@ PrefabInstance:
     - target: {fileID: 8842575847103525908, guid: df7052f011e6e7d4f8eb5a3d2de2dc5d, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8842575847103525910, guid: df7052f011e6e7d4f8eb5a3d2de2dc5d, type: 3}
+      propertyPath: m_SortingLayer
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8842575847103525910, guid: df7052f011e6e7d4f8eb5a3d2de2dc5d, type: 3}
+      propertyPath: m_SortingOrder
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 8842575847103525910, guid: df7052f011e6e7d4f8eb5a3d2de2dc5d, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 498489253
       objectReference: {fileID: 0}
     - target: {fileID: 8842575847103525911, guid: df7052f011e6e7d4f8eb5a3d2de2dc5d, type: 3}
       propertyPath: m_LocalPosition.x
