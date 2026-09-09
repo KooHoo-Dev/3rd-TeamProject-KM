@@ -13,6 +13,7 @@ namespace BlueMarble
     {
         [Title("Components")]
         [SerializeField] private Camera mainCamera;
+        [SerializeField] private RectTransform travelMask;
 
         private RoomClient Client => RoomClient.Instance;
         private BlueMarbleWorld World => BlueMarbleWorld.Instance;
@@ -27,6 +28,8 @@ namespace BlueMarble
                 return;
             }
             
+            travelMask.gameObject.SetActive(true);
+
             try
             {
                 while (true)
@@ -44,11 +47,18 @@ namespace BlueMarble
 
                     if (board.TryGetTile(worldPos, out Tile tile) == false) continue;
                     if (board.GetTile(player.Position) == tile) continue;
+
+                    travelMask.gameObject.SetActive(false);
                     if (await MoveToAsync(playerId, tile)) break;
+                    travelMask.gameObject.SetActive(true);
                 }
             }
             catch (OperationCanceledException)
             {
+            }
+            finally
+            {
+                travelMask.gameObject.SetActive(false);
             }
         }
         

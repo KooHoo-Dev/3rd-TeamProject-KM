@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Jay;
 using Sirenix.OdinInspector;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Utility;
@@ -16,6 +17,7 @@ namespace BlueMarble
 
         [Title("UI")]
         [SerializeField] private Button rollButton;
+        [SerializeField] private TMP_Text diceText;
 
         [Title("Settings")]
         [SerializeField] private float jumpPower = 8f;
@@ -57,9 +59,13 @@ namespace BlueMarble
                 .Join(r2)
                 .ToUniTask(TweenCancelBehaviour.Complete);
             
-            await CustomUniTask.DelaySeconds(1f);
+            diceText.SetText($"{d1 + d2}");
+            diceText.gameObject.SetActive(true);
+            
+            await CustomUniTask.DelaySeconds(1.5f);
 
             SetActiveDices(false);
+            diceText.gameObject.SetActive(false);
         }
 
         private void HandleRollButtonClicked()

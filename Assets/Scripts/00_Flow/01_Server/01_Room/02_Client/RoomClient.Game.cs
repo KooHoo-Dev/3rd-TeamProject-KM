@@ -16,8 +16,10 @@ namespace BlueMarble.Server
 
         [field: PropertySpace]
         [field: ShowInInspector, ReadOnly] public int RoundCount { get; private set; }
+        [field: ShowInInspector, ReadOnly] public int MaxRoundCount { get; private set; }
         [field: ShowInInspector, ReadOnly] public int TurnId { get; private set; }
         [field: ShowInInspector, ReadOnly] public User CurrentTurnUser { get; private set; }
+        [field: ShowInInspector, ReadOnly] public bool IsSpectating { get; private set; }
 
         public event Action OnGameStarted;
 
@@ -37,6 +39,7 @@ namespace BlueMarble.Server
         public event Action<UserMoveFinishedMessage> OnUserMoveFinished;
         public event Action<UserMoveCancelledMessage> OnUserMoveCancelled;
         public event Action<string, PlayerActivityType> OnPlayerActivityChanged;
+        public event Action<User> OnPlayerBankrupted;
         
         public event Action<GameEndedMessage> OnGameEnded;
         
@@ -62,6 +65,9 @@ namespace BlueMarble.Server
             RegisterHandler<GoldCardPresentationFinishedMessage>(
                 ProtocolHeader.GOLD_CARD_PRESENTATION_FINISHED,
                 HandleGoldCardPresentationFinished);
+            RegisterHandler<PlayerBankruptedMessage>(
+                ProtocolHeader.PLAYER_BANKRUPTED,
+                HandlePlayerBankrupted);
             RegisterHandler<GameEndedMessage>(ProtocolHeader.GAME_ENDED, HandleGameEnded);
 
             RegisterHandler<EconomyUpdatedMessage>(ProtocolHeader.ECONOMY_UPDATED, HandleEconomyUpdated);
@@ -219,6 +225,11 @@ namespace BlueMarble.Server
                 Activity = activity
             });
         }
+
+        public void SetLocalPlayerActivity(PlayerActivityType activity)
+        {
+            OnPlayerActivityChanged?.Invoke(Me.Id, activity);
+        }
         
         #endregion
         
@@ -240,6 +251,7 @@ namespace BlueMarble.Server
             User user = GetUser(message.PlayerId);
             
             RoundCount = message.RoundCount;
+            MaxRoundCount = message.MaxRoundCount;
             TurnId = message.TurnId;
             
             CurrentTurnUser = user;
@@ -303,6 +315,23 @@ namespace BlueMarble.Server
             
             OnGameEnded?.Invoke(message);
             Debug.Log("[RoomClient] Game ended");
+        }
+
+        private void HandlePlayerBankrupted(PlayerBankruptedMessage message)
+        {
+            User user = GetUser(message.Id);
+
+            playerIds = Array.FindAll(playerIds, id => id != message.Id);
+
+            if (message.Id == Me.Id)
+                IsSpectating = true;
+
+            OnPlayerBankrupted?.Invoke(user);
+
+            if (CurrentTurnUser?.Id == message.Id)
+                CurrentTurnUser = null;
+
+            Debug.Log($"[RoomClient] {user.Nickname}({user.Id}) went bankrupt.");
         }
 
         private void HandleEconomyUpdated(EconomyUpdatedMessage message)

@@ -19,6 +19,7 @@ namespace BlueMarble
         [SerializeField] private Image[] equipmentSlots;
         [SerializeField] private GameObject bubble;
         [SerializeField] private TMP_Text bubbleText;
+        [SerializeField] private GameObject bankrupt;
 
         public string Id { get; private set; }
 
@@ -33,6 +34,7 @@ namespace BlueMarble
             nicknameText.text = $"{user.Nickname}({user.Id})";
 
             HideBubble();
+            bankrupt.SetActive(false);
         }
 
         public void SetGold(int amount)
@@ -80,6 +82,11 @@ namespace BlueMarble
         public void HideBubble()
         {
             bubble.SetActive(false);
+        }
+
+        public void SetBankrupt()
+        {
+            bankrupt.SetActive(true);
         }
     }
 }

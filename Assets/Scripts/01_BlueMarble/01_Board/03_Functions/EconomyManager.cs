@@ -4,12 +4,14 @@ using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using Jay;
 using UnityEngine;
+using Utility;
 
 namespace BlueMarble
 {
     public class EconomyManager : SingletonBase<EconomyManager>
     {
         private readonly Dictionary<string, int> golds = new();
+        private readonly HashSet<string> paymentProtectionUsedPlayerIds = new();
 
         public event Action OnUpdated;
         
@@ -97,6 +99,21 @@ namespace BlueMarble
             if (amount <= 0) return true;
             if (TryGetGold(payerId, out int currentGold) == false) return false;
 
+            bool canUsePaymentProtection =
+                currentGold < amount &&
+                string.IsNullOrEmpty(recipientId) == false &&
+                payerId == Client.Me.Id &&
+                paymentProtectionUsedPlayerIds.Contains(payerId) == false &&
+                GetTotalAssets(payerId, currentGold) >= amount;
+
+            if (canUsePaymentProtection)
+            {
+                paymentProtectionUsedPlayerIds.Add(payerId);
+                await GainGoldTo(recipientId, amount);
+                await PresentPaymentProtectionAsync();
+                return true;
+            }
+
             if (currentGold < amount)
             {
                 await TerritoryManager.Instance.LiquidateForDebtAsync(payerId, amount);
@@ -118,6 +135,33 @@ namespace BlueMarble
 
             await Client.RequestDeclareBankruptcy(payerId);
             return false;
+        }
+
+        private static long GetTotalAssets(string playerId, int currentGold)
+        {
+            long totalAssets = currentGold;
+            List<Tile> territories = BlueMarbleWorld.Instance.Board.GetOccupiedTiles(playerId);
+
+            for (int i = 0; i < territories.Count; i++)
+                totalAssets += territories[i].GetTotalValue();
+
+            return totalAssets;
+        }
+
+        private async UniTask PresentPaymentProtectionAsync()
+        {
+            Client.SetLocalPlayerActivity(PlayerActivityType.PaymentProtection);
+
+            try
+            {
+                await Client.AnnouncePlayerActivity(PlayerActivityType.PaymentProtection);
+                await CustomUniTask.DelaySeconds(1.5f);
+            }
+            finally
+            {
+                Client.SetLocalPlayerActivity(PlayerActivityType.None);
+                await Client.AnnouncePlayerActivity(PlayerActivityType.None);
+            }
         }
 
         #endregion

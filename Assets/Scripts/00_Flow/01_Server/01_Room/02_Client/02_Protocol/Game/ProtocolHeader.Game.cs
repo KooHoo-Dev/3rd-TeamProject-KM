@@ -47,6 +47,7 @@
         public const string GOLD_CARD_DRAWN = "goldCardDrawn";
         public const string INVENTORY_UPDATED = "inventoryUpdated";
         public const string USER_MOVE_CANCELLED = "userMoveCancelled";
+        public const string PLAYER_BANKRUPTED = "playerBankrupted";
     
         public const string GAME_ENDED = "gameEnded";
         public const string COMBAT_OFFER = "combatOffer";

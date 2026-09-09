@@ -163,6 +163,7 @@ namespace BlueMarble.Server
             others.Clear();
             playerIds = null;
             inventories.Clear();
+            IsSpectating = false;
         }
     }
 }

@@ -37,7 +37,8 @@
         Shop = 1,
         TerritoryPurchase = 2,
         Treasure = 3,
-        Combat = 4
+        Combat = 4,
+        PaymentProtection = 5
     }
 
     #region CLIENT_TO_SERVER
@@ -112,6 +113,7 @@
         public string Type { get; set; } = ProtocolHeader.TURN_STARTED;
         
         public int RoundCount { get; set; }
+        public int MaxRoundCount { get; set; }
         public int TurnId { get; set; }
         
         public string PlayerId { get; set; }
@@ -141,6 +143,12 @@
     {
         public string Type { get; set; } = ProtocolHeader.GAME_ENDED;
         public string WinnerId { get; set; }
+    }
+
+    public class PlayerBankruptedMessage
+    {
+        public string Type { get; set; } = ProtocolHeader.PLAYER_BANKRUPTED;
+        public string Id { get; set; }
     }
 
     public class EconomyUpdatedMessage

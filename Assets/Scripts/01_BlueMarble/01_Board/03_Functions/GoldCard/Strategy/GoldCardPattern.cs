@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System;
 using BlueMarble.Server;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -37,16 +36,17 @@ namespace BlueMarble
         {
             EconomyManager economy = EconomyManager.Instance;
 
-            string localPlayerId = RoomClient.Instance.Me.Id;
-            Array.Sort(targetIds, (left, right) =>
-                (left == localPlayerId).CompareTo(right == localPlayerId));
-
             for (int i = 0; i < targetIds.Length; i++)
             {
                 string targetId = targetIds[i];
-                await economy.PayMandatoryAsync(targetId, goldAmount);
+                if (economy.TryGetGold(targetId, out int currentGold) == false) continue;
+
+                int lossAmount = Mathf.Min(currentGold, goldAmount);
+                if (lossAmount <= 0) continue;
+
+                await economy.LoseGoldTo(targetId, lossAmount);
                 
-                Debug.Log($"[GoldCardPattern] Lose {goldAmount} gold to {targetId}");
+                Debug.Log($"[GoldCardPattern] Lose {lossAmount} gold to {targetId}");
             }
         }
     }

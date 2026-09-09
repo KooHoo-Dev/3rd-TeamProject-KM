@@ -17,6 +17,9 @@ namespace BlueMarble
         [field: SerializeField] public PlayerManager Players { get; private set; }
         [field: SerializeField] public TurnManager Turn { get; private set; }
 
+        [Title("Round")]
+        [SerializeField] private TMP_Text roundText;
+
         [Title("Winner")]
         [SerializeField] private GameObject winnerPanel;
         [SerializeField] private TMP_Text winnerText;
@@ -38,6 +41,7 @@ namespace BlueMarble
             Client.OnTurnStarted += HandleTurnStarted;
             Client.OnDiceRolled += HandleDiceRolled;
             Client.OnGameEnded += HandleGameEnded;
+            Client.OnPlayerBankrupted += HandlePlayerBankrupted;
             Client.OnLeft += HandlePlayerLeft;
 
             Client.OnUserMovedTo += HandleUserMovedTo;
@@ -71,6 +75,7 @@ namespace BlueMarble
             Client.OnTurnStarted -= HandleTurnStarted;
             Client.OnDiceRolled -= HandleDiceRolled;
             Client.OnGameEnded -= HandleGameEnded;
+            Client.OnPlayerBankrupted -= HandlePlayerBankrupted;
             Client.OnLeft -= HandlePlayerLeft;
 
             Client.OnUserMovedTo -= HandleUserMovedTo;
@@ -89,6 +94,7 @@ namespace BlueMarble
                 $"Turn {Client.TurnId}, " +
                 $"Player {user.Nickname}({user.Id})");
 
+            roundText.SetText($"{Client.RoundCount}/{Client.MaxRoundCount}");
             Players.SetCurrentTurn(user.Id);
 
             if (canAct == false)
@@ -197,6 +203,14 @@ namespace BlueMarble
                 Players.CancelAllMoves();
                 TileEffectSyncManager.Instance.CancelAll();
             }
+        }
+
+        private void HandlePlayerBankrupted(User user)
+        {
+            Players.Remove(user.Id);
+
+            if (user.Id == Client.Me.Id)
+                Turn.SetInputEnabled(false);
         }
 
         private void HandleUserMovedTo(MoveUserToMessage message)
