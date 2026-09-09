@@ -18,6 +18,7 @@ namespace BlueMarble
         [Title("UI")]
         [SerializeField] private Button rollButton;
         [SerializeField] private TMP_Text diceText;
+        [SerializeField] private GameObject sfxObject;
 
         [Title("Settings")]
         [SerializeField] private float jumpPower = 8f;
@@ -49,6 +50,8 @@ namespace BlueMarble
         
         public async UniTask RollAsync(int d1, int d2)
         {
+            sfxObject.SetActive(true);
+            
             Sequence r1 = dices[0].CreateRoll(d1, jumpPower, jumpDuration);
             Sequence r2 = dices[1].CreateRoll(d2, jumpPower, jumpDuration);
             
@@ -65,6 +68,7 @@ namespace BlueMarble
             await CustomUniTask.DelaySeconds(1.5f);
 
             SetActiveDices(false);
+            sfxObject.SetActive(false);
             diceText.gameObject.SetActive(false);
         }
 
