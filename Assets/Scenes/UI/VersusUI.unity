@@ -247,11 +247,6 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!1 &383663643 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5899969049165572909, guid: fea9f79c5efcb39459ad449d125fc287, type: 3}
-  m_PrefabInstance: {fileID: 6634663343330703696}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &555816560
 GameObject:
   m_ObjectHideFlags: 0
@@ -281,20 +276,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c49cca0ad056f2499fe2dae63770ba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlueMarble.BattleVSIntro
-  wordObjects:
-  - {fileID: 383663643}
-  - {fileID: 1735081531}
-  - {fileID: 1582259678}
-  - {fileID: 1060860335}
-  scaleDuration: 0.15
-  punchScaleAmount: 1
-  mainCamera: {fileID: 282896597}
-  shakeDuration: 0.5
-  shakeMagnitude: 0.3
-  finalVFX: {fileID: 0}
-  audioSource: {fileID: 0}
-  hitSFX: {fileID: 0}
-  finalExplosionSFX: {fileID: 0}
 --- !u!4 &555816562
 Transform:
   m_ObjectHideFlags: 0
@@ -310,21 +291,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1060860335 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1767289916436053512, guid: fea9f79c5efcb39459ad449d125fc287, type: 3}
-  m_PrefabInstance: {fileID: 6634663343330703696}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1582259678 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8950035377729176649, guid: fea9f79c5efcb39459ad449d125fc287, type: 3}
-  m_PrefabInstance: {fileID: 6634663343330703696}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1735081531 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5913159301929801239, guid: fea9f79c5efcb39459ad449d125fc287, type: 3}
-  m_PrefabInstance: {fileID: 6634663343330703696}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6634663343330703696
 PrefabInstance:
   m_ObjectHideFlags: 0
