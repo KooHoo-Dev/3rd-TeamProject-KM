@@ -29,6 +29,7 @@ namespace BlueMarble
             territory.OnUpdated += RefreshGoldState;
             Client.OnInventoryUpdated += HandleInventoryUpdated;
             Client.OnPlayerActivityChanged += HandlePlayerActivityChanged;
+            Client.OnPlayerBankrupted += HandlePlayerBankrupted;
             Client.OnLeft += HandlePlayerLeft;
 
             RefreshEquipmentStates();
@@ -44,6 +45,7 @@ namespace BlueMarble
 
             Client.OnInventoryUpdated -= HandleInventoryUpdated;
             Client.OnPlayerActivityChanged -= HandlePlayerActivityChanged;
+            Client.OnPlayerBankrupted -= HandlePlayerBankrupted;
             Client.OnLeft -= HandlePlayerLeft;
         }
 
@@ -144,6 +146,8 @@ namespace BlueMarble
                     profile.ShowBubble("보물 찾는중...");
                 else if (activity == PlayerActivityType.Combat)
                     profile.ShowBubble("결투 준비중...");
+                else if (activity == PlayerActivityType.PaymentProtection)
+                    profile.ShowBubble("까방권 발동!");
 
                 return;
             }
@@ -158,6 +162,19 @@ namespace BlueMarble
                 if (profile.Id != user.Id) continue;
 
                 profile.gameObject.SetActive(false);
+                return;
+            }
+        }
+
+        private void HandlePlayerBankrupted(User user)
+        {
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                Profile profile = profiles[i];
+                if (profile.gameObject.activeSelf == false) continue;
+                if (profile.Id != user.Id) continue;
+
+                profile.SetBankrupt();
                 return;
             }
         }
