@@ -93,7 +93,7 @@ namespace BlueMarble
                 bounceSequence.Append(chestRect.DOAnchorPosY(originalPos.y + chestShakeStrength, singleBounceDuration).SetEase(Ease.OutQuad));
                 bounceSequence.Append(chestRect.DOAnchorPosY(originalPos.y, singleBounceDuration).SetEase(Ease.InQuad));
             }
-
+            
             await UniTask.Delay(TimeSpan.FromSeconds(chestShakeDuration));
 
             // 2. 상자 열림 연출 (자동)

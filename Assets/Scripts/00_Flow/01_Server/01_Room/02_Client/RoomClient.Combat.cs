@@ -75,7 +75,7 @@ namespace BlueMarble.Server
 
         private static void HandleCombatStarted(CombatStartedMessage message)
         {
-            CombatSystem.Instance.BeginCombatFromNetwork(message);
+            CombatSystem.Instance.BeginCombatFromNetwork(message).Forget();
         }
 
         private static void HandleCombatPosition(CombatPositionMessage message)
