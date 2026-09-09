@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 3065905803182764529}
   - component: {fileID: 100300101096086298}
   - component: {fileID: 5785082589826598391}
+  - component: {fileID: 2175016733153991097}
   m_Layer: 0
   m_Name: Meteor
   m_TagString: Untagged
@@ -100,6 +101,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80d5de04dad42b9bd1c572fd2d55382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.AnimatedProjectile
+--- !u!210 &2175016733153991097
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6024530381651066043}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 2
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &6457480019823153087
 GameObject:
   m_ObjectHideFlags: 0

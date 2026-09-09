@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4617507768283295721}
   - component: {fileID: 2274517321164613820}
   - component: {fileID: 502837921010649597}
+  - component: {fileID: 7227735072644668705}
   m_Layer: 0
   m_Name: IceShard
   m_TagString: Untagged
@@ -68,6 +69,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80d5de04dad42b9bd1c572fd2d55382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.AnimatedProjectile
+--- !u!210 &7227735072644668705
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2535272285983100770}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 2
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &4205003444582492944
 GameObject:
   m_ObjectHideFlags: 0

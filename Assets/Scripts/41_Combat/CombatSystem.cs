@@ -228,6 +228,9 @@ namespace Combat
             IsCombatActive = false;
             StopCombatTimer();
 
+            if (LocalPlayerId == AttackerId || LocalPlayerId == DefenderId)
+                InventoryManager.Instance.LossDurabilityAll();
+
             if (TryGetEntity(result.LoserId, out CombatEntity loserEntity))
             {
                 loserEntity.ApplyHealthSnapshot(0);

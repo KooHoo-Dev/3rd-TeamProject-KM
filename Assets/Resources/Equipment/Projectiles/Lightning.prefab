@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7442008120787375222}
   - component: {fileID: 7375304444710663193}
   - component: {fileID: 6655078032503541996}
+  - component: {fileID: -2802504743357796028}
   m_Layer: 0
   m_Name: Lightning
   m_TagString: Untagged
@@ -68,6 +69,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80d5de04dad42b9bd1c572fd2d55382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.AnimatedProjectile
+--- !u!210 &-2802504743357796028
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4615696916472384264}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 2
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &7767939226084033677
 GameObject:
   m_ObjectHideFlags: 0

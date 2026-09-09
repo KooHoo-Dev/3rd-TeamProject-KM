@@ -163,6 +163,7 @@ GameObject:
   - component: {fileID: 2320512987111400947}
   - component: {fileID: 3224966375425445217}
   - component: {fileID: 8329103365716673501}
+  - component: {fileID: 7678209265656748264}
   m_Layer: 0
   m_Name: Fireball
   m_TagString: Untagged
@@ -220,6 +221,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80d5de04dad42b9bd1c572fd2d55382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.AnimatedProjectile
+--- !u!210 &7678209265656748264
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2566308783633917722}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 2
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1001 &7881566452430731266
 PrefabInstance:
   m_ObjectHideFlags: 0

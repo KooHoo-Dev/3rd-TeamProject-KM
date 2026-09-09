@@ -19,16 +19,18 @@ namespace BlueMarble
         
         private RoomClient Client => RoomClient.Instance;
         
-        private DiceManager Dice => DiceManager.Instance;
+        private DiceManager dice;
 
         private void Awake()
         {
-            Dice.OnRollButtonClicked += RequestRollDice;
+            dice = DiceManager.Instance;
+            dice.OnRollButtonClicked += RequestRollDice;
         }
 
         private void OnDisable()
         {
-            Dice.OnRollButtonClicked -= RequestRollDice;
+            if (dice != null)
+                dice.OnRollButtonClicked -= RequestRollDice;
         }
         
         private void RequestRollDice()
@@ -36,7 +38,7 @@ namespace BlueMarble
             if (CanRoll == false) return;
 
             CanRoll = false;
-            Dice.SetRollButtonActive(false);
+            dice.SetRollButtonActive(false);
             
             OnDiceRollRequested?.Invoke();
         }
@@ -44,7 +46,7 @@ namespace BlueMarble
         public void SetInputEnabled(bool enabled)
         {
             CanRoll = enabled;
-            Dice.SetRollButtonActive(enabled);
+            dice.SetRollButtonActive(enabled);
         }
 
         public void BeginTurn(bool isMyTurn)
@@ -52,15 +54,15 @@ namespace BlueMarble
             Debug.Log($"[TurnManager] BeginTurn. IsMyTurn: {isMyTurn}");
             
             CanRoll = isMyTurn;
-            Dice.ShowForTurn(isMyTurn);
+            dice.ShowForTurn(isMyTurn);
         }
 
         public async UniTask ShowDiceResultAsync(int d1, int d2)
         {
             CanRoll = false;
-            Dice.SetRollButtonActive(false);
+            dice.SetRollButtonActive(false);
 
-            await Dice.RollAsync(d1, d2);
+            await dice.RollAsync(d1, d2);
         }
     }
 }

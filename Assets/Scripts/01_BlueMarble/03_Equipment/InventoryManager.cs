@@ -161,8 +161,17 @@ namespace BlueMarble
             Equipment equipment = slots[slotsIndex];
             if (equipment == null) return;
 
-            slots[slotsIndex] = null;
             NotifyEquipmentRemoved(equipment);
+
+            for (int i = slotsIndex; i < slots.Length - 1; i++)
+            {
+                slots[i] = slots[i + 1];
+
+                if (slots[i] != null)
+                    slots[i].SlotIndex = i;
+            }
+
+            slots[slots.Length - 1] = null;
         }
 
         private static void NotifyEquipmentSet(Equipment equipment)

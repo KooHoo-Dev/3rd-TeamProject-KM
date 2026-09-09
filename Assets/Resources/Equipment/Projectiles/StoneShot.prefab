@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1629003259670301445}
   - component: {fileID: 7001176608521892755}
   - component: {fileID: 6188206027524282114}
+  - component: {fileID: 658561380673844446}
   m_Layer: 0
   m_Name: StoneShot
   m_TagString: Untagged
@@ -68,6 +69,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b80d5de04dad42b9bd1c572fd2d55382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Combat.AnimatedProjectile
+--- !u!210 &658561380673844446
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2829980556697950916}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 2
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &6624009002081858002
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,16 +14,19 @@ namespace BlueMarble
         [SerializeField] private Profile[] profiles;
         
         private RoomClient Client => RoomClient.Instance;
-        private EconomyManager Economy => EconomyManager.Instance;
-        private TerritoryManager Territory => TerritoryManager.Instance;
+        private EconomyManager economy;
+        private TerritoryManager territory;
 
         private void Start()
         {
+            economy = EconomyManager.Instance;
+            territory = TerritoryManager.Instance;
+
             InitProfiles();
             RefreshGoldState();
 
-            Economy.OnUpdated += RefreshGoldState;
-            Territory.OnUpdated += RefreshGoldState;
+            economy.OnUpdated += RefreshGoldState;
+            territory.OnUpdated += RefreshGoldState;
             Client.OnInventoryUpdated += HandleInventoryUpdated;
             Client.OnPlayerActivityChanged += HandlePlayerActivityChanged;
             Client.OnLeft += HandlePlayerLeft;
@@ -33,8 +36,12 @@ namespace BlueMarble
 
         private void OnDisable()
         {
-            Economy.OnUpdated -= RefreshGoldState;
-            Territory.OnUpdated -= RefreshGoldState;
+            if (economy != null)
+                economy.OnUpdated -= RefreshGoldState;
+
+            if (territory != null)
+                territory.OnUpdated -= RefreshGoldState;
+
             Client.OnInventoryUpdated -= HandleInventoryUpdated;
             Client.OnPlayerActivityChanged -= HandlePlayerActivityChanged;
             Client.OnLeft -= HandlePlayerLeft;
@@ -64,7 +71,7 @@ namespace BlueMarble
                 Profile profile = profiles[i];
                 
                 if (profile.gameObject.activeSelf == false) continue;
-                if (Economy.TryGetGold(profile.Id, out int gold) == false) continue;
+                if (economy.TryGetGold(profile.Id, out int gold) == false) continue;
                 
                 profile.SetGold(gold);
 
