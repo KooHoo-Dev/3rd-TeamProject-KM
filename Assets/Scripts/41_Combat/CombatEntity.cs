@@ -1,19 +1,26 @@
-﻿using UnityEngine;
+﻿using Player;
+using Sirenix.OdinInspector;
+using UnityEngine;
 
 namespace Combat
 {
     public abstract class CombatEntity : MonoBehaviour
     {
-        [field: SerializeField] public string OwnerId { get; private set;}
+        [field: SerializeField] public string OwnerId { get; private set; }
+        [ShowInInspector, ReadOnly] private CharacterController2D controller;
         
         public int CurrentHp { get; protected set; }
         public int MaxHp { get; protected set; }
+
+        public bool IsInvincible => controller.IsInvincible;
 
         public virtual void Init(string playerId, int maxHp)
         {
             OwnerId = playerId;
             CurrentHp = maxHp;
             MaxHp = maxHp;
+            
+            controller = GetComponent<CharacterController2D>();
 
             if (CombatSystem.Instance != null)
             {

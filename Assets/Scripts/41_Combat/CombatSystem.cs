@@ -292,6 +292,7 @@ namespace Combat
                 return false;
 
             if (!TryGetEntity(targetId, out CombatEntity entity)) return false;
+            if (entity.IsInvincible) return false;
 
             entity.TakeDamage(damage);
 
