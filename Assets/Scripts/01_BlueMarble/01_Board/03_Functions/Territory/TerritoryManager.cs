@@ -121,16 +121,22 @@ namespace BlueMarble
 
                 CombatOutcome outcome = await CombatSystem.Instance.StartCombat(playerId, tile);
 
+                int tileValue = tile.GetTotalValue();
+                
                 if (outcome == CombatOutcome.AttackerWin)
                 {
                     if (tile.State.OwnerId != playerId)
                         await ChangeOwnerAsync(tile, playerId);
 
+                    await EconomyManager.Instance.GainGoldTo(playerId, tileValue);
                     return;
                 }
 
                 if (outcome == CombatOutcome.DefenderWin)
+                {
                     await PayTollAsync(playerId, state.OwnerId, tile.GetTollAmount());
+                    await EconomyManager.Instance.GainGoldTo(state.OwnerId, tileValue);
+                }
             }
             finally
             {
