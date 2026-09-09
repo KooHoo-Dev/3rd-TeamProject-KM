@@ -79,7 +79,14 @@ namespace BlueMarble
 
         private async UniTask ShowRewardInternalAsync(EquipmentDef reward)
         {
+            rewardIconImage.gameObject.SetActive(false);
+            rewardIconImage.sprite = null;
+            rewardNameText.text = string.Empty;
+
             chestPanel.SetActive(true);
+            chestAnimator.ResetTrigger(OpenTrigger);
+            chestAnimator.Rebind();
+            chestAnimator.Update(0f);
 
             // 1. 상자 흔들림 (오픈 전 기대감 연출) - 정확히 N번 통통 튀는 연출
             var chestRect = (RectTransform)chestAnimator.transform;

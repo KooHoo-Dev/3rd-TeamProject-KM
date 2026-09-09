@@ -20,6 +20,9 @@ namespace BlueMarble
         [Title("Settings")]
         [SerializeField] private float jumpPower = 1f;
         [SerializeField] private float jumpDuration = 0.5f;
+        [SerializeField] private AudioClip jumpSound;
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private float volumeScale = 0.5f;
         
         [field: Title("States")]
         [field: ShowInInspector, ReadOnly] public int CurrentTileIndex { get; private set; }
@@ -86,6 +89,7 @@ namespace BlueMarble
             
             Tile goal = board.GetTile(CurrentTileIndex);
             
+            audioSource.PlayOneShot(jumpSound, volumeScale);
             await transform
                 .DOJump(goal.transform.position, jumpPower, 1, jumpDuration)
                 .SetEase(Ease.OutCubic)
