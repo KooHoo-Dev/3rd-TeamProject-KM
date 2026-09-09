@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Jay
 {
@@ -30,7 +31,7 @@ namespace Jay
             backgroundCamera.allowMSAA = false;
 
             UpdateViewportRect();
-            Camera.onPreCull += ApplyViewportRect;
+            RenderPipelineManager.beginCameraRendering += ApplyViewportRect;
         }
 
         private void Update()
@@ -42,7 +43,7 @@ namespace Jay
 
         private void OnDestroy()
         {
-            Camera.onPreCull -= ApplyViewportRect;
+            RenderPipelineManager.beginCameraRendering -= ApplyViewportRect;
         }
 
         private void UpdateViewportRect()
@@ -64,7 +65,7 @@ namespace Jay
             }
         }
 
-        private void ApplyViewportRect(Camera targetCamera)
+        private void ApplyViewportRect(ScriptableRenderContext _, Camera targetCamera)
         {
             if (targetCamera == backgroundCamera || targetCamera.targetTexture != null) return;
 
