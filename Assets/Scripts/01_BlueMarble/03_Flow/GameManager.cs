@@ -153,19 +153,22 @@ namespace BlueMarble
                     cancellationToken: destroyCancellationToken);
             }
 
-            if (string.IsNullOrEmpty(message.WinnerId) == false)
+            if (World.IsBoardReady == false)
             {
-                if (World.IsBoardReady == false)
-                {
-                    await UniTask.WaitUntil(
-                        this,
-                        _ => World.IsBoardReady,
-                        cancellationToken: destroyCancellationToken);
-                }
+                await UniTask.WaitUntil(
+                    this,
+                    _ => World.IsBoardReady,
+                    cancellationToken: destroyCancellationToken);
+            }
 
-                User winner = Client.GetUser(message.WinnerId);
+            string winnerId = string.IsNullOrEmpty(message.WinnerId)
+                ? GetRoundWinnerId()
+                : message.WinnerId;
+
+            if (string.IsNullOrEmpty(winnerId) == false)
+            {
+                User winner = Client.GetUser(winnerId);
                 string winnerNickname = winner.Nickname;
-                string winnerId = winner.Id;
                 int totalAssets = GetTotalAssets(winnerId);
                 
                 winnerPanel.SetActive(true);
@@ -176,6 +179,25 @@ namespace BlueMarble
             }
 
             await Client.LeaveAsync();
+        }
+
+        private string GetRoundWinnerId()
+        {
+            string winnerId = null;
+            int highestAssets = int.MinValue;
+
+            for (int i = 0; i < Client.PlayerIds.Count; i++)
+            {
+                string playerId = Client.PlayerIds[i];
+                int totalAssets = GetTotalAssets(playerId);
+
+                if (totalAssets <= highestAssets) continue;
+
+                winnerId = playerId;
+                highestAssets = totalAssets;
+            }
+
+            return winnerId;
         }
 
         private int GetTotalAssets(string playerId)

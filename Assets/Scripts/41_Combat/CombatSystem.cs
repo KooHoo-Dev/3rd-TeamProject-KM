@@ -230,7 +230,10 @@ namespace Combat
             StopCombatTimer();
 
             if (LocalPlayerId == AttackerId || LocalPlayerId == DefenderId)
+            {
+                InventoryManager.Instance.ResetCooldownAll();
                 InventoryManager.Instance.LossDurabilityAll();
+            }
 
             if (TryGetEntity(result.LoserId, out CombatEntity loserEntity))
             {
