@@ -10,10 +10,15 @@ namespace Player
         [Header("Settings")]
         public float        speed               = 4.0f;
         public float        skinWidth           = 0.02f;
-        public float        dodgeSpeedBonus     = 2.0f;
-        public float        dodgeDuration       = 0.2f;   
         public LayerMask    collisionLayer;
 
+        [Header("Dodge Settings")]
+        public float        dodgeSpeedBonus     = 2.0f;
+        public float        dodgeDuration       = 0.5f;
+        public float dodgeCooldown = 1.5f;
+
+        private float nextDodgeTime;
+        
         private Collider2D  col;
         
         private Vector3 externalDelta       = Vector3.zero;   
@@ -117,15 +122,22 @@ namespace Player
 
         public async UniTaskVoid Dodge(float direction)
         {
-            if (IsInvincible) return;
+            // 회피 동작 중이거나 쿨타임이면 사용 불가
+            if (IsInvincible || Time.time < nextDodgeTime)
+                return;
 
+            // 회피를 시작한 시점을 기준으로 쿨타임 적용
+            nextDodgeTime = Time.time + dodgeCooldown;
             IsInvincible = true;
-            
+
             dodgeCts?.Cancel();
             dodgeCts?.Dispose();
             dodgeCts = new CancellationTokenSource();
-            
-            float dir = Mathf.Abs(direction) > 0.01f ? Mathf.Sign(direction) : 0.0f;
+
+            float dir = Mathf.Abs(direction) > 0.01f
+                ? Mathf.Sign(direction)
+                : 0.0f;
+
             float elapsed = 0.0f;
 
             try
@@ -134,17 +146,23 @@ namespace Player
                 {
                     if (dir != 0.0f)
                     {
-                        AddExternalMovement(Vector3.right * dir * (speed + dodgeSpeedBonus) * Time.deltaTime);
+                        AddExternalMovement(
+                            Vector3.right * dir *
+                            (speed + dodgeSpeedBonus) *
+                            Time.deltaTime
+                        );
                     }
 
                     elapsed += Time.deltaTime;
-                    
-                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: dodgeCts.Token);
+
+                    await UniTask.Yield(
+                        PlayerLoopTiming.Update,
+                        cancellationToken: dodgeCts.Token
+                    );
                 }
             }
             catch (System.OperationCanceledException)
             {
-                
             }
             finally
             {

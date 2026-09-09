@@ -130,7 +130,7 @@ namespace Player
         
         private void HandleDodge()
         {
-            if (IsActionLocked) return;
+            // if (IsActionLocked) return;
 
             if (SimpleInput.GetKeyDown(Key.Space))
             {
